@@ -1,0 +1,18 @@
+
+<div class="" id="myModal_1" tabindex="-1" role="dialog"
+	aria-labelledby="myModalLabelcancel">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+			 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+				<h4 class="modal-title" id="myModalLabelcancel"></h4>
+			</div>
+			<div class="modal-body">
+				<font color="red"><h4 class="modal-title">No Hotel found for the given search creteria.
+			</div>
+			<div class="modal-footer">
+				<a class="hand-cursor" href="<?=base_url()?>">Search Again</a>
+			</div>
+		</div>
+	</div>
+</div>

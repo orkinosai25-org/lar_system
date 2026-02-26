@@ -1,0 +1,262 @@
+.baggage_meal_details hr{margin:5px 0px !important;} 
+.baggage_meal_details .mealservice {font-family:"Roboto",sans-serif; font-size:13px; color:#0096cf;}  
+.baggage_meal_details .formlabel{font-size: 16px;color: #3F3F3F;line-height: 24px;font-weight: 500;} 
+.baggage_meal_details ul li {margin-right: 8px;/* margin: 0; */}
+.baggage_meal_details .nav-tabs > li > a{font-size: 14px;padding: 9px 13px 9px;background: none !important;font-weight: 400;border: none;border-bottom: none;background: #F6F6F6;}
+.baggage_meal_details > ul li a::before {
+    border-radius: 50%;
+    box-shadow: none;
+    content: "";
+    height: 16px;
+    left: 7px;
+    position: absolute;
+    top: 10px;
+    width: 16px;
+    background: #fff;
+    border: 1px solid #ddd;
+    display: none;
+    }
+
+.bag_pax_name, .meal_pax_name, .pref_pax_name{height: 40px;/* padding-top: 10px; */width: 100%;text-align: left;font-size: 13px;color: #3F3F3F;line-height: 20px;font-weight: 500;padding-left: 17px;margin-bottom: 7.5px;display: flex;align-items: center;}
+.baggagecharge {    color: #999;    display: block;    font-size: 13px;    margin: 0 0 15px 0;    overflow: hidden; border-bottom: 1px solid #ddd; padding-bottom: 5px;}
+.baggagecharge #remove_extra_baggage.btn,
+.baggagecharge #remove_extra_meal.btn,
+.baggagecharge #remove_extra_seat.btn,
+.baggagecharge-agent #remove_extra_baggage.btn,
+.baggagecharge-agent #remove_extra_meal.btn,
+.baggagecharge-agent #remove_extra_seat.btn
+{margin-left: 10px; padding: 1px 5px; background:#0094ce; color: #fff; border: none; margin-top: -5px; }
+.baggagecharge #remove_extra_baggage.btn:hover,
+.baggagecharge #remove_extra_meal.btn:hover{background: #ff4e00;}
+.baggagecharge #extra_baggage_charge,
+.baggagecharge #extra_meal_charge, .baggagecharge #extra_seat_charge {font-weight: bold; font-size: 14px;}
+.selectedwrap{margin-bottom: 5px;}
+.addbaggage{overflow-y: hidden;overflow-x: auto;white-space: nowrap;margin: 0 0 10px;}
+.addbaggage .addtlbox{display: inline-block;vertical-align: middle;padding: 0 6px;}
+.splinmar .flyinputsnor {padding: 5px 5px;font-size: 14px;appearance: none;}
+.nav-tabs > li.active > a, .nav-tabs > li.active > a:focus, .nav-tabs > li.active > a:hover{background: #0094ce;color: #fff;-webkit-border-top-left-radius: 4px;-webkit-border-top-right-radius: 4px;-moz-border-radius-topleft: 4px;-moz-border-radius-topright: 4px;border-top-left-radius: 4px;border-top-right-radius: 4px;border: none !important;background: none !important;}
+.active .btn.btn-sm.btn-default {
+    background: none !important;
+    border: none;
+    border-bottom: 3px solid #3F3F3F !important;
+    font-weight: 600;
+    color: #3F3F3F !important;
+    }
+
+
+
+.labltowr.noxtra{line-height:15px;}
+.labltowr.noxtra small{font-size:12px; color:#ef7d25;}
+.mt10{margin-top:10px;}
+.pt30{padding-top: 32px;}
+.extra_services_indicator_tab{border-bottom: 1px solid #EFEFEF !important;}
+.baggagecharge-agent {
+    color: #666;
+    display: block;
+    overflow: hidden;
+    border-bottom: 1px solid #ddd; padding-bottom: 5px;
+}
+.active_pax_seat_tab { background: #a5dcf2 !important; } 
+.in_active_pax_seat_tab { background: #f5f5f5 !important; }
+
+.in_active_seat_map_tab{ background: rgba(26,130,130,0.2) !important; color: #333 !important; } 
+.mytabs th, .mytabs td {
+  color: #333333;
+  font-weight: normal;
+  padding: 10px !important;
+  vertical-align: middle !important;
+}
+.mytabs .nav.nav-tabs {
+  border-bottom: medium none;
+}
+.mytabs .tab-content {
+  background: #ffffff none repeat scroll 0 0;
+}
+.mytabs .nav.nav-tabs li a {
+  border: medium none;
+  border-radius: 0 !important;
+  color: #333333;
+  font-size: 16px;
+  padding: 15px;
+  text-align: center;
+  width: 150px;
+}
+.mytabs .mybtnc {
+  padding: 15px;
+}
+.mytabs {
+  padding: 15px 0;
+}
+.mytabs .tab-content .tab-pane {
+  /*max-height: 300px;
+  overflow: auto;*/
+}
+.flight_d {/* background: url(../images/flight_diagram.png) no-repeat center top; */height: auto;margin:0px auto;border-left: 2px solid #7A7A7A;border-right: 2px solid #7A7A7A;}
+.flight-mw {/* width: 200px; */margin: 0px auto;/* height: 1888px; */}
+.flight-con {width: 100%;padding: 65px 0px 25px;overflow: hidden;}
+.flight-con table td {padding:9.5px 3px !important;position: relative;font-size: 14px;color: #111;font-weight: 500;}
+.flight-con table td .tooltip { width: 140px !important; }
+.flight-con table td .tooltip.top .tooltip-arrow { bottom: -5px; border-top-color:#777; }
+.flight-con table td img {width: 25px !important;height: 22px !important;transform:rotate(90deg);}
+.flight-tab {margin: 0;display: block;padding: 20px 0;text-align: center;border-bottom: none;}
+.flight-tab li a::before { position: relative !important; }
+.flight-tab li a{width: auto !important;background: #f5f5f5;border-radius: 18px;}
+.flight-tab > li.active a {background: #3F3F3F !important;border: none !important;border-radius: 18px !important;}
+.load_links > a {
+  display: inline-block;
+  padding: 10px 10px 10px 0;
+}
+.active_seat_segment_map,.active_seat_segment_pax th.seat_segment_pax_label{background: #3F3F3F;color:#fff;font-weight:normal;border: 1px solid #3F3F3F;font-size: 12px;line-height: 18px;font-weight: 500;}
+.active_seat_segment_pax_tr{background:#e4f8f9 none repeat scroll 0 0;/* border-radius: 0 0 13px 5px; *//* overflow: hidden; */}
+.table.table-bordered.seat_pax_details.seat_segment_pax.active_seat_segment_pax {
+  background: #ffffff none repeat scroll 0 0;
+  border: none;
+  border-radius: 5px;
+  overflow: hidden;
+  /* margin: 0; */
+}
+.table.table-bordered.seat_pax_details.seat_segment_pax .nethed {
+  background: #F7F7F7;
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 500;
+}
+.nav-tabs > li > a, .nav > li > a:focus, .nav > li > a:hover {
+  background: #fbfbfb none repeat scroll 0 0;
+    /* border: 1px solid #f1f1f1; */
+    color: #2d3e52;
+}
+.difbgble > td {
+  text-align: center;
+}
+.flight-con .table-striped > tbody > tr:nth-of-type(2n){ background:#fff;}
+.seat_segment_pax_label, .nethed th{ font-weight:normal;}
+.seat_segment_pax_label{ background: #3b4148 none repeat scroll 0 0;
+    color: #ffffff; }
+.seatmapicon {
+  background: #ffffff none repeat scroll 0 0;
+  /* border-radius: 3px; */
+  display: block;
+  margin: 0;
+  overflow: hidden;
+  padding: 15px 10px;
+  /* text-align: center; */
+  border-bottom: 1px solid #CECECE;
+}
+.rowicon {
+  display: inline-block;
+  padding: 5px;
+}
+.flight-con .tooltip.top{ background:#0094ce !important; border-radius:3px; opacity:1 !important;max-width:60px !important;}
+.flight-con .tooltip.top .tooltip-inner{ background:none !important; padding:0 !important; } 
+.flight-con .tooltip.top .tooltip-arrow{border-top-color: #0094ce !important;}
+ .st_row td:first-child {
+    font-size: 12px;
+}
+.flight-tab li {
+    margin: 0;
+    float: none;
+    display: inline-block;
+}
+.seat_segment_pax {
+    display: none;
+}
+
+.active_seat_segment_pax {
+    display: table;
+}
+
+.st_tbl {
+    margin-top: 79px;
+}
+
+.seat_segment_pax tr:first-child {
+    background: #ccc;
+}
+
+.seat_segment_pax .nethed th {
+    font-size: 12px;
+    line-height: 18px;
+    font-weight: 500;
+    color: #545454;
+    text-align: center;
+}
+
+.seat_segment_pax td {
+    text-align: center !important;
+    border: 1px solid #CDCDCD !important;
+    font-size: 13px;
+}
+
+.seat_segment_pax_tr td::first-child {
+    text-align: left !important;
+}
+
+
+.seat_segment_pax .nethed th:first-child {
+    text-align: left;
+}
+
+.seat_segment_pax td.seat_pax_name {
+    text-align: left !important;
+    /* border: 1px solid #CDCDCD; */
+}
+.seatmapicon {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.btn.sk_btn {
+    font-size: 12px;
+    line-height: 21px;
+    color: #494949;
+    background: #B6A47C1A;
+    border: 1px solid #BF9766;
+    border-radius: 25px;
+}
+.extra_services_indicator_tab li img.ex_icn {
+    display: inline-block;
+}
+
+.extra_services_indicator_tab li.active img.ex_icn.active {
+    display: inline-block;
+}
+
+.extra_services_indicator_tab li.active img.ex_icn {
+    display: none;
+}
+
+.extra_services_indicator_tab li img.ex_icn.active {
+    display: none;
+}
+.pasngrinput h3 {
+    font-size: 16px;
+    line-height: 24px !important;
+    font-weight: 500;
+    /* margin: 15px 0 10px !important; */
+    padding-left: 17px;
+}
+
+.my-5 {
+    margin: 5px 0 10px;
+}
+
+.flyinputsnor {
+    padding-right: 27px;
+    font-size: 13px;
+    padding-left: 7.5px;
+}
+.addbaggage > div {
+    padding: 0 6px !important;
+}
+
+.baggage_meal_details .nav-tabs > li.active > a:hover {
+    /* background: #3F3F3F !important; */
+}
+.flight-tab.nav-tabs > li.active > a, .flight-tab.nav-tabs > li.active > a:focus, .flight-tab.nav-tabs > li.active > a:hover {
+    background: #3F3F3F !important;
+}
+    .modal-sm {
+        width: 600px;
+    }

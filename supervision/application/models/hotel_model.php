@@ -1,0 +1,342 @@
+<?php
+
+/**
+ * Library which has generic functions to get data
+ *
+ * @package    Provab Application
+ * @subpackage Hotel Model
+ * @author     Balu A<balu.provab@gmail.com>
+ * @version    V2
+ */
+class Hotel_Model extends CI_Model
+{
+	// private $master_search_data;
+	/**
+	 * return booking list
+	 */
+	public function booking(array $condition = [], bool $count = false, int $offset = 0, int $limit = 100000000000): array|string
+	{
+		$response=[];
+		$condition = $this->custom_db->get_custom_condition($condition);
+		//BT, CD, ID
+		if ($count) {
+			$query = 'select count(distinct(BD.app_reference)) as total_records 
+					from hotel_booking_details BD
+					join hotel_booking_itinerary_details AS HBID on BD.app_reference=HBID.app_reference
+					join payment_option_list AS POL on BD.payment_mode=POL.payment_category_code 
+					where BD.domain_origin=' . get_domain_auth_id() . ' ' . $condition;
+			$data = $this->db->query($query)->row_array();
+			return $data['total_records'];
+		} else {
+			$this->load->library('booking_data_formatter');
+			$response['status'] = SUCCESS_STATUS;
+			$response['data'] = array();
+			$booking_itinerary_details	= array();
+			$booking_customer_details	= array();
+			$cancellation_details = array();
+			$bd_query = 'select * from hotel_booking_details AS BD 
+						WHERE BD.domain_origin=' . get_domain_auth_id() . '' . $condition . '
+						order by BD.origin desc limit ' . $offset . ', ' . $limit;
+			$booking_details = $this->db->query($bd_query)->result_array();
+			$app_reference_ids = $this->booking_data_formatter->implode_app_reference_ids($booking_details);
+			if (empty($app_reference_ids) == false) {
+				$id_query = 'select * from hotel_booking_itinerary_details AS ID 
+							WHERE ID.app_reference IN (' . $app_reference_ids . ')';
+				$cd_query = 'select * from hotel_booking_pax_details AS CD 
+							WHERE CD.app_reference IN (' . $app_reference_ids . ')';
+				$cancellation_details_query = 'select * from hotel_cancellation_details AS HCD 
+							WHERE HCD.app_reference IN (' . $app_reference_ids . ')';
+				$booking_itinerary_details	= $this->db->query($id_query)->result_array();
+				$booking_customer_details	= $this->db->query($cd_query)->result_array();
+				$cancellation_details	= $this->db->query($cancellation_details_query)->result_array();
+			}
+			$response['data']['booking_details']			= $booking_details;
+			$response['data']['booking_itinerary_details']	= $booking_itinerary_details;
+			$response['data']['booking_customer_details']	= $booking_customer_details;
+			$response['data']['cancellation_details']	= $cancellation_details;
+			return $response;
+		}
+	}
+	//----------------------sdp ------- 
+
+	public function b2c_hotel_report(array $condition = [], bool $count = false, int $offset = 0, int $limit = 100000000000): array|string
+	{
+		$response=[];
+		$condition = $this->custom_db->get_custom_condition($condition);
+
+		if (isset($condition) == true) {
+			$offset = 0;
+		} else {
+			$offset = $offset;
+		}
+
+		//BT, CD, ID
+		if ($count) {
+			$query = 'select count(distinct(BD.app_reference)) as total_records
+					from hotel_booking_details BD
+					join hotel_booking_itinerary_details AS HBID on BD.app_reference=HBID.app_reference
+					join payment_option_list AS POL on BD.payment_mode=POL.payment_category_code
+					left join user as U on BD.created_by_id = U.user_id 
+					where (U.user_type=' . B2C_USER . ' OR BD.created_by_id = 0) AND BD.domain_origin=' . get_domain_auth_id() . ' ' . $condition . '';
+
+			$data = $this->db->query($query)->row_array();
+			return $data['total_records'];
+		} else {
+			$this->load->library('booking_data_formatter');
+			$response['status'] = SUCCESS_STATUS;
+			$response['data'] = array();
+			$booking_itinerary_details	= array();
+			$booking_customer_details	= array();
+			$cancellation_details = array();
+
+			$bd_query = 'select BD.* ,U.user_name,U.first_name,U.last_name from hotel_booking_details AS BD
+					     left join user U on BD.created_by_id =U.user_id 					     
+						 WHERE  (U.user_type=' . B2C_USER . ' OR BD.created_by_id = 0) AND BD.domain_origin=' . get_domain_auth_id() . '' . $condition . '						 
+						 order by BD.created_datetime desc, BD.origin desc limit ' . $offset . ', ' . $limit . '';
+
+			$booking_details = $this->db->query($bd_query)->result_array();
+			$app_reference_ids = $this->booking_data_formatter->implode_app_reference_ids($booking_details);
+			if (empty($app_reference_ids) == false) {
+				$id_query = 'select * from hotel_booking_itinerary_details AS ID 
+							WHERE ID.app_reference IN (' . $app_reference_ids . ')';
+				$cd_query = 'select * from hotel_booking_pax_details AS CD 
+							WHERE CD.app_reference IN (' . $app_reference_ids . ')';
+				$cancellation_details_query = 'select * from hotel_cancellation_details AS HCD 
+							WHERE HCD.app_reference IN (' . $app_reference_ids . ')';
+				$payment_details_query = 'select * from  payment_gateway_details AS PD
+							WHERE PD.app_reference IN (' . $app_reference_ids . ')';
+
+				$booking_itinerary_details	= $this->db->query($id_query)->result_array();
+				$booking_customer_details	= $this->db->query($cd_query)->result_array();
+				$cancellation_details	= $this->db->query($cancellation_details_query)->result_array();
+				$payment_details = $this->db->query($payment_details_query)->result_array();
+			}
+			$response['data']['booking_details']			= $booking_details;
+			$response['data']['booking_itinerary_details']	= $booking_itinerary_details;
+			$response['data']['booking_customer_details']	= $booking_customer_details;
+			$response['data']['cancellation_details']	= $cancellation_details;
+			$response['data']['payment_details']	= $payment_details;
+
+			return $response;
+		}
+	}
+	public function b2b_hotel_report(array $condition = [], bool $count = false, int $offset = 0, int $limit = 100000000000): array|string
+	{
+		$response=[];
+		$condition = $this->custom_db->get_custom_condition($condition);
+
+		if (isset($condition) == true) {
+			$offset = 0;
+		} else {
+			$offset = $offset;
+		}
+
+		//BT, CD, ID
+		if ($count) {
+			$query = 'select count(distinct(BD.app_reference)) as total_records 
+					from hotel_booking_details BD
+					join hotel_booking_itinerary_details AS HBID on BD.app_reference=HBID.app_reference
+					join payment_option_list AS POL on BD.payment_mode=POL.payment_category_code 
+					left join user as U on BD.created_by_id = U.user_id  where U.user_type=' . B2B_USER . ' AND BD.domain_origin=' . get_domain_auth_id() . ' ' . $condition;
+			$data = $this->db->query($query)->row_array();
+			return $data['total_records'];
+		} else {
+			$this->load->library('booking_data_formatter');
+			$response['status'] = SUCCESS_STATUS;
+			$response['data'] = array();
+			$booking_itinerary_details	= array();
+			$booking_customer_details	= array();
+			$cancellation_details = array();
+			$bd_query = 'select BD.* ,U.agency_name,U.first_name,U.last_name from hotel_booking_details AS BD
+					     left join user U on BD.created_by_id =U.user_id 					     
+						 WHERE  U.user_type=' . B2B_USER . ' AND BD.domain_origin=' . get_domain_auth_id() . ' ' . $condition . '
+						 order by BD.created_datetime desc, BD.origin desc limit ' . $offset . ', ' . $limit;
+			$booking_details = $this->db->query($bd_query)->result_array();
+			$app_reference_ids = $this->booking_data_formatter->implode_app_reference_ids($booking_details);
+			if (empty($app_reference_ids) == false) {
+				$id_query = 'select * from hotel_booking_itinerary_details AS ID 
+							WHERE ID.app_reference IN (' . $app_reference_ids . ')';
+				$cd_query = 'select * from hotel_booking_pax_details AS CD 
+							WHERE CD.app_reference IN (' . $app_reference_ids . ')';
+				$cancellation_details_query = 'select * from hotel_cancellation_details AS HCD 
+							WHERE HCD.app_reference IN (' . $app_reference_ids . ')';
+				$booking_itinerary_details	= $this->db->query($id_query)->result_array();
+				$booking_customer_details	= $this->db->query($cd_query)->result_array();
+				$cancellation_details	= $this->db->query($cancellation_details_query)->result_array();
+			}
+			$response['data']['booking_details']			= $booking_details;
+			$response['data']['booking_itinerary_details']	= $booking_itinerary_details;
+			$response['data']['booking_customer_details']	= $booking_customer_details;
+			$response['data']['cancellation_details']	= $cancellation_details;
+			return $response;
+		}
+	}
+	public function ultra_hotel_report(array $condition = [], bool $count = false, int $offset = 0, int $limit = 100000000000): array|string
+	{
+		$response=[];
+		$condition = $this->custom_db->get_custom_condition($condition);
+
+		if (isset($condition) == true) {
+			$offset = 0;
+		} else {
+			$offset = $offset;
+		}
+
+		//BT, CD, ID
+		if ($count) {
+			$query = 'select count(distinct(BD.app_reference)) as total_records 
+					from hotel_booking_details BD
+					join hotel_booking_itinerary_details AS HBID on BD.app_reference=HBID.app_reference
+					join payment_option_list AS POL on BD.payment_mode=POL.payment_category_code 
+					left join user as U on BD.created_by_id = U.user_id  where U.user_type=' . ULTRALUX_USER . ' AND BD.domain_origin=' . get_domain_auth_id() . ' ' . $condition;
+			$data = $this->db->query($query)->row_array();
+			return $data['total_records'];
+		} else {
+			$this->load->library('booking_data_formatter');
+			$response['status'] = SUCCESS_STATUS;
+			$response['data'] = array();
+			$booking_itinerary_details	= array();
+			$booking_customer_details	= array();
+			$cancellation_details = array();
+			$bd_query = 'select BD.* ,U.agency_name,U.first_name,U.last_name from hotel_booking_details AS BD
+					     left join user U on BD.created_by_id =U.user_id 					     
+						 WHERE  U.user_type=' . ULTRALUX_USER . ' AND BD.domain_origin=' . get_domain_auth_id() . ' ' . $condition . '
+						 order by BD.created_datetime desc, BD.origin desc limit ' . $offset . ', ' . $limit;
+			$booking_details = $this->db->query($bd_query)->result_array();
+			$app_reference_ids = $this->booking_data_formatter->implode_app_reference_ids($booking_details);
+			if (empty($app_reference_ids) == false) {
+				$id_query = 'select * from hotel_booking_itinerary_details AS ID 
+							WHERE ID.app_reference IN (' . $app_reference_ids . ')';
+				$cd_query = 'select * from hotel_booking_pax_details AS CD 
+							WHERE CD.app_reference IN (' . $app_reference_ids . ')';
+				$cancellation_details_query = 'select * from hotel_cancellation_details AS HCD 
+							WHERE HCD.app_reference IN (' . $app_reference_ids . ')';
+				$booking_itinerary_details	= $this->db->query($id_query)->result_array();
+				$booking_customer_details	= $this->db->query($cd_query)->result_array();
+				$cancellation_details	= $this->db->query($cancellation_details_query)->result_array();
+			}
+			$response['data']['booking_details']			= $booking_details;
+			$response['data']['booking_itinerary_details']	= $booking_itinerary_details;
+			$response['data']['booking_customer_details']	= $booking_customer_details;
+			$response['data']['cancellation_details']	= $cancellation_details;
+			return $response;
+		}
+	}
+	public function get_booking_details(string $app_reference, string $booking_source, string $booking_status = ''): array
+	{
+		$response=[];
+		$response['status'] = FAILURE_STATUS;
+		$response['data'] = array();
+		$bd_query = 'select * from hotel_booking_details AS BD WHERE BD.app_reference like ' . $this->db->escape($app_reference);
+		if (empty($booking_source) == false) {
+			$bd_query .= '	AND BD.booking_source = ' . $this->db->escape($booking_source);
+		}
+		if (empty($booking_status) == false) {
+			$bd_query .= ' AND BD.status = ' . $this->db->escape($booking_status);
+		}
+		$id_query = 'select * from hotel_booking_itinerary_details AS ID WHERE ID.app_reference=' . $this->db->escape($app_reference);
+		$cd_query = 'select * from hotel_booking_pax_details AS CD WHERE CD.app_reference=' . $this->db->escape($app_reference);
+		$cancellation_details_query = 'select HCD.* from hotel_cancellation_details AS HCD WHERE HCD.app_reference=' . $this->db->escape($app_reference);
+		$response['data']['booking_details']			= $this->db->query($bd_query)->result_array();
+		$response['data']['booking_itinerary_details']	= $this->db->query($id_query)->result_array();
+		$response['data']['booking_customer_details']	= $this->db->query($cd_query)->result_array();
+		$response['data']['cancellation_details']	= $this->db->query($cancellation_details_query)->result_array();
+		if (valid_array($response['data']['booking_details']) == true and valid_array($response['data']['booking_itinerary_details']) == true and valid_array($response['data']['booking_customer_details']) == true) {
+			$response['status'] = SUCCESS_STATUS;
+		}
+		return $response;
+	}
+	public function booking_events(): array
+	{
+		//BT, CD, ID
+		$query = 'select * from hotel_booking_details where domain_origin=' . get_domain_auth_id();
+		return $this->db->query($query)->result_array();
+	}
+	public function get_monthly_booking_summary(array $condition = []): array
+	{
+		//Balu A
+		$condition = $this->custom_db->get_custom_condition($condition);
+		$query = 'select count(distinct(BD.app_reference)) AS total_booking, 
+				sum(HBID.total_fare+HBID.admin_markup+HBID.agent_markup) as monthly_payment, sum(HBID.admin_markup) as monthly_earning, 
+				MONTH(BD.created_datetime) as month_number 
+				from hotel_booking_details AS BD
+				join hotel_booking_itinerary_details AS HBID on BD.app_reference=HBID.app_reference
+				where (YEAR(BD.created_datetime) BETWEEN ' . date('Y') . ' AND ' . date('Y', strtotime('+1 year')) . ')  and BD.domain_origin=' . get_domain_auth_id() . ' ' . $condition . '
+				GROUP BY YEAR(BD.created_datetime), 
+				MONTH(BD.created_datetime)';
+		return $this->db->query($query)->result_array();
+	}
+	public function monthly_search_history(int $year_start, int $year_end): array
+	{
+		$query = 'select count(*) AS total_search, MONTH(created_datetime) as month_number from search_hotel_history where
+		(YEAR(created_datetime) BETWEEN ' . $year_start . ' AND ' . $year_end . ') AND domain_origin=' . get_domain_auth_id() . ' 
+		AND search_type="' . META_ACCOMODATION_COURSE . '"
+		GROUP BY YEAR(created_datetime), MONTH(created_datetime)';
+		return $this->db->query($query)->result_array();
+	}
+
+	public function top_search(int $year_start, int $year_end): array
+	{
+		$query = 'select count(*) AS total_search, CONCAT(country,"-",city) label from search_hotel_history where
+		(YEAR(created_datetime) BETWEEN ' . $year_start . ' AND ' . $year_end . ') AND domain_origin=' . get_domain_auth_id() . ' 
+		AND search_type="' . META_ACCOMODATION_COURSE . '"
+		GROUP BY CONCAT(country, city) order by count(*) desc, created_datetime desc limit 0, 15';
+		return $this->db->query($query)->result_array();
+	}
+
+	/**
+	 *
+	 */
+	public function get_static_response(int $token_id): ?array
+	{
+		$static_response = $this->custom_db->single_table_records('test', '*', array('origin' => intval($token_id)));
+		return json_decode($static_response['data'][0]['test'], true);
+	}
+	/**
+	 * Balu A
+	 * Update Cancellation details and Status
+	 * @param $AppReference
+	 * @param $cancellation_details
+	 */
+	public function update_cancellation_details(string $AppReference, array $cancellation_details): void
+	{
+		$AppReference = trim($AppReference);
+		$booking_status = 'BOOKING_CANCELLED';
+		//1. Add Cancellation details
+		$this->update_cancellation_refund_details($AppReference, $cancellation_details);
+		//2. Update Master Booking Status
+		$this->custom_db->update_record('hotel_booking_details', array('status' => $booking_status), array('app_reference' => $AppReference)); //later
+		//3.Update Itinerary Status
+		$this->custom_db->update_record('hotel_booking_itinerary_details', array('status' => $booking_status), array('app_reference' => $AppReference)); //later
+	}
+	/**
+	 * Add Cancellation details
+	 * @param unknown_type $AppReference
+	 * @param unknown_type $cancellation_details
+	 */
+	public function update_cancellation_refund_details(string $AppReference, array $cancellation_details): void
+	{
+		$hotel_cancellation_details = array();
+		$hotel_cancellation_details['app_reference'] = 				$AppReference;
+		$hotel_cancellation_details['ChangeRequestId'] = 			$cancellation_details['ChangeRequestId'];
+		$hotel_cancellation_details['ChangeRequestStatus'] = 		$cancellation_details['ChangeRequestStatus'];
+		$hotel_cancellation_details['status_description'] = 		$cancellation_details['StatusDescription'];
+		$hotel_cancellation_details['API_RefundedAmount'] = 		$cancellation_details['RefundedAmount'];
+		$hotel_cancellation_details['API_CancellationCharge'] = 	$cancellation_details['CancellationCharge'];
+		if ($cancellation_details['ChangeRequestStatus'] == 3) {
+			$hotel_cancellation_details['cancellation_processed_on'] =	date('Y-m-d H:i:s');
+		}
+		$cancel_details_exists = $this->custom_db->single_table_records('hotel_cancellation_details', '*', array('app_reference' => $AppReference));
+		if ($cancel_details_exists['status'] == true) {
+			//Update the Data
+			unset($hotel_cancellation_details['app_reference']);
+			$this->custom_db->update_record('hotel_cancellation_details', $hotel_cancellation_details, array('app_reference' => $AppReference));
+		} else {
+			//Insert Data
+			$hotel_cancellation_details['created_by_id'] = 				(int)$this->entity_user_id;
+			$hotel_cancellation_details['created_datetime'] = 			date('Y-m-d H:i:s');
+			// $data['cancellation_requested_on'] = date('Y-m-d H:i:s');
+			$this->custom_db->insert_record('hotel_cancellation_details', $hotel_cancellation_details);
+		}
+	}
+}
