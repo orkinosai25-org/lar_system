@@ -42,7 +42,7 @@
 5. Improve performance metrics (page load <2s, 99.9% uptime)
 
 ### Investment Required
-- **Total Budget:** $436,800
+- **Total Budget:** $465,840
 - **Timeline:** 20 weeks (5 months)
 - **Expected ROI:** $64 saved for every $1 spent
 - **Break-even:** 3 months post-launch
