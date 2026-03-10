@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LAR System — Annex I: Audit Limitations & Constraints Register</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+        .container { max-width: 1300px; margin: 0 auto; }
+        .header { text-align: center; color: white; margin-bottom: 50px; }
+        .header h1 { font-size: 2.4em; margin-bottom: 8px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .header p { font-size: 1em; opacity: 0.9; }
+        .meta { display: flex; justify-content: center; gap: 30px; margin-top: 18px; flex-wrap: wrap; }
+        .meta-item { background: rgba(255,255,255,0.15); border-radius: 8px; padding: 8px 18px; color: white; font-size: 0.92em; }
+
+        .section {
+            background: white;
+            border-radius: 14px;
+            padding: 36px 40px;
+            margin-bottom: 36px;
+            box-shadow: 0 16px 50px rgba(0,0,0,0.25);
+        }
+        .section h2 {
+            color: #333;
+            margin-bottom: 18px;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 12px;
+            font-size: 1.5em;
+        }
+        .section h3 { color: #667eea; margin: 24px 0 10px; font-size: 1.1em; }
+        .section p { color: #555; line-height: 1.7; margin-bottom: 10px; }
+
+        table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.88em; }
+        th { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 10px 14px; text-align: left; font-weight: 600; }
+        td { padding: 9px 14px; border-bottom: 1px solid #eee; vertical-align: top; line-height: 1.5; }
+        tr:nth-child(even) td { background: #f8f9ff; }
+        tr:hover td { background: #f0f0ff; }
+
+        .badge { display: inline-block; padding: 2px 9px; border-radius: 12px; font-size: 0.76em; font-weight: 700; text-transform: uppercase; }
+        .badge-critical { background: #dc3545; color: white; }
+        .badge-significant { background: #fd7e14; color: white; }
+        .badge-moderate { background: #ffc107; color: #333; }
+        .badge-minor { background: #17a2b8; color: white; }
+
+        .constraint-box {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 12px 0;
+            border-left: 4px solid #667eea;
+        }
+        .constraint-box.critical-c { border-left-color: #dc3545; background: #fff8f8; }
+        .constraint-box.significant-c { border-left-color: #fd7e14; background: #fffaf5; }
+        .constraint-box .c-title { font-weight: 700; margin-bottom: 6px; }
+        .constraint-box .c-detail { color: #555; font-size: 0.92em; line-height: 1.6; }
+
+        .impact-statement {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 14px 18px;
+            margin: 16px 0;
+            font-size: 0.92em;
+            color: #664d03;
+        }
+
+        footer { text-align: center; color: rgba(255,255,255,0.75); margin-top: 40px; font-size: 0.85em; padding: 16px 0; }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <div class="header">
+        <h1>LAR System — Annex I</h1>
+        <h2 style="font-size:1.3em; font-weight:400; margin-top:6px;">Audit Limitations &amp; Constraints Register</h2>
+        <p>TOR Deliverable 5.6 — Mandatory</p>
+        <div class="meta">
+            <div class="meta-item">🗓 Date: 2026-03-10</div>
+            <div class="meta-item">🔒 CONFIDENTIAL — INTERNAL USE ONLY</div>
+            <div class="meta-item">📋 Version: v1.0</div>
+            <div class="meta-item">🔗 Related: TOR Section 5.6, SOW Section 4</div>
+        </div>
+    </div>
+
+    <!-- PURPOSE -->
+    <div class="section">
+        <h2>1. Purpose &amp; TOR Reference</h2>
+        <p>This register satisfies TOR Section 5.6 (Audit Limitations &amp; Constraints Register) — a mandatory deliverable. It records every condition, restriction, or access gap that bounded the scope, depth, or confidence of findings in this audit engagement. It is produced to enable LAR to make informed decisions about residual risk and to identify what additional testing is required before any finding can be closed with full evidence.</p>
+        <p>Findings cited in the main audit report (v7.3.3) and Annex H (Static Analysis Evidence Log) must be read in conjunction with this register. Any finding whose evidence source is restricted by a constraint listed below should be treated as a <strong>tentative finding</strong> pending confirmation through the testing specified in the "Required to Close" column.</p>
+    </div>
+
+    <!-- SECTION 2: ACCESS & ENVIRONMENT CONSTRAINTS -->
+    <div class="section">
+        <h2>2. Environment &amp; Access Constraints</h2>
+        <p>The following access and environment limitations applied throughout this engagement.</p>
+
+        <div class="constraint-box critical-c">
+            <div class="c-title">C-001 — <span class="badge badge-critical">Critical</span> No Access to Pre-Production Environment</div>
+            <div class="c-detail">
+                <strong>Constraint:</strong> No login credentials, VPN access, or SSH access to any pre-production, staging, or production environment were provided to the auditor at any point during the engagement.<br/>
+                <strong>Impact on findings:</strong> Zero runtime evidence (PHP error logs, Apache/Nginx logs, application logs, session logs) could be collected. All findings are from static source code analysis only. No booking scenario, repricing test, API trace, or TTL test could be executed.<br/>
+                <strong>TOR reference:</strong> TOR §5.5 requires an evidence pack including logs, traces, booking references, and reproducible test steps — these cannot be produced without environment access.<br/>
+                <strong>Required to close:</strong> Provision of a fully-configured pre-production environment matching the production topology, with sandbox Amadeus GDS credentials, for a minimum of 5 business days of controlled testing access.
+            </div>
+        </div>
+
+        <div class="constraint-box critical-c">
+            <div class="c-title">C-002 — <span class="badge badge-critical">Critical</span> No GDS / Amadeus Sandbox Credentials</div>
+            <div class="c-detail">
+                <strong>Constraint:</strong> No Amadeus API sandbox or test environment credentials were provided. No credentials for any external GDS or supplier API were provided.<br/>
+                <strong>Impact on findings:</strong> The three contracted verticals — Flights, Hotels, and Cars (TOR §3.1) — could not be tested end-to-end. Fare parity, PNR integrity, HK/HL/UC confirmation status, TTL validation, repricing, and stale-cache behaviour could not be verified.<br/>
+                <strong>Required to close:</strong> Amadeus test environment credentials + all applicable supplier API sandbox access.
+            </div>
+        </div>
+
+        <div class="constraint-box critical-c">
+            <div class="c-title">C-003 — <span class="badge badge-critical">Critical</span> No Runtime Application Logs Available</div>
+            <div class="c-detail">
+                <strong>Constraint:</strong> Server is not running in the analysis environment. No <code>/var/log/apache2/error.log</code>, <code>/var/log/php-fpm.log</code>, CodeIgniter application logs, or payment gateway transaction logs are accessible.<br/>
+                <strong>Impact on findings:</strong> Cannot verify actual error output in production, cannot identify runtime-only failures (e.g., silent booking failures, silent payment gateway errors), cannot confirm frequency or recurrence of parse errors under live load.<br/>
+                <strong>Required to close:</strong> Export of last 90 days of application and web server error logs from production and pre-production environments, with PII redacted.
+            </div>
+        </div>
+
+        <div class="constraint-box significant-c">
+            <div class="c-title">C-004 — <span class="badge badge-significant">Significant</span> No Database Schema or Sample Data Access</div>
+            <div class="c-detail">
+                <strong>Constraint:</strong> No database access was provided. No schema export, ERD, or anonymised sample dataset was made available.<br/>
+                <strong>Impact on findings:</strong> SQL injection risk assessment is limited to code-level pattern identification only. Cannot confirm exploitability with actual data. Cannot assess data residency, retention, or PII exposure. PCI DSS and GDPR compliance assessment is incomplete without schema knowledge.<br/>
+                <strong>Required to close:</strong> Provision of anonymised database schema export and a representative anonymised sample dataset in a controlled read-only sandbox.
+            </div>
+        </div>
+
+        <div class="constraint-box significant-c">
+            <div class="c-title">C-005 — <span class="badge badge-significant">Significant</span> No Network / Infrastructure Access</div>
+            <div class="c-detail">
+                <strong>Constraint:</strong> No access to web server configuration (Apache/Nginx), firewall rules, TLS/SSL configuration, CDN configuration, or deployment infrastructure was provided.<br/>
+                <strong>Impact on findings:</strong> HTTPS enforcement, HSTS, security headers (Content-Security-Policy, X-Frame-Options, etc.), TLS version, and certificate status cannot be assessed. WAF presence and configuration cannot be verified.<br/>
+                <strong>Required to close:</strong> Server configuration file exports (sanitised) and access to run <code>testssl.sh</code> or equivalent against the pre-production HTTPS endpoint.
+            </div>
+        </div>
+
+        <div class="constraint-box significant-c">
+            <div class="c-title">C-006 — <span class="badge badge-significant">Significant</span> No CI/CD Pipeline Access or Artefacts</div>
+            <div class="c-detail">
+                <strong>Constraint:</strong> No GitHub Actions workflow configuration, no Playwright test reports, no existing CI artefacts were made available for review.<br/>
+                <strong>Impact on findings:</strong> Cannot confirm whether any automated regression tests exist. Cannot verify that existing tests would catch the identified regressions. Cannot assess release gating quality.<br/>
+                <strong>Required to close:</strong> Export of all CI workflow definitions and the last 10 CI run reports (pass/fail with artefact links).
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 3: SCOPE CONSTRAINTS -->
+    <div class="section">
+        <h2>3. Scope Constraints &amp; Out-of-Scope Boundaries</h2>
+        <p>The following items are explicitly noted as outside the contracted audit scope per TOR Section 6, or were added to the initial submission in error and have been removed from the revised deliverables (see Annex F Revision Note).</p>
+
+        <table>
+            <thead>
+                <tr><th>ID</th><th>Item</th><th>TOR Exclusion</th><th>Status in Deliverables</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>SC-001</td>
+                    <td>UI/UX redesign with before/after mockups</td>
+                    <td>TOR §6 — explicitly excluded</td>
+                    <td>Removed from Annex F (Revised)</td>
+                </tr>
+                <tr>
+                    <td>SC-002</td>
+                    <td>Chargeable work bundles / commercial pricing proposal ($40K–$436K)</td>
+                    <td>SOW §6a — audit independence; TOR §6</td>
+                    <td>Removed from Annex F (Revised)</td>
+                </tr>
+                <tr>
+                    <td>SC-003</td>
+                    <td>AI Chat Assistant feature proposal</td>
+                    <td>Not referenced in TOR — out of scope</td>
+                    <td>Not in revised deliverables</td>
+                </tr>
+                <tr>
+                    <td>SC-004</td>
+                    <td>Identity &amp; Registration Modernisation design (OAuth/OIDC proposal)</td>
+                    <td>Not referenced in TOR — out of scope</td>
+                    <td>Noted as advisory only; not an audit finding</td>
+                </tr>
+                <tr>
+                    <td>SC-005</td>
+                    <td>Cruises vertical audit</td>
+                    <td>TOR §3.1 — contracted verticals are Flights, Hotels, Cars only</td>
+                    <td>Not in scope; removed from findings</td>
+                </tr>
+                <tr>
+                    <td>SC-006</td>
+                    <td>Private Aviation (Jet/Heli) vertical audit</td>
+                    <td>TOR §3.1 — contracted verticals are Flights, Hotels, Cars only</td>
+                    <td>Not in scope; removed from findings</td>
+                </tr>
+                <tr>
+                    <td>SC-007</td>
+                    <td>Private Boats &amp; Yachts vertical audit</td>
+                    <td>TOR §3.1 — contracted verticals are Flights, Hotels, Cars only</td>
+                    <td>Not in scope; removed from findings</td>
+                </tr>
+                <tr>
+                    <td>SC-008</td>
+                    <td>Formal penetration testing</td>
+                    <td>TOR §6 — explicitly excluded</td>
+                    <td>SQL injection and XSS findings are static analysis only — not confirmed exploitation</td>
+                </tr>
+                <tr>
+                    <td>SC-009</td>
+                    <td>Stress / load testing</td>
+                    <td>TOR §6 — explicitly excluded</td>
+                    <td>Performance observations are static analysis only</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- SECTION 4: DATA CONSTRAINTS -->
+    <div class="section">
+        <h2>4. Data &amp; Evidence Constraints</h2>
+
+        <div class="constraint-box significant-c">
+            <div class="c-title">D-001 — <span class="badge badge-significant">Significant</span> Revenue / Financial Impact Figures Cannot Be Validated</div>
+            <div class="c-detail">
+                <strong>Constraint:</strong> No booking volumes, payment transaction counts, conversion rate data, or revenue data were provided or accessible.<br/>
+                <strong>Impact:</strong> Any specific dollar revenue-at-risk figure included in the initial submission (e.g. $6.8M) has been removed from the revised deliverables (Annex F Revised) as it cannot be derived without booking volume assumptions, data sources, and a documented methodology per TOR §3.3.<br/>
+                <strong>Required to close:</strong> Provision of anonymised monthly booking counts, payment success/failure rates, and average booking values — or explicit written instruction from LAR to use an industry-standard estimate methodology with stated assumptions.
+            </div>
+        </div>
+
+        <div class="constraint-box significant-c">
+            <div class="c-title">D-002 — <span class="badge badge-significant">Significant</span> No PNR or Booking Reference Records</div>
+            <div class="c-detail">
+                <strong>Constraint:</strong> No PNR records, booking references, customer journey logs, or session traces were provided.<br/>
+                <strong>Impact:</strong> PNR integrity, atomicity, and lifecycle audit trail findings (TOR §5.x Flights) cannot be substantiated with specific booking evidence. The finding that PNR integrity is at risk is based solely on the presence of stub code and parse errors in the flight model — not on observed booking failures.<br/>
+                <strong>Required to close:</strong> Access to anonymised booking records in the pre-production environment, or controlled execution of end-to-end booking scenarios with captured traces.
+            </div>
+        </div>
+
+        <div class="constraint-box">
+            <div class="c-title">D-003 — <span class="badge badge-moderate">Moderate</span> No Previous Audit Reports or Baseline</div>
+            <div class="c-detail">
+                <strong>Constraint:</strong> No previous audit reports, security assessments, or technical debt registers were provided as a baseline.<br/>
+                <strong>Impact:</strong> Cannot distinguish newly introduced vulnerabilities from historical technical debt. Cannot assess whether previously identified issues have been remediated. All findings are treated as first-observation.<br/>
+                <strong>Required to close:</strong> Provision of any prior technical assessment, pen-test reports, or security scan outputs.
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 5: METHODOLOGY CONSTRAINTS -->
+    <div class="section">
+        <h2>5. Methodology Constraints</h2>
+
+        <table>
+            <thead>
+                <tr><th>ID</th><th>Constraint</th><th>Impact on Evidence Quality</th><th>Finding Categories Affected</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>M-001</td>
+                    <td>Static analysis only — no dynamic testing</td>
+                    <td>Cannot confirm exploitability of identified SQL injection, XSS, or CSRF vulnerabilities. Severity is based on code pattern, not confirmed exploitation.</td>
+                    <td>All P0/P1 security findings</td>
+                </tr>
+                <tr>
+                    <td>M-002</td>
+                    <td>No API endpoint testing</td>
+                    <td>Cannot confirm actual API response behaviour, error propagation, or authentication bypass. Controller findings are based on source code review only.</td>
+                    <td>Flights, Hotels, Cars verticals (TOR §3.1)</td>
+                </tr>
+                <tr>
+                    <td>M-003</td>
+                    <td>PHP lint only — no runtime execution</td>
+                    <td>Parse errors confirmed as syntactically invalid. Fatal errors confirmed as type-invalid. But actual runtime behaviour (e.g. whether CI framework suppresses the error) cannot be confirmed without execution.</td>
+                    <td>Parse error findings (Annex H §1)</td>
+                </tr>
+                <tr>
+                    <td>M-004</td>
+                    <td>grep-based credential detection — no secret scanner tooling</td>
+                    <td>Identified credentials represent a minimum set; a dedicated secret scanning tool (truffleHog, gitleaks) may identify additional secrets in git history or binary files not accessible via grep.</td>
+                    <td>Hardcoded credentials findings (Annex H §3)</td>
+                </tr>
+                <tr>
+                    <td>M-005</td>
+                    <td>No payment gateway live testing</td>
+                    <td>The hardcoded payment gateway password was identified statically. Whether the gateway endpoint is reachable, whether the credential is current, and whether transactions can be initiated cannot be confirmed.</td>
+                    <td>Payment credential finding (Annex H §3)</td>
+                </tr>
+                <tr>
+                    <td>M-006</td>
+                    <td>No authentication / session lifecycle testing</td>
+                    <td>CSRF disabled status confirmed in config. Cookie flag settings confirmed in config. But actual browser-based session behaviour (whether cookies are issued with correct flags in practice) cannot be verified without a running environment.</td>
+                    <td>CSRF and cookie findings (Annex H §4, §5)</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- SECTION 6: VERTICAL-SPECIFIC CONSTRAINTS -->
+    <div class="section">
+        <h2>6. Contracted Vertical Audit Limitations (TOR §3.1)</h2>
+
+        <div class="impact-statement">
+            ⚠ None of the three contracted verticals (Flights, Hotels, Cars) could be tested end-to-end. All vertical findings below are limited to source-code-level observations. Runtime booking flow, repricing, TTL, and failure-path testing remain outstanding and cannot be closed without pre-production environment access (see C-001, C-002).
+        </div>
+
+        <h3>6.1 Flights</h3>
+        <table>
+            <thead>
+                <tr><th>Required Test</th><th>TOR Reference</th><th>Status</th><th>Constraint Ref</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Fare parity validation (search → booking → ticketing)</td><td>TOR §5.x Flights</td><td>❌ Not executed</td><td>C-001, C-002</td></tr>
+                <tr><td>Repricing test at checkout (TTL expiry scenario)</td><td>TOR §5.x Flights</td><td>❌ Not executed</td><td>C-001, C-002</td></tr>
+                <tr><td>PNR integrity check and lifecycle trace</td><td>TOR §5.x Flights</td><td>❌ Not executed</td><td>C-001, C-002, C-003</td></tr>
+                <tr><td>Void/refund path on partial ticketing failure</td><td>TOR §5.x Flights</td><td>❌ Not executed</td><td>C-001, C-002</td></tr>
+                <tr><td>Code-level review (parse errors, stub code)</td><td>Annex H §1, §2</td><td>✅ Completed (static)</td><td>—</td></tr>
+            </tbody>
+        </table>
+
+        <h3>6.2 Hotels</h3>
+        <table>
+            <thead>
+                <tr><th>Required Test</th><th>TOR Reference</th><th>Status</th><th>Constraint Ref</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>HK/HL/UC confirmation status testing</td><td>TOR §5.x Hotels</td><td>❌ Not executed</td><td>C-001, C-002</td></tr>
+                <tr><td>Partial confirmation / rollback test (multi-room)</td><td>TOR §5.x Hotels</td><td>❌ Not executed</td><td>C-001, C-002</td></tr>
+                <tr><td>Cancellation / no-show penalty workflow</td><td>TOR §5.x Hotels</td><td>❌ Not executed</td><td>C-001, C-002</td></tr>
+                <tr><td>Modification flow repricing + reconfirmation</td><td>TOR §5.x Hotels</td><td>❌ Not executed</td><td>C-001, C-002</td></tr>
+                <tr><td>Code-level review (hotel controller parse error)</td><td>Annex H §1</td><td>✅ Completed (static)</td><td>—</td></tr>
+            </tbody>
+        </table>
+
+        <h3>6.3 Cars</h3>
+        <table>
+            <thead>
+                <tr><th>Required Test</th><th>TOR Reference</th><th>Status</th><th>Constraint Ref</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Pre-checkout rate/availability verification</td><td>TOR §5.x Cars</td><td>❌ Not executed</td><td>C-001, C-002</td></tr>
+                <tr><td>Stale-cache protection test</td><td>TOR §5.x Cars</td><td>❌ Not executed</td><td>C-001, C-002</td></tr>
+                <tr><td>Policy/no-show disclosure assessment</td><td>TOR §5.x Cars</td><td>❌ Not executed</td><td>C-001, C-002</td></tr>
+                <tr><td>Audit trail review</td><td>TOR §5.x Cars</td><td>❌ Not executed</td><td>C-001, C-002, C-003</td></tr>
+                <tr><td>Code-level review (car model display_errors)</td><td>Annex H §6</td><td>✅ Completed (static)</td><td>—</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- SECTION 7: IMPACT SUMMARY -->
+    <div class="section">
+        <h2>7. Constraint Impact Summary on Mandatory Deliverables</h2>
+
+        <table>
+            <thead>
+                <tr><th>TOR Deliverable</th><th>Status</th><th>Limiting Constraint(s)</th><th>What Remains</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>5.1 Audit Framework Document</strong></td>
+                    <td>⚠ Partial</td>
+                    <td>—</td>
+                    <td>This register (Annex I) and Annex J constitute the framework artefacts. A standalone Audit Framework Document should be produced at engagement start, not end.</td>
+                </tr>
+                <tr>
+                    <td><strong>5.2 CTO-Level Audit Report</strong></td>
+                    <td>⚠ Partial</td>
+                    <td>C-001 through C-006</td>
+                    <td>Static analysis findings are complete. Vertical audit findings (booking flows, API traces) require environment access. Report updated in v7.3.3 and supplemented by Annex H, I, J.</td>
+                </tr>
+                <tr>
+                    <td><strong>5.3 Risk Register &amp; Remediation Backlog</strong></td>
+                    <td>⚠ Revised</td>
+                    <td>C-001, C-004</td>
+                    <td>Annex J provides a structured risk register based on static findings. Risk scoring is provisional — likelihood and impact ratings should be validated against runtime evidence when available.</td>
+                </tr>
+                <tr>
+                    <td><strong>5.4 Go-Live Readiness Summary</strong></td>
+                    <td>⚠ Conditional</td>
+                    <td>C-001 through C-006</td>
+                    <td>Current verdict: NOT PRODUCTION-READY based on static findings (PHP parse errors, hardcoded credentials, disabled CSRF). Final go-live verdict requires successful execution of all items in vertical test matrices above.</td>
+                </tr>
+                <tr>
+                    <td><strong>5.5 Evidence Pack</strong></td>
+                    <td>⚠ Partial</td>
+                    <td>C-001, C-002, C-003</td>
+                    <td>Annex H provides all static analysis evidence (grep output, PHP lint output). Dynamic evidence (logs, traces, booking references, API traces) requires environment access (see C-001–C-006).</td>
+                </tr>
+                <tr>
+                    <td><strong>5.6 Audit Limitations Register</strong></td>
+                    <td>✅ This document</td>
+                    <td>—</td>
+                    <td>This is Annex I.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+<footer>
+    LAR System — Annex I: Audit Limitations &amp; Constraints Register &nbsp;|&nbsp; v1.0 — 2026-03-10 &nbsp;|&nbsp; Classification: CONFIDENTIAL — INTERNAL USE ONLY<br>
+    TOR Deliverable 5.6 | Supplementary to LAR_System_COLOSSAL_Audit_Security_Readiness_v7_3_3_AllAnnexesEmbedded.docx
+</footer>
+
+</body>
+</html>

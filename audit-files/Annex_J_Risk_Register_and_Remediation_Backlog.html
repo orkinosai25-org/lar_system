@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LAR System — Annex J: Risk Register & Remediation Backlog</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header { text-align: center; color: white; margin-bottom: 50px; }
+        .header h1 { font-size: 2.4em; margin-bottom: 8px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .header p { font-size: 1em; opacity: 0.9; }
+        .meta { display: flex; justify-content: center; gap: 30px; margin-top: 18px; flex-wrap: wrap; }
+        .meta-item { background: rgba(255,255,255,0.15); border-radius: 8px; padding: 8px 18px; color: white; font-size: 0.92em; }
+
+        .section {
+            background: white;
+            border-radius: 14px;
+            padding: 36px 40px;
+            margin-bottom: 36px;
+            box-shadow: 0 16px 50px rgba(0,0,0,0.25);
+        }
+        .section h2 {
+            color: #333;
+            margin-bottom: 18px;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 12px;
+            font-size: 1.5em;
+        }
+        .section h3 { color: #667eea; margin: 22px 0 10px; font-size: 1.1em; }
+        .section p { color: #555; line-height: 1.7; margin-bottom: 10px; }
+
+        /* Risk register table */
+        .risk-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.82em; }
+        .risk-table th {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 10px 12px;
+            text-align: left;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .risk-table td { padding: 9px 12px; border-bottom: 1px solid #eee; vertical-align: top; line-height: 1.45; }
+        .risk-table tr:nth-child(even) td { background: #f8f9ff; }
+        .risk-table tr:hover td { background: #f0f0ff; }
+
+        /* Severity badges */
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.78em; font-weight: 700; text-transform: uppercase; white-space: nowrap; }
+        .p0  { background: #dc3545; color: white; }
+        .p1  { background: #fd7e14; color: white; }
+        .p2  { background: #ffc107; color: #333; }
+        .p3  { background: #17a2b8; color: white; }
+
+        /* Risk score matrix */
+        .score-5 { color: #dc3545; font-weight: bold; }
+        .score-4 { color: #c0392b; font-weight: bold; }
+        .score-3 { color: #fd7e14; font-weight: bold; }
+        .score-2 { color: #ffc107; font-weight: bold; }
+        .score-1 { color: #28a745; font-weight: bold; }
+
+        .status-open   { color: #dc3545; font-weight: bold; }
+        .status-partial{ color: #fd7e14; font-weight: bold; }
+
+        .scoring-key {
+            display: flex; gap: 20px; flex-wrap: wrap; margin: 16px 0;
+            padding: 14px 18px;
+            background: #f8f9ff;
+            border-radius: 8px;
+            font-size: 0.85em;
+        }
+        .scoring-key .key-item strong { color: #667eea; }
+
+        .note-box {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin: 14px 0;
+            font-size: 0.88em;
+            color: #664d03;
+        }
+
+        .stats { display: flex; gap: 16px; flex-wrap: wrap; margin: 20px 0; }
+        .stat-card {
+            flex: 1; min-width: 120px;
+            border-radius: 10px; padding: 16px 18px; text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .stat-card.red   { background: #dc3545; color: white; }
+        .stat-card.orange{ background: #fd7e14; color: white; }
+        .stat-card.yellow{ background: #ffc107; color: #333; }
+        .stat-card.teal  { background: #17a2b8; color: white; }
+        .stat-card .num  { font-size: 2.2em; font-weight: 800; }
+        .stat-card .lbl  { font-size: 0.78em; margin-top: 3px; opacity: 0.9; }
+
+        footer { text-align: center; color: rgba(255,255,255,0.75); margin-top: 40px; font-size: 0.85em; padding: 16px 0; }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <div class="header">
+        <h1>LAR System — Annex J</h1>
+        <h2 style="font-size:1.3em; font-weight:400; margin-top:6px;">Risk Register &amp; Remediation Backlog</h2>
+        <p>TOR Deliverable 5.3 — Mandatory</p>
+        <div class="meta">
+            <div class="meta-item">🗓 Date: 2026-03-10</div>
+            <div class="meta-item">🔒 CONFIDENTIAL — INTERNAL USE ONLY</div>
+            <div class="meta-item">📋 Version: v1.0</div>
+            <div class="meta-item">🔗 Related: TOR Section 5.3, Annex H (Evidence), Annex I (Constraints)</div>
+        </div>
+    </div>
+
+    <!-- PURPOSE -->
+    <div class="section">
+        <h2>1. Purpose &amp; Scope</h2>
+        <p>This register satisfies TOR Section 5.3 (Risk Register &amp; Remediation Backlog). It replaces the bullet-list summary in the initial submission (Annex C) with a structured per-finding register including: unique risk ID, priority, affected module(s), finding description, root cause, evidence source, likelihood, impact, risk score, recommended corrective action, and evidence required to close.</p>
+
+        <div class="note-box">
+            ⚠ <strong>Scope note:</strong> All findings in this register are based on <strong>static source code analysis only</strong>. Likelihood and impact ratings reflect the worst-case scenario derivable from code evidence. Ratings marked with an asterisk (*) should be validated against runtime evidence when pre-production access is available. See Annex I (Constraints Register) for a full list of testing not yet executable.
+        </div>
+
+        <div class="stats">
+            <div class="stat-card red"><div class="num">12</div><div class="lbl">P0 Critical</div></div>
+            <div class="stat-card orange"><div class="num">8</div><div class="lbl">P1 High</div></div>
+            <div class="stat-card yellow"><div class="num">6</div><div class="lbl">P2 Medium</div></div>
+            <div class="stat-card teal"><div class="num">50+</div><div class="lbl">P3 FIXME/TODO</div></div>
+        </div>
+
+        <div class="scoring-key">
+            <div class="key-item"><strong>Likelihood:</strong> 5=Near-certain | 4=Likely | 3=Possible | 2=Unlikely | 1=Rare</div>
+            <div class="key-item"><strong>Impact:</strong> 5=Critical/revenue loss | 4=Severe | 3=Significant | 2=Moderate | 1=Minor</div>
+            <div class="key-item"><strong>Risk Score:</strong> Likelihood × Impact (1–25)</div>
+            <div class="key-item"><strong>Evidence basis:</strong> SA = Static Analysis | CONF = Config file review | GREP = grep pattern match</div>
+        </div>
+    </div>
+
+    <!-- P0 FINDINGS -->
+    <div class="section">
+        <h2>2. P0 — Critical Risks (Go-Live Blockers)</h2>
+        <p>P0 risks must be remediated and evidenced before any go-live approval. Each has a risk score of 15–25.</p>
+
+        <table class="risk-table">
+            <thead>
+                <tr>
+                    <th>Risk ID</th>
+                    <th>Priority</th>
+                    <th>Title</th>
+                    <th>Module(s)</th>
+                    <th>Root Cause</th>
+                    <th>Evidence Source</th>
+                    <th>L</th><th>I</th><th>Score</th>
+                    <th>Status</th>
+                    <th>Corrective Action</th>
+                    <th>Evidence to Close</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>R-001</strong></td>
+                    <td><span class="badge p0">P0</span></td>
+                    <td>Production database passwords committed to source control</td>
+                    <td>agent, supplier, b2c, ultralux, supervision, services/webservices</td>
+                    <td>Config files with plaintext credentials version-controlled without .gitignore exclusion</td>
+                    <td>GREP — <code>database.php</code> lines 52, 71, 72 (Annex H §3)</td>
+                    <td class="score-5">5</td><td class="score-5">5</td><td class="score-5">25</td>
+                    <td class="status-open">OPEN</td>
+                    <td>1. Rotate all exposed credentials immediately. 2. Move DB credentials to environment variables or secret store. 3. Add production/development config files to .gitignore. 4. Purge from git history with git-filter-repo. 5. Audit all other environment-specific config files.</td>
+                    <td>Secret store config screenshot; rotated credential confirmation; git history clean (git log --all --full-history -- *database.php shows no credential commits); .gitignore diff</td>
+                </tr>
+                <tr>
+                    <td><strong>R-002</strong></td>
+                    <td><span class="badge p0">P0</span></td>
+                    <td>Payment gateway password hardcoded in view file</td>
+                    <td>b2c</td>
+                    <td>Payment gateway credential stored in a PHP view file at line 3 — executed on every page render, exposed in PHP error output if display_errors is ON</td>
+                    <td>GREP — <code>b2c/views/.../payment/payment_page.php:3</code> (Annex H §3)</td>
+                    <td class="score-5">5</td><td class="score-5">5</td><td class="score-5">25</td>
+                    <td class="status-open">OPEN</td>
+                    <td>1. Rotate payment gateway credential immediately. 2. Move to environment variable loaded server-side. 3. Confirm payment gateway provider has been notified of credential exposure. 4. Review payment gateway transaction logs for unauthorised use.</td>
+                    <td>Payment gateway credential rotation confirmation; env variable config; gateway provider confirmation of no unauthorised activity</td>
+                </tr>
+                <tr>
+                    <td><strong>R-003</strong></td>
+                    <td><span class="badge p0">P0</span></td>
+                    <td>PHP parse error in flight services model — flight booking unavailable</td>
+                    <td>services/webservices</td>
+                    <td>Syntax error at line 279 (<code>flight_model.php</code>) — unexpected "public" token. Class definition structure broken. Model fails to load entirely.</td>
+                    <td>SA — <code>php -l services/webservices/application/models/flight_model.php</code> (Annex H §1)</td>
+                    <td class="score-5">5</td><td class="score-5">5</td><td class="score-5">25</td>
+                    <td class="status-open">OPEN</td>
+                    <td>Fix syntax error at line 279. Confirm no further parse errors in file. Add PHP lint check to CI pipeline as a mandatory pre-merge gate.</td>
+                    <td>php -l output showing "No syntax errors detected"; CI pipeline run showing lint gate passing; runtime test showing flight search endpoint returns 200 (not 500)</td>
+                </tr>
+                <tr>
+                    <td><strong>R-004</strong></td>
+                    <td><span class="badge p0">P0</span></td>
+                    <td>PHP parse error in agent hotel controller — hotel booking unavailable for agents</td>
+                    <td>agent</td>
+                    <td>Unclosed '{' at line 1028 (<code>hotel.php</code>) — controller fails to load, all agent hotel routes return 500</td>
+                    <td>SA — <code>php -l agent/application/controllers/hotel.php</code> (Annex H §1)</td>
+                    <td class="score-5">5</td><td class="score-5">5</td><td class="score-5">25</td>
+                    <td class="status-open">OPEN</td>
+                    <td>Close unclosed '{' block at line 1028. PHP lint check in CI.</td>
+                    <td>php -l output; runtime hotel search test via agent UI; CI lint gate</td>
+                </tr>
+                <tr>
+                    <td><strong>R-005</strong></td>
+                    <td><span class="badge p0">P0</span></td>
+                    <td>Verbose error output active in customer-facing payment and booking controllers</td>
+                    <td>b2c, services/webservices, supplier</td>
+                    <td><code>ini_set('display_errors', 1)</code> and <code>error_reporting(E_ALL)</code> active in production-facing controllers including flight, auth, general, user, payment-related files (14+ instances)</td>
+                    <td>SA — grep <code>display_errors</code> (Annex H §6)</td>
+                    <td class="score-5">5</td><td class="score-4">4</td><td class="score-5">20</td>
+                    <td class="status-open">OPEN</td>
+                    <td>1. Set <code>display_errors = Off</code> globally in php.ini / .htaccess for production. 2. Remove all inline ini_set / error_reporting calls from controllers. 3. Configure <code>log_errors = On</code> to a server-side log file only. 4. Verify generic error page is shown to users.</td>
+                    <td>Screenshot of application returning generic error page on deliberate syntax fault; php.ini production config showing display_errors=Off; server error log showing errors are captured server-side</td>
+                </tr>
+                <tr>
+                    <td><strong>R-006</strong></td>
+                    <td><span class="badge p0">P0</span></td>
+                    <td>Weak password hashing (MD5) used throughout authentication</td>
+                    <td>services/webservices, agent, supervision</td>
+                    <td>MD5 used to hash passwords before database storage and authentication comparison. MD5 is cryptographically broken for password storage — vulnerable to rainbow tables and GPU-accelerated brute force.</td>
+                    <td>GREP — <code>hooks.php:115,167</code>, <code>user_model.php:40</code> (Annex H §7)</td>
+                    <td class="score-5">5</td><td class="score-4">4</td><td class="score-5">20</td>
+                    <td class="status-open">OPEN</td>
+                    <td>1. Replace MD5 with <code>password_hash($password, PASSWORD_ARGON2ID)</code> (PHP 7.2+). 2. Implement progressive rehash on next login for existing accounts. 3. Force password reset for all admin/privileged accounts.</td>
+                    <td>Code diff showing Argon2id/bcrypt implementation; unit test confirming password_verify() passes; test showing MD5 hashes are no longer stored; admin password reset confirmation</td>
+                </tr>
+                <tr>
+                    <td><strong>R-007</strong></td>
+                    <td><span class="badge p0">P0</span></td>
+                    <td>No POST idempotency on booking/payment — duplicate booking risk</td>
+                    <td>b2c, agent, services/webservices</td>
+                    <td>No idempotency key or double-submit protection identified in booking or payment POST handlers. Network retry or browser back/refresh can trigger duplicate bookings and double charges. (Static finding — not confirmed at runtime — see Annex I M-001.)</td>
+                    <td>SA — absence of idempotency key handling in booking controllers; presence of stubbed booking methods (Annex H §2)</td>
+                    <td class="score-4">4</td><td class="score-5">5</td><td class="score-5">20</td>
+                    <td class="status-open">OPEN</td>
+                    <td>1. Implement Idempotency-Key header or client-side token for all booking POST requests. 2. Store processed keys server-side with short TTL. 3. Return cached result for duplicate requests.</td>
+                    <td>Code diff; retry test confirming single booking created on duplicate POST; idempotency store configuration; test log with booking reference showing single effect</td>
+                </tr>
+                <tr>
+                    <td><strong>R-008</strong></td>
+                    <td><span class="badge p0">P0</span></td>
+                    <td>SQL injection risk — unparameterised string concatenation in queries</td>
+                    <td>services/webservices, supplier, b2c, agent</td>
+                    <td>6+ locations pass variables directly into SQL query strings without parameterisation or escaping. Includes AES_DECRYPT auth flows (<code>general.php:438,492,521</code>, <code>hooks.php:327</code>) and data queries (<code>hotel_model_v3.php:707</code>, <code>eco_stays.php:567,1264</code>).</td>
+                    <td>GREP — <code>db->query.*\.</code> unescaped (Annex H §8)</td>
+                    <td class="score-4">4</td><td class="score-5">5</td><td class="score-5">20</td>
+                    <td class="status-open">OPEN</td>
+                    <td>1. Replace all direct concatenation with CodeIgniter query bindings: <code>$this->db->query($sql, [$param])</code>. 2. Or use Query Builder: <code>$this->db->where()</code>. 3. Apply to all identified locations. 4. Static scan (zero critical results required before closure).</td>
+                    <td>Code diff for all 6+ identified locations; static scan output showing zero SQLi findings; pen-test closure report (when pen-test is commissioned)</td>
+                </tr>
+                <tr>
+                    <td><strong>R-009</strong></td>
+                    <td><span class="badge p0">P0</span></td>
+                    <td>Flight booking detail and email ticket functions stubbed out (B2C)</td>
+                    <td>b2c</td>
+                    <td><code>flight_booking_details()</code> (line 259) and <code>email_flight_ticket()</code> (line 329) in <code>b2c/controllers/report.php</code> both contain <code>echo 'under working'; exit;</code> — booking confirmation and ticket email delivery are completely broken for B2C customers.</td>
+                    <td>SA — <code>b2c/controllers/report.php:259,329</code> (Annex H §2)</td>
+                    <td class="score-5">5</td><td class="score-5">5</td><td class="score-5">25</td>
+                    <td class="status-open">OPEN</td>
+                    <td>Implement both functions with complete logic (retrieve booking from DB, render confirmation view, send email via configured mail driver). Remove all stub exit() calls. Test end-to-end.</td>
+                    <td>Successful B2C booking confirmation page screenshot; sent ticket email sample; CI test showing booking reference page renders correctly</td>
+                </tr>
+                <tr>
+                    <td><strong>R-010</strong></td>
+                    <td><span class="badge p0">P0</span></td>
+                    <td>Shared default password ("Provab@123") in auth and user management</td>
+                    <td>agent, ultralux, supervision</td>
+                    <td>Hardcoded fallback/default password used in auth controllers (agent line 66, ultralux line 67), password reset (supervision/general.php:225), and user management (supervision/user.php:1645). Any account using this default is trivially compromised.</td>
+                    <td>GREP — <code>Provab@123</code> pattern (Annex H §3)</td>
+                    <td class="score-5">5</td><td class="score-5">5</td><td class="score-5">25</td>
+                    <td class="status-open">OPEN</td>
+                    <td>1. Remove all hardcoded default passwords. 2. Force mandatory password change on first login for all accounts using this default. 3. Generate secure random temporary passwords. 4. Audit DB for any accounts with this password hash and force reset.</td>
+                    <td>Code diff removing all instances; DB audit showing no accounts with Provab@123 hash; forced-reset confirmation logs</td>
+                </tr>
+                <tr>
+                    <td><strong>R-011</strong></td>
+                    <td><span class="badge p0">P0</span></td>
+                    <td>Google Maps API key hardcoded in supplier config</td>
+                    <td>supplier</td>
+                    <td>Google Maps API key hardcoded in <code>supplier/application/config/provab_config.php:58</code>. Key is exposed to anyone with repo access and may be used to incur charges against the LAR billing account.</td>
+                    <td>GREP — <code>AIzaSyALMsvTH...</code> (Annex H §3)</td>
+                    <td class="score-5">5</td><td class="score-3">3</td><td class="score-4">15</td>
+                    <td class="status-open">OPEN</td>
+                    <td>1. Rotate Google Maps API key immediately via Google Cloud Console. 2. Move to environment variable. 3. Apply API key restrictions in Google Cloud Console (restrict to specific domains/IPs). 4. Audit Google Cloud billing for unexpected usage.</td>
+                    <td>New key rotation confirmation; env variable config; Google Cloud key restriction screenshot; billing audit showing no unexpected charges</td>
+                </tr>
+                <tr>
+                    <td><strong>R-012</strong></td>
+                    <td><span class="badge p0">P0</span></td>
+                    <td>Package and B2B/B2C package report functions stubbed out (Supervision)</td>
+                    <td>supervision</td>
+                    <td><code>package()</code>, <code>b2b_package_report()</code>, <code>b2c_package_report()</code> in supervision report controller (lines 942, 947, 952) all return stub HTML. <code>update_flight_booking_details()</code> (line 921) has a FIXME with no return. Package reporting is completely non-functional in the admin panel.</td>
+                    <td>SA — <code>supervision/.../controllers/report.php:921,942,947,952</code> (Annex H §2)</td>
+                    <td class="score-5">5</td><td class="score-4">4</td><td class="score-5">20</td>
+                    <td class="status-open">OPEN</td>
+                    <td>Implement all four functions. Update_flight_booking_details must return a status response. Package report functions must render data from the database. Remove all stub output.</td>
+                    <td>Package report page screenshots; B2B and B2C package report data visible; update function returning correct JSON/redirect; CI test coverage for report functions</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- P1 FINDINGS -->
+    <div class="section">
+        <h2>3. P1 — High Risks (Required Before Go-Live)</h2>
+
+        <table class="risk-table">
+            <thead>
+                <tr>
+                    <th>Risk ID</th><th>Priority</th><th>Title</th><th>Module(s)</th>
+                    <th>Root Cause</th><th>Evidence Source</th>
+                    <th>L</th><th>I</th><th>Score</th>
+                    <th>Status</th><th>Corrective Action</th><th>Evidence to Close</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>R-013</strong></td>
+                    <td><span class="badge p1">P1</span></td>
+                    <td>CSRF protection disabled on all modules</td>
+                    <td>All 6 modules</td>
+                    <td><code>$config['csrf_protection'] = FALSE</code> in all CodeIgniter config files. All POST-based booking, payment, and management forms are unprotected against cross-site request forgery.</td>
+                    <td>CONF — <code>*/config/config.php:297</code> (Annex H §4)</td>
+                    <td class="score-4">4</td><td class="score-4">4</td><td class="score-4">16</td>
+                    <td class="status-open">OPEN</td>
+                    <td>1. Set <code>$config['csrf_protection'] = TRUE</code> across all modules. 2. Add CSRF token to all POST forms using <code>{csrf_field()}</code> or equivalent. 3. Verify AJAX calls include the token header. 4. Test that form submission fails without valid token.</td>
+                    <td>Config diff; form source showing hidden CSRF field; test showing form rejects request without token; CI automated form test</td>
+                </tr>
+                <tr>
+                    <td><strong>R-014</strong></td>
+                    <td><span class="badge p1">P1</span></td>
+                    <td>Session cookies missing Secure and HttpOnly flags</td>
+                    <td>All 6 modules</td>
+                    <td><code>$config['cookie_secure'] = FALSE</code> means session cookies are transmitted over plain HTTP. Without Secure + HttpOnly + SameSite flags, cookies are vulnerable to network interception and JS access.</td>
+                    <td>CONF — <code>*/config/config.php:272</code> (Annex H §5)</td>
+                    <td class="score-4">4</td><td class="score-4">4</td><td class="score-4">16</td>
+                    <td class="status-open">OPEN</td>
+                    <td>1. Set <code>$config['cookie_secure'] = TRUE</code>. 2. Set <code>$config['cookie_httponly'] = TRUE</code>. 3. Enforce HTTPS-only (HSTS header). 4. Add SameSite=Strict or Lax to session cookies.</td>
+                    <td>Config diff; browser dev-tools screenshot of session cookie showing Secure+HttpOnly+SameSite attributes; HSTS header shown in response headers</td>
+                </tr>
+                <tr>
+                    <td><strong>R-015</strong></td>
+                    <td><span class="badge p1">P1</span></td>
+                    <td>XSS risk — unescaped $_GET output in report views and admin panel</td>
+                    <td>supplier, supervision</td>
+                    <td>$_GET parameters echoed directly into HTML attribute values (<code>b2c_hotel_report.php:16,31,32</code>, <code>manage_promo_code.php:64</code>) without <code>htmlspecialchars()</code> or equivalent encoding.</td>
+                    <td>GREP — <code>echo.*\$_GET</code> (Annex H §9)</td>
+                    <td class="score-4">4</td><td class="score-4">4</td><td class="score-4">16</td>
+                    <td class="status-open">OPEN</td>
+                    <td>1. Wrap all direct $GET output with <code>htmlspecialchars($val, ENT_QUOTES, 'UTF-8')</code>. 2. Apply consistently across all view files. 3. Add a baseline Content-Security-Policy header. 4. Run automated XSS scan post-fix.</td>
+                    <td>Code diff; static scan showing zero XSS findings at identified locations; CSP header in HTTP response; E2E XSS test with crafted payload showing no execution</td>
+                </tr>
+                <tr>
+                    <td><strong>R-016</strong></td>
+                    <td><span class="badge p1">P1</span></td>
+                    <td>PHP fatal error in supplier eco_stays controller</td>
+                    <td>supplier</td>
+                    <td>Type error at line 700 — string used as default for typed int parameter. Eco-stays controller fails to instantiate; eco-stays management pages unavailable for suppliers.</td>
+                    <td>SA — <code>php -l supplier/.../eco_stays.php</code> (Annex H §1)</td>
+                    <td class="score-5">5</td><td class="score-3">3</td><td class="score-4">15</td>
+                    <td class="status-open">OPEN</td>
+                    <td>Fix parameter default to match declared type (int). PHP lint in CI.</td>
+                    <td>php -l output; eco-stays management page loading in pre-production environment; CI lint gate</td>
+                </tr>
+                <tr>
+                    <td><strong>R-017</strong></td>
+                    <td><span class="badge p1">P1</span></td>
+                    <td>PHP fatal error in B2C transfer search view</td>
+                    <td>b2c</td>
+                    <td>Unparenthesized chained ternary at line 26 in <code>transfer_search.php</code>. Transfer search page returns a fatal error for all B2C customers.</td>
+                    <td>SA — <code>php -l b2c/.../transfer_search.php</code> (Annex H §1)</td>
+                    <td class="score-5">5</td><td class="score-3">3</td><td class="score-4">15</td>
+                    <td class="status-open">OPEN</td>
+                    <td>Parenthesise the ternary chain per PHP 8.0+ requirements. PHP lint in CI.</td>
+                    <td>php -l output; transfer search page loading in pre-production environment; CI lint gate</td>
+                </tr>
+                <tr>
+                    <td><strong>R-018</strong></td>
+                    <td><span class="badge p1">P1</span></td>
+                    <td>Digest authentication not implemented in webservices hook</td>
+                    <td>services/webservices</td>
+                    <td><code>hooks.php:39</code> contains a TODO for Digest Auth that has not been implemented. API authentication may fall back to weaker mechanisms or fail, depending on calling client configuration.</td>
+                    <td>SA — <code>services/webservices/application/hooks/hooks.php:39</code> (Annex H §2)</td>
+                    <td class="score-3">3</td><td class="score-4">4</td><td class="score-3">12</td>
+                    <td class="status-open">OPEN</td>
+                    <td>Determine whether Digest Auth is required per API contract. If yes, implement fully. If superseded by another auth mechanism, remove the TODO and document the current auth method.</td>
+                    <td>Code diff or documented decision; API authentication test showing correct auth challenge/response</td>
+                </tr>
+                <tr>
+                    <td><strong>R-019</strong></td>
+                    <td><span class="badge p1">P1</span></td>
+                    <td>Application logging disabled (log_threshold = 0) in all modules</td>
+                    <td>All 6 modules</td>
+                    <td><code>$config['log_threshold'] = 0</code> in all CodeIgniter config files. Application-level errors, warnings, and debug information are not logged anywhere. Silent failures are undetectable in production.</td>
+                    <td>CONF — <code>*/config/config.php:184</code></td>
+                    <td class="score-5">5</td><td class="score-3">3</td><td class="score-4">15</td>
+                    <td class="status-open">OPEN</td>
+                    <td>1. Set <code>$config['log_threshold'] = 1</code> (errors only) in production. 2. Set <code>log_threshold = 4</code> in pre-production for full debug output. 3. Configure log path to a writable, non-web-accessible directory. 4. Implement log rotation.</td>
+                    <td>Config diff; log file showing error entries in pre-production test; log rotation config</td>
+                </tr>
+                <tr>
+                    <td><strong>R-020</strong></td>
+                    <td><span class="badge p1">P1</span></td>
+                    <td>Missing structured audit trail for booking lifecycle</td>
+                    <td>b2c, agent, services/webservices</td>
+                    <td>No structured booking audit trail logging is evident in the codebase. Booking status transitions (created → paid → ticketed → confirmed) are not atomically logged. No correlation IDs found. This makes forensic reconstruction of booking failures impossible.</td>
+                    <td>SA — absence of audit trail in booking controllers; FIXME markers for status return (Annex H §2)</td>
+                    <td class="score-4">4</td><td class="score-3">3</td><td class="score-3">12</td>
+                    <td class="status-open">OPEN</td>
+                    <td>1. Add structured logging (JSON format recommended) at each booking state transition. 2. Include correlation IDs. 3. Ensure logs capture: booking reference, user ID, amount, API provider response codes, timestamps.</td>
+                    <td>Log sample showing booking lifecycle entries with correlation ID; end-to-end booking trace from log</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- P2 FINDINGS -->
+    <div class="section">
+        <h2>4. P2 — Medium Risks (Required Before Go-Live or Within 30 Days)</h2>
+
+        <table class="risk-table">
+            <thead>
+                <tr>
+                    <th>Risk ID</th><th>Priority</th><th>Title</th><th>Module(s)</th>
+                    <th>Root Cause</th><th>Evidence Source</th>
+                    <th>L</th><th>I</th><th>Score</th>
+                    <th>Status</th><th>Corrective Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>R-021</strong></td>
+                    <td><span class="badge p2">P2</span></td>
+                    <td>SMS notification not implemented</td>
+                    <td>agent</td>
+                    <td>TODO at <code>agent/.../domain_management_model.php:409</code>. Booking confirmation SMS functionality is absent. Customers may not receive timely booking notifications.</td>
+                    <td>SA — grep TODO (Annex H §2)</td>
+                    <td class="score-3">3</td><td class="score-2">2</td><td class="score-2">6</td>
+                    <td class="status-open">OPEN</td>
+                    <td>Implement SMS via configured provider (e.g. Twilio). Test end-to-end in pre-production.</td>
+                </tr>
+                <tr>
+                    <td><strong>R-022</strong></td>
+                    <td><span class="badge p2">P2</span></td>
+                    <td>Balance notification not implemented</td>
+                    <td>services/webservices</td>
+                    <td>FIXME at <code>services/webservices/.../domain_management_model.php:145</code>. Agent balance alert notifications are absent, risking undetected balance depletion.</td>
+                    <td>SA — grep FIXME</td>
+                    <td class="score-3">3</td><td class="score-2">2</td><td class="score-2">6</td>
+                    <td class="status-open">OPEN</td>
+                    <td>Implement balance threshold alert. Test in pre-production.</td>
+                </tr>
+                <tr>
+                    <td><strong>R-023</strong></td>
+                    <td><span class="badge p2">P2</span></td>
+                    <td>Currency conversion rate — multiple TODO markers</td>
+                    <td>supervision</td>
+                    <td>4× TODO comments at <code>supervision/.../private_management.php:205,251,296,336</code> noting "better solution for currency conversion rate". Current implementation may use stale or inaccurate rates.</td>
+                    <td>SA — grep TODO</td>
+                    <td class="score-3">3</td><td class="score-3">3</td><td class="score-3">9</td>
+                    <td class="status-open">OPEN</td>
+                    <td>Integrate a reliable live currency rate API. Document rate refresh frequency and failsafe behaviour.</td>
+                </tr>
+                <tr>
+                    <td><strong>R-024</strong></td>
+                    <td><span class="badge p2">P2</span></td>
+                    <td>Email/notification on domain admin changes not implemented</td>
+                    <td>services/webservices</td>
+                    <td>FIXME at <code>user_model.php:529,557</code> — notifications for domain admin changes are not sent. Admin changes can occur silently with no audit notification trail.</td>
+                    <td>SA — grep FIXME</td>
+                    <td class="score-3">3</td><td class="score-2">2</td><td class="score-2">6</td>
+                    <td class="status-open">OPEN</td>
+                    <td>Implement admin change notification email. Test in pre-production.</td>
+                </tr>
+                <tr>
+                    <td><strong>R-025</strong></td>
+                    <td><span class="badge p2">P2</span></td>
+                    <td>50+ unresolved FIXME/TODO markers across all modules</td>
+                    <td>All 6 modules</td>
+                    <td>50+ open FIXME/TODO comments represent acknowledged incomplete implementations. Individually, many are low severity, but collectively represent untested code paths that may fail silently in production.</td>
+                    <td>SA — grep FIXME/TODO (Annex H §2)</td>
+                    <td class="score-4">4</td><td class="score-2">2</td><td class="score-3">8</td>
+                    <td class="status-open">OPEN</td>
+                    <td>Each FIXME/TODO to be triaged: either implemented and tested, or explicitly documented as deferred with a tracked ticket and acceptance criteria.</td>
+                </tr>
+                <tr>
+                    <td><strong>R-026</strong></td>
+                    <td><span class="badge p2">P2</span></td>
+                    <td>No CI/CD pipeline with automated testing gates</td>
+                    <td>All</td>
+                    <td>No GitHub Actions Playwright/PHPUnit workflow detected for the application modules. PHP parse errors and stub code are mergeable to main without automated detection.</td>
+                    <td>SA — absence of .github/workflows test configs in application modules</td>
+                    <td class="score-5">5</td><td class="score-3">3</td><td class="score-4">15</td>
+                    <td class="status-open">OPEN</td>
+                    <td>1. Add PHP lint (<code>php -l</code>) as mandatory CI gate on all PRs. 2. Add PHPUnit integration tests for core booking flows. 3. Add Playwright E2E tests with screenshot artifacts. 4. Block merge on CI failure.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- VERTICAL TESTING BACKLOG -->
+    <div class="section">
+        <h2>5. Vertical Testing Backlog (Pending Environment Access)</h2>
+        <p>The following test scenarios are required under TOR §3.1 and §3.2 but cannot be executed without pre-production environment access (see Annex I constraints C-001, C-002, C-003). Each item will generate additional risk register entries once executed.</p>
+
+        <table class="risk-table">
+            <thead>
+                <tr><th>Test ID</th><th>Vertical</th><th>Test Scenario</th><th>TOR Ref</th><th>Status</th><th>Annex I Constraint</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>T-001</td><td>Flights</td><td>End-to-end booking: search → hold → pay → PNR confirmed</td><td>§5.x Flights</td><td class="status-open">PENDING</td><td>C-001, C-002</td></tr>
+                <tr><td>T-002</td><td>Flights</td><td>Fare repricing between search and checkout (price change scenario)</td><td>§5.x Flights</td><td class="status-open">PENDING</td><td>C-001, C-002</td></tr>
+                <tr><td>T-003</td><td>Flights</td><td>TTL expiry — session expires before payment; confirm void/refund</td><td>§5.x Flights</td><td class="status-open">PENDING</td><td>C-001, C-002</td></tr>
+                <tr><td>T-004</td><td>Flights</td><td>Partial ticketing failure — confirm atomic rollback and no orphaned PNR</td><td>§5.x Flights</td><td class="status-open">PENDING</td><td>C-001, C-002, C-003</td></tr>
+                <tr><td>T-005</td><td>Hotels</td><td>HK confirmation — confirm status shown as Confirmed only after HK code received</td><td>§5.x Hotels</td><td class="status-open">PENDING</td><td>C-001, C-002</td></tr>
+                <tr><td>T-006</td><td>Hotels</td><td>HL/UC status — confirm distinct display and communication to customer</td><td>§5.x Hotels</td><td class="status-open">PENDING</td><td>C-001, C-002</td></tr>
+                <tr><td>T-007</td><td>Hotels</td><td>Multi-room booking with partial confirmation — test rollback</td><td>§5.x Hotels</td><td class="status-open">PENDING</td><td>C-001, C-002</td></tr>
+                <tr><td>T-008</td><td>Hotels</td><td>Cancellation with penalty — correct fee shown, refund processed</td><td>§5.x Hotels</td><td class="status-open">PENDING</td><td>C-001, C-002</td></tr>
+                <tr><td>T-009</td><td>Cars</td><td>Rate/availability check at pre-checkout — stale cache prevention</td><td>§5.x Cars</td><td class="status-open">PENDING</td><td>C-001, C-002</td></tr>
+                <tr><td>T-010</td><td>Cars</td><td>Policy and no-show disclosure displayed before payment confirmation</td><td>§5.x Cars</td><td class="status-open">PENDING</td><td>C-001, C-002</td></tr>
+                <tr><td>T-011</td><td>All</td><td>Idempotency — submit booking form twice, confirm single booking created</td><td>§1 No idempotency P0</td><td class="status-open">PENDING</td><td>C-001</td></tr>
+                <tr><td>T-012</td><td>All</td><td>CSRF — confirm POST request without token is rejected (after R-013 fix)</td><td>§1 CSRF P1</td><td class="status-open">PENDING</td><td>C-001</td></tr>
+                <tr><td>T-013</td><td>All</td><td>Payment flow — confirm no PHP error output visible on payment failure</td><td>§1 Verbose errors P0</td><td class="status-open">PENDING</td><td>C-001</td></tr>
+                <tr><td>T-014</td><td>All</td><td>Customer journey — full session lifecycle from search to confirmation email</td><td>TOR §3.2</td><td class="status-open">PENDING</td><td>C-001, C-002, C-003</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- REGISTER SUMMARY -->
+    <div class="section">
+        <h2>6. Register Summary &amp; Go-Live Gate</h2>
+
+        <table class="risk-table">
+            <thead>
+                <tr><th>Priority</th><th>Count</th><th>Go-Live Gate</th><th>Current Status</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><span class="badge p0">P0</span></td>
+                    <td>12 findings (R-001 to R-012)</td>
+                    <td>All P0s must be remediated AND evidenced before any go-live approval</td>
+                    <td class="status-open">ALL OPEN — Go-live BLOCKED</td>
+                </tr>
+                <tr>
+                    <td><span class="badge p1">P1</span></td>
+                    <td>8 findings (R-013 to R-020)</td>
+                    <td>All P1s must be remediated before go-live; evidence required</td>
+                    <td class="status-open">ALL OPEN — Go-live BLOCKED</td>
+                </tr>
+                <tr>
+                    <td><span class="badge p2">P2</span></td>
+                    <td>6 findings (R-021 to R-026)</td>
+                    <td>P2s must be remediated within 30 days of go-live; tracked tickets required</td>
+                    <td class="status-open">ALL OPEN</td>
+                </tr>
+                <tr>
+                    <td>Vertical tests</td>
+                    <td>14 scenarios (T-001 to T-014)</td>
+                    <td>All 14 scenarios must pass before go-live approval per TOR §3.1</td>
+                    <td class="status-open">ALL PENDING (environment access required)</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div style="background: #fff8f8; border: 2px solid #dc3545; border-radius: 10px; padding: 18px 22px; margin-top: 20px;">
+            <strong style="color: #dc3545; font-size: 1.1em;">⛔ Go-Live Verdict: BLOCKED</strong>
+            <p style="color: #555; margin-top: 8px; line-height: 1.6;">
+                Based on static analysis alone: 12 P0 and 8 P1 findings are open. At minimum, the four PHP parse/fatal errors (R-003, R-004, R-016, R-017) mean core booking controllers cannot load. Hardcoded production credentials (R-001, R-002, R-010, R-011) represent an immediate security incident risk that must be treated as an emergency. The 14 vertical test scenarios (T-001 to T-014) are yet to be executed and may produce additional findings.
+            </p>
+            <p style="color: #555; margin-top: 6px; line-height: 1.6; font-size: 0.92em;">
+                <strong>Recommended immediate actions (Phase 0 — Emergency):</strong> (1) Rotate all exposed credentials (R-001, R-002, R-010, R-011); (2) Disable display_errors in production (R-005); (3) Fix PHP parse errors (R-003, R-004, R-016, R-017). These can be completed before environment access is arranged and eliminate the most critical immediate risks.
+            </p>
+        </div>
+    </div>
+
+</div>
+
+<footer>
+    LAR System — Annex J: Risk Register &amp; Remediation Backlog &nbsp;|&nbsp; v1.0 — 2026-03-10 &nbsp;|&nbsp; Classification: CONFIDENTIAL — INTERNAL USE ONLY<br>
+    TOR Deliverable 5.3 | Evidence source: Annex H (Static Analysis) | Constraints: Annex I | Report: v7.3.3
+</footer>
+
+</body>
+</html>
