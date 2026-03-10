@@ -935,11 +935,13 @@ each constraint.**
 | **Annex I** | Audit Limitations & Constraints Register | `audit-files/Annex_I_Audit_Limitations_and_Constraints_Register.html` | HTML |
 | **Annex J** | Risk Register & Remediation Backlog | `audit-files/Annex_J_Risk_Register_and_Remediation_Backlog.html` | HTML |
 
-> **Note on Annex F:** The Visual Audit Guide (previously submitted as Annex F) has
-> been removed from this revised submission as it contained a commercial remediation
-> pricing proposal. Any future remediation proposal will be submitted as a separate
-> document at LAR's invitation, following acceptance of this audit report, in compliance
-> with SOW Section 6a (audit independence).
+> **Note on Annex F:** The Visual Audit Guide (Annex F) has been **revised** in this
+> submission. All commercial remediation pricing, ROI projections, and chargeable work
+> bundles have been removed per SOW Section 6a (audit independence). The revised document
+> is retained as a supplemental visual reference only at
+> `audit-files/Annex F — Visual Audit Guide.html`. It is not a TOR Section 5 mandatory
+> deliverable. Any future remediation proposal will be submitted as a separate document,
+> at LAR's invitation, following acceptance of this audit report.
 
 ---
 

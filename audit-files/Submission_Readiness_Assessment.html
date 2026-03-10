@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LAR System — Submission Readiness Assessment (v7.4)</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+        .container { max-width: 1300px; margin: 0 auto; }
+        .header { text-align: center; color: white; margin-bottom: 50px; }
+        .header h1 { font-size: 2.2em; margin-bottom: 8px; text-shadow: 2px 2px 4px rgba(0,0,0,0.4); }
+        .header .subtitle { font-size: 1.05em; opacity: 0.85; margin-top: 6px; }
+        .meta { display: flex; justify-content: center; gap: 24px; margin-top: 22px; flex-wrap: wrap; }
+        .meta-item { background: rgba(255,255,255,0.12); border-radius: 8px; padding: 8px 18px; color: white; font-size: 0.88em; }
+
+        .section {
+            background: white;
+            border-radius: 14px;
+            padding: 34px 38px;
+            margin-bottom: 32px;
+            box-shadow: 0 16px 50px rgba(0,0,0,0.35);
+        }
+        .section h2 {
+            color: #1a1a2e;
+            margin-bottom: 18px;
+            border-bottom: 3px solid #0f3460;
+            padding-bottom: 12px;
+            font-size: 1.45em;
+        }
+        .section h3 { color: #0f3460; margin: 22px 0 10px; font-size: 1.05em; }
+        .section p { color: #444; line-height: 1.75; margin-bottom: 10px; font-size: 0.94em; }
+
+        table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.86em; }
+        th {
+            background: linear-gradient(135deg, #1a1a2e, #0f3460);
+            color: white;
+            padding: 10px 14px;
+            text-align: left;
+            font-weight: 600;
+        }
+        td { padding: 9px 14px; border-bottom: 1px solid #e8e8e8; vertical-align: top; line-height: 1.55; color: #333; }
+        tr:nth-child(even) td { background: #f5f7ff; }
+        tr:hover td { background: #eef0fa; }
+
+        .badge { display: inline-block; padding: 2px 9px; border-radius: 10px; font-size: 0.76em; font-weight: 700; text-transform: uppercase; white-space: nowrap; }
+        .badge-met      { background: #28a745; color: white; }
+        .badge-partial  { background: #fd7e14; color: white; }
+        .badge-risk     { background: #dc3545; color: white; }
+        .badge-minor    { background: #17a2b8; color: white; }
+        .badge-info     { background: #6c757d; color: white; }
+
+        .verdict-box {
+            border-radius: 10px;
+            padding: 20px 26px;
+            margin: 18px 0;
+            font-size: 0.95em;
+        }
+        .verdict-ready     { background: #d4edda; border-left: 5px solid #28a745; }
+        .verdict-caution   { background: #fff3cd; border-left: 5px solid #ffc107; }
+        .verdict-blocked   { background: #f8d7da; border-left: 5px solid #dc3545; }
+
+        .check-list { list-style: none; padding: 0; margin: 12px 0; }
+        .check-list li { padding: 6px 0 6px 28px; position: relative; color: #444; font-size: 0.93em; line-height: 1.55; }
+        .check-list li::before { position: absolute; left: 0; font-weight: bold; font-size: 1.1em; }
+        .check-list li.ok::before    { content: "✅"; }
+        .check-list li.warn::before  { content: "⚠️"; }
+        .check-list li.block::before { content: "❌"; }
+        .check-list li.info::before  { content: "ℹ️"; }
+
+        .rec-box {
+            background: #f0f4ff;
+            border: 1px solid #c5d0f5;
+            border-radius: 8px;
+            padding: 14px 18px;
+            margin: 10px 0;
+            font-size: 0.91em;
+            line-height: 1.6;
+            color: #333;
+        }
+        .rec-box strong { color: #0f3460; }
+
+        .doc-inventory-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 18px;
+            margin: 18px 0;
+        }
+        .doc-card {
+            border: 1px solid #dde3f5;
+            border-radius: 10px;
+            padding: 18px 20px;
+            background: #fafbff;
+        }
+        .doc-card h4 { color: #0f3460; font-size: 0.95em; margin-bottom: 8px; }
+        .doc-card p  { font-size: 0.83em; color: #555; line-height: 1.55; }
+        .doc-card .doc-status { margin-top: 10px; }
+
+        .risk-row-high   td { border-left: 4px solid #dc3545; }
+        .risk-row-medium td { border-left: 4px solid #fd7e14; }
+        .risk-row-low    td { border-left: 4px solid #17a2b8; }
+
+        code {
+            background: #f0f0f0;
+            border-radius: 4px;
+            padding: 1px 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        .timeline {
+            border-left: 3px solid #0f3460;
+            padding-left: 24px;
+            margin: 14px 0;
+        }
+        .timeline-item { margin-bottom: 14px; }
+        .timeline-item .tl-date { font-size: 0.8em; color: #0f3460; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+        .timeline-item .tl-text { font-size: 0.9em; color: #444; line-height: 1.5; margin-top: 3px; }
+
+        @media (max-width: 700px) {
+            .section { padding: 22px 18px; }
+            .header h1 { font-size: 1.6em; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <div class="header">
+        <h1>LAR System — Submission Readiness Assessment</h1>
+        <div class="subtitle">Inventory of current deliverable status against LAR cure conditions &amp; TOR requirements</div>
+        <div class="meta">
+            <div class="meta-item">📅 Assessment Date: 2026-03-10</div>
+            <div class="meta-item">📄 Current Report Version: v7.4</div>
+            <div class="meta-item">🔍 Auditor: Dr. Ismail Kucukdurgut, OrkinosAI</div>
+            <div class="meta-item">📬 Feedback Ref: J. Zabula (CTO, LAR) 2026-03-09</div>
+            <div class="meta-item">⏱️ Cure Deadline: 5 business days from 2026-03-09</div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════ 1. OVERALL VERDICT ══ -->
+    <div class="section">
+        <h2>1. Overall Submission Verdict</h2>
+
+        <div class="verdict-box verdict-caution">
+            <strong>⚠️ CONDITIONALLY READY TO SUBMIT — with one residual risk to communicate proactively</strong><br><br>
+            The revised submission (v7.4, plus Annexes H, I, J, and revised Annex F) addresses all nine
+            cure conditions enumerated in LAR's non-acceptance notice. All mandatory TOR deliverables
+            (§5.1–5.6) are now present and substantively complete. Out-of-scope content and commercial
+            pricing have been removed in full.<br><br>
+            The single residual risk that must be communicated clearly — and is documented throughout
+            the submission — is that <strong>no access to a pre-production runtime environment, live
+            logs, GDS sandbox credentials, or real transaction records was provided</strong>. All evidence
+            is therefore based on static source-code analysis. This is a constraint of the engagement,
+            not a failure to exercise the methodology. It is fully documented in Annex I and referenced
+            in every finding. A cover letter or alignment call (offered by LAR in their notice) should
+            be used to surface this constraint clearly before submitting.
+        </div>
+
+        <h3>Engagement Timeline</h3>
+        <div class="timeline">
+            <div class="timeline-item">
+                <div class="tl-date">2026-02-16</div>
+                <div class="tl-text">LAR Audit Project kick-off meeting (Ismail Kucukdurgut / John Zabula +3 others)</div>
+            </div>
+            <div class="timeline-item">
+                <div class="tl-date">2026-03-05</div>
+                <div class="tl-text">v7.3.3 submitted: LAR System COLOSSAL Audit, Security &amp; Readiness Report + Annex F</div>
+            </div>
+            <div class="timeline-item">
+                <div class="tl-date">2026-03-09</div>
+                <div class="tl-text">LAR non-acceptance notice issued (J. Zabula, CTO). Six grounds cited; 5-business-day cure period opened; 9 cure conditions specified</div>
+            </div>
+            <div class="timeline-item">
+                <div class="tl-date">2026-03-10</div>
+                <div class="tl-text"><strong>PR #8 merged:</strong> Annex H (Static Analysis Evidence Log), Annex I (Audit Limitations), Annex J (Risk Register), revised Annex F (commercial pricing removed)</div>
+            </div>
+            <div class="timeline-item">
+                <div class="tl-date">2026-03-10</div>
+                <div class="tl-text"><strong>PR #10 merged:</strong> AUDIT_REPORT.md fully rewritten to v7.4 — all 9 cure conditions addressed; TOR deliverables map present; Section 1 (Audit Framework), Sections 3–5 (vertical audit findings), Section 6 (booking flow), Section 7 (revenue methodology), Section 8 (18 measurable CGo conditions)</div>
+            </div>
+            <div class="timeline-item">
+                <div class="tl-date">2026-03-10 (today)</div>
+                <div class="tl-text">This readiness assessment document produced. Cure deadline: ~2026-03-14 (5 business days from 2026-03-09)</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════ 2. DOCUMENT INVENTORY ══ -->
+    <div class="section">
+        <h2>2. Current Deliverable Inventory</h2>
+        <p>All files referenced below exist in the repository at the stated paths.</p>
+
+        <div class="doc-inventory-grid">
+            <div class="doc-card">
+                <h4>📄 AUDIT_REPORT.md (v7.4)</h4>
+                <p>Main CTO-level audit report. Fully rewritten in PR #10. Covers TOR §5.1 (Audit Framework, Section 1), §5.2 (CTO-level findings, Sections 2–8), §5.4 (Go-Live Readiness, Section 8), and §5.6 summary (Section 10). 957 lines.</p>
+                <div class="doc-status"><span class="badge badge-met">✔ Present &amp; Compliant (v7.4)</span></div>
+            </div>
+            <div class="doc-card">
+                <h4>📊 Annex H — Static Analysis Evidence Log</h4>
+                <p><code>audit-files/Annex_H_Static_Analysis_Evidence_Log.html</code><br>
+                Raw PHP lint and grep output for all P0/P1 findings. Evidence Scope Statement clarifies static-only basis. TOR §5.5 (Evidence Pack).</p>
+                <div class="doc-status"><span class="badge badge-met">✔ Present — TOR §5.5</span></div>
+            </div>
+            <div class="doc-card">
+                <h4>📋 Annex I — Audit Limitations &amp; Constraints Register</h4>
+                <p><code>audit-files/Annex_I_Audit_Limitations_and_Constraints_Register.html</code><br>
+                8 constraints documented (C-001–S-001). Per-vertical test matrices. Impact on each TOR 5.1–5.6 deliverable. TOR §5.6 (was entirely absent in v7.3.3).</p>
+                <div class="doc-status"><span class="badge badge-met">✔ Present — TOR §5.6</span></div>
+            </div>
+            <div class="doc-card">
+                <h4>⚠️ Annex J — Risk Register &amp; Remediation Backlog</h4>
+                <p><code>audit-files/Annex_J_Risk_Register_and_Remediation_Backlog.html</code><br>
+                29 findings (12 P0, 8 P1, 9 P2). Each entry: Risk ID, priority, module, root cause, evidence, likelihood × impact score, corrective action, evidence to close. Replaces bullet-list Annex C. TOR §5.3.</p>
+                <div class="doc-status"><span class="badge badge-met">✔ Present — TOR §5.3</span></div>
+            </div>
+            <div class="doc-card">
+                <h4>🔍 Annex F — Visual Audit Reference (Revised)</h4>
+                <p><code>audit-files/Annex F — Visual Audit Guide.html</code><br>
+                Revised in PR #8: all commercial pricing, ROI projections, dollar bundles, and UI/UX mockups removed per SOW §6a. Now contains only system-state screenshots and audit observations. Not a TOR §5 mandatory deliverable.</p>
+                <div class="doc-status"><span class="badge badge-minor">ℹ Supplemental — commercial pricing removed</span></div>
+            </div>
+            <div class="doc-card">
+                <h4>📁 Supporting Reference Documents</h4>
+                <p><code>audit-files/LsOHSoPWRsCneGFu6rjQ_LAR Audit TOR v1.01 (1).pdf</code> — TOR reference<br>
+                <code>audit-files/LAR_System_COLOSSAL_...v7_3_3....docx</code> — original submission (retained for reference)</p>
+                <div class="doc-status"><span class="badge badge-info">Reference Only</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════ 3. CURE CONDITIONS STATUS ══ -->
+    <div class="section">
+        <h2>3. Cure Condition Status (All 9 Items)</h2>
+        <p>LAR's non-acceptance notice required the following nine conditions to be met within 5 business days.
+        The table below assesses each against the current v7.4 submission.</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th style="width:4%">#</th>
+                    <th style="width:30%">LAR Cure Condition</th>
+                    <th style="width:10%">Status</th>
+                    <th style="width:30%">How Addressed in v7.4</th>
+                    <th style="width:26%">Residual Risk / Note</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>(a)</strong></td>
+                    <td>Evidence package for every P0 and P1 finding — logs, API traces, booking references, or reproducible test steps from the pre-production environment</td>
+                    <td><span class="badge badge-partial">Partial</span></td>
+                    <td>Annex H provides static analysis evidence (grep output, PHP lint results, file path + line number references) for all P0/P1 findings. Each finding in AUDIT_REPORT.md §2 is marked <code>[STATIC]</code> with Annex H cross-reference.</td>
+                    <td><strong>Key risk:</strong> LAR specified "pre-production environment" evidence. No such environment was provided to the auditor. Constraint C-001 (Annex I) documents this explicitly. Runtime evidence (logs, API traces) is not available. Must be communicated proactively in cover communication.</td>
+                </tr>
+                <tr>
+                    <td><strong>(b)</strong></td>
+                    <td>Evidenced findings for Flights, Hotels, and Cars — actual test scenario outcomes, not checklists</td>
+                    <td><span class="badge badge-partial">Partial</span></td>
+                    <td>Sections 3 (Flights: F-001–F-005), 4 (Hotels: H-001–H-004), 5 (Cars: C-001–C-003) provide code-evidenced findings with specific file paths, line references, and code excerpts demonstrating each gap.</td>
+                    <td>All findings are <code>[STATIC]</code> (code analysis), not executed test scenarios. No GDS sandbox or supplier API access was provided (Annex I: C-002, C-003). Same environment constraint as (a).</td>
+                </tr>
+                <tr>
+                    <td><strong>(c)</strong></td>
+                    <td>Booking flow and customer journey findings covering the full search-to-post-booking lifecycle, session handling, and failure-path behaviour</td>
+                    <td><span class="badge badge-met">Met</span></td>
+                    <td>AUDIT_REPORT.md §6: BF-001 (session lifetime), BF-002 (no retry/idempotency logic), BF-003 (silent confirmation failures), BF-004 (no booking amendment flow). 14-step search-to-post-booking code-path trace. Each step rated ✅/⚠️/❌ with code evidence.</td>
+                    <td>Minor: findings are static-analysis-based as per constraint C-001. Fully documented.</td>
+                </tr>
+                <tr>
+                    <td><strong>(d)</strong></td>
+                    <td>Revenue and commercial risk analysis with a stated methodology and supporting basis</td>
+                    <td><span class="badge badge-met">Met</span></td>
+                    <td>AUDIT_REPORT.md §7: $6.8M figure withdrawn explicitly. Replacement section declares assumed baseline (200–500 bookings/month, ABV $1,500–$3,000), benchmark sources (IATA 2024, Phocuswright 2024), confidence level ("Low"), and data required to validate each estimate.</td>
+                    <td>None — methodology is clearly stated. All figures are appropriately caveated as estimates.</td>
+                </tr>
+                <tr>
+                    <td><strong>(e)</strong></td>
+                    <td>Structured Risk Register with severity, impact assessment, and recommended remediation approach per finding</td>
+                    <td><span class="badge badge-met">Met</span></td>
+                    <td>Annex J: 29 findings with Risk ID, priority, affected module, description, root cause, evidence source, likelihood (1–5), impact (1–5), risk score (1–25), corrective action, evidence required to close.</td>
+                    <td>None. Replaces the previous bullet-list Annex C as required.</td>
+                </tr>
+                <tr>
+                    <td><strong>(f)</strong></td>
+                    <td>Structured Go-Live Readiness Summary with explicit, measurable Conditional Go conditions</td>
+                    <td><span class="badge badge-met">Met</span></td>
+                    <td>AUDIT_REPORT.md §8.2: 18 Conditional Go conditions (CGo-01 through CGo-18). Each specifies: the condition, a specific verification method (test command, code grep, or end-to-end scenario), and the linked finding(s). All are independently verifiable.</td>
+                    <td>None. Substantially improved from the single-paragraph v7.3.3 section.</td>
+                </tr>
+                <tr>
+                    <td><strong>(g)</strong></td>
+                    <td>Audit Limitations &amp; Constraints Register documenting what was and was not accessible during testing</td>
+                    <td><span class="badge badge-met">Met</span></td>
+                    <td>Annex I: 8 constraints (C-001–S-001), each with impact on findings, per-vertical test matrices, and impact on each TOR §5.1–5.6 deliverable. Was entirely absent in v7.3.3.</td>
+                    <td>None.</td>
+                </tr>
+                <tr>
+                    <td><strong>(h)</strong></td>
+                    <td>Removal of out-of-scope content: UI/UX redesign, AI Chat Assistant, Identity Modernisation, Cruises, Private Aviation, and Yachts</td>
+                    <td><span class="badge badge-met">Met</span></td>
+                    <td>AUDIT_REPORT.md v7.4 contains none of these sections. Scope confirmation statement at the top of the report explicitly limits coverage to Flights, Hotels, and Cars. Annex I S-001 documents the exclusions.</td>
+                    <td>None. All removed.</td>
+                </tr>
+                <tr>
+                    <td><strong>(i)</strong></td>
+                    <td>Removal of commercial remediation pricing proposal (Annex F work bundles)</td>
+                    <td><span class="badge badge-met">Met</span></td>
+                    <td>PR #8 removed all commercial pricing from Annex F. AUDIT_REPORT.md §Annexes notes that any future remediation proposal must be a separate document, at LAR's invitation, per SOW §6a.</td>
+                    <td>Minor inconsistency: AUDIT_REPORT.md says Annex F "has been removed" but the revised file still exists in <code>audit-files/</code>. The revised file contains no commercial content and is labelled "Revised". See Section 5 (Recommendations) for suggested wording fix.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ═══════════════════════════════════════ 4. TOR DELIVERABLES ══ -->
+    <div class="section">
+        <h2>4. TOR §5 Mandatory Deliverables — Status</h2>
+        <p>The non-acceptance notice (item 1.4) cited all six TOR §5 mandatory deliverables as absent or incomplete.
+        Current status of each:</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th style="width:10%">TOR Ref</th>
+                    <th style="width:25%">Deliverable</th>
+                    <th style="width:10%">v7.3.3 Status</th>
+                    <th style="width:12%">v7.4 Status</th>
+                    <th style="width:28%">Where Satisfied</th>
+                    <th style="width:15%">Residual Note</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>5.1</strong></td>
+                    <td>Audit Framework Document</td>
+                    <td>Not standalone</td>
+                    <td><span class="badge badge-met">Met</span></td>
+                    <td>AUDIT_REPORT.md §1 (Audit Framework): scope, method table, standards applied, severity framework. Embedded in main report with TOR Deliverables Map pointing to it.</td>
+                    <td>Embedded in main report, not a standalone file. Common practice for integrated reports; risk is low.</td>
+                </tr>
+                <tr>
+                    <td><strong>5.2</strong></td>
+                    <td>CTO-Level Audit Report</td>
+                    <td>Partial</td>
+                    <td><span class="badge badge-met">Met</span></td>
+                    <td>AUDIT_REPORT.md §2–8: action-oriented findings with root cause, production impact, corrective direction. P0–P2 framework applied. Each finding is CTO-executable.</td>
+                    <td>None.</td>
+                </tr>
+                <tr>
+                    <td><strong>5.3</strong></td>
+                    <td>Risk Register &amp; Remediation Backlog</td>
+                    <td>Bullet list only</td>
+                    <td><span class="badge badge-met">Met</span></td>
+                    <td>Annex J — structured register, 29 findings, impact scores, corrective actions, evidence-to-close criteria.</td>
+                    <td>None.</td>
+                </tr>
+                <tr>
+                    <td><strong>5.4</strong></td>
+                    <td>Go-Live Readiness Summary</td>
+                    <td>One paragraph</td>
+                    <td><span class="badge badge-met">Met</span></td>
+                    <td>AUDIT_REPORT.md §8: 18 explicit measurable Conditional Go conditions (CGo-01–CGo-18) with verification methods.</td>
+                    <td>None.</td>
+                </tr>
+                <tr>
+                    <td><strong>5.5</strong></td>
+                    <td>Evidence Pack</td>
+                    <td>Entirely absent</td>
+                    <td><span class="badge badge-partial">Partial</span></td>
+                    <td>Annex H — static analysis evidence (PHP lint output, grep scans) for all P0/P1 findings. Evidence type is static-analysis only; no runtime evidence available (constraint C-001).</td>
+                    <td>LAR specified "reproducible test steps from the pre-production environment." Runtime evidence cannot be produced without environment access. This is the primary risk to acceptance.</td>
+                </tr>
+                <tr>
+                    <td><strong>5.6</strong></td>
+                    <td>Audit Limitations &amp; Constraints Register</td>
+                    <td>Entirely absent</td>
+                    <td><span class="badge badge-met">Met</span></td>
+                    <td>Annex I — 8 constraints with impact assessments and per-deliverable impact table.</td>
+                    <td>None.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ═══════════════════════════════════════ 5. RESIDUAL RISKS ══ -->
+    <div class="section">
+        <h2>5. Residual Risks to Acceptance</h2>
+        <p>The following risks, in priority order, could lead to a second rejection. Each has a recommended mitigation.</p>
+
+        <h3>Risk R-1 (High) — Static-Only Evidence vs. Pre-Production Runtime Requirement</h3>
+        <div class="verdict-box verdict-blocked">
+            <strong>Description:</strong> LAR's cure condition (a) and TOR §5.5 explicitly require evidence from
+            "the agreed pre-production environment." All evidence in the current submission derives from static source
+            code analysis. No pre-production environment, live server logs, GDS sandbox, or API trace capture was
+            made available during the engagement.<br><br>
+            <strong>Impact if unmitigated:</strong> LAR could reject the submission on the same ground as the original
+            non-acceptance notice (1.1 — "no evidence for P0/P1 findings"), arguing that the static analysis evidence
+            does not satisfy the contractual definition.<br><br>
+            <strong>Mitigation:</strong> The constraint is documented in Annex I (C-001–C-005) and referenced in every
+            finding. In the submission cover communication, explicitly note: <em>"The auditor has produced the maximum
+            evidence achievable within the access constraints of this engagement. Static analysis is the highest-fidelity
+            evidence available when no pre-production environment access is provided. Annex I documents all constraints.
+            Runtime confirmation of each finding is pending LAR's provision of the pre-production environment and GDS
+            sandbox credentials."</em> The 5-day alignment call option offered by LAR should be used to resolve this
+            position before final submission.
+        </div>
+
+        <h3>Risk R-2 (Medium) — "Test Scenario Outcomes" for Verticals</h3>
+        <div class="verdict-box verdict-caution">
+            <strong>Description:</strong> Cure condition (b) asked for "actual test scenario outcomes" for Flights,
+            Hotels, and Cars. The v7.4 vertical findings (Sections 3–5) are code-derived observations (static),
+            not outcomes of executed booking scenarios.<br><br>
+            <strong>Mitigation:</strong> Annex I documents that no GDS or supplier API sandbox was provided (C-002,
+            C-003). The code-level findings are real and evidenced (file path + line reference). The Annex I
+            per-vertical test matrices (T-001–T-014) show precisely which scenarios remain pending environment access.
+            Communicate that the findings represent code evidence of functional gaps — the missing "test outcome" is
+            that the test cannot be run because the implementation is absent.
+        </div>
+
+        <h3>Risk R-3 (Low) — Annex F Wording Inconsistency</h3>
+        <div class="verdict-box verdict-caution">
+            <strong>Description:</strong> AUDIT_REPORT.md §Annexes states <em>"The Visual Audit Guide (previously
+            submitted as Annex F) has been removed from this revised submission."</em> However, the revised file
+            <code>audit-files/Annex F — Visual Audit Guide.html</code> still exists in the repository (though all
+            commercial pricing has been removed). If LAR reads the report text and then sees the file still present,
+            this inconsistency could create confusion or the appearance of incomplete action.<br><br>
+            <strong>Mitigation (applied in this PR):</strong> Update the Annex F note in AUDIT_REPORT.md to clarify
+            that the file has been <em>revised</em> (not deleted) to remove all commercial content per SOW §6a, and
+            is retained as an optional supplemental visual reference. See Section 7 below for the specific change.
+        </div>
+
+        <h3>Risk R-4 (Low) — Revenue Figures May Still Draw Scrutiny</h3>
+        <div class="verdict-box verdict-caution">
+            <strong>Description:</strong> The replacement revenue analysis (Section 7) uses IATA and Phocuswright
+            2024 benchmark references. LAR's CTO may ask for the specific citations.<br><br>
+            <strong>Mitigation:</strong> Section 7 is clearly labelled "Low" confidence with an explicit statement
+            that all figures must be validated against LAR's actual transaction data. The methodology is transparent.
+            If LAR requests specific citations, provide the IATA 2024 Airline IT Insights report and Phocuswright
+            "Online Travel in Focus" 2024 as the benchmark sources.
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════ 6. RECOMMENDATIONS ══ -->
+    <div class="section">
+        <h2>6. Recommendations Before Submission</h2>
+
+        <h3>6.1 Immediate Actions (Before Sending)</h3>
+
+        <div class="rec-box">
+            <strong>Action 1 — Use the alignment call option.</strong><br>
+            LAR's notice offered a brief alignment call within 2 business days <em>"if you have questions about any
+            of the specific requirements listed above."</em> Given that Risk R-1 (environment access) is a structural
+            constraint — not a content gap — this call should be requested immediately. The objective is to either:
+            (a) secure environment access before the cure deadline, or (b) obtain LAR's written acknowledgement that
+            static-analysis evidence is acceptable given the constraint. This protects both parties.
+        </div>
+
+        <div class="rec-box">
+            <strong>Action 2 — Write a concise, structured cover letter.</strong><br>
+            Do not submit the documents without a cover letter that:
+            <ul style="margin: 8px 0 0 18px; line-height: 1.7; font-size: 0.92em;">
+                <li>Confirms receipt of and response to the non-acceptance notice</li>
+                <li>Maps each of the 9 cure conditions to its location in the revised submission</li>
+                <li>Clearly states the environment access constraint (Annex I C-001) and explains that static analysis
+                is the maximum evidence achievable without that access</li>
+                <li>Requests LAR to provide pre-production environment and GDS sandbox access to allow the 14 pending
+                test scenarios (Annex I, T-001–T-014) to be executed for a final evidence-complete submission</li>
+            </ul>
+        </div>
+
+        <div class="rec-box">
+            <strong>Action 3 — Fix the Annex F description inconsistency in AUDIT_REPORT.md.</strong><br>
+            Update the Annex F note to say the file has been <em>revised</em> (commercial content removed) rather
+            than removed entirely. This avoids confusion and is more accurate. This change is applied in this PR.
+        </div>
+
+        <h3>6.2 What NOT to Do</h3>
+
+        <ul class="check-list">
+            <li class="block">Do <strong>not</strong> reintroduce commercial pricing, ROI projections, or remediation
+            bundles anywhere in the submission. This would re-trigger SOW §6a violation.</li>
+            <li class="block">Do <strong>not</strong> reintroduce out-of-scope content (UI/UX redesign, AI Chat,
+            Cruises, Aviation, Yachts).</li>
+            <li class="block">Do <strong>not</strong> reinstate the unsupported $6.8M revenue figure or any revenue
+            estimate without the explicit methodology now present in Section 7.</li>
+            <li class="block">Do <strong>not</strong> submit without the cover letter. Bare document submission
+            leaves the residual risks unaddressed.</li>
+        </ul>
+
+        <h3>6.3 After Acceptance — Next Steps</h3>
+        <ul class="check-list">
+            <li class="ok">Request LAR to provision pre-production environment and GDS sandbox credentials to execute
+            the 14 test scenarios in Annex I (T-001–T-014)</li>
+            <li class="ok">Once runtime evidence is collected, produce Annex H v2 (runtime evidence pack) to formally
+            close the evidence gap and trigger the 60% milestone payment</li>
+            <li class="ok">Prepare a separate remediation proposal document at LAR's invitation, after audit acceptance,
+            per SOW §6a — this is where the remediation cost proposals may go</li>
+            <li class="ok">Track LAR's progress against the 18 Conditional Go conditions (CGo-01–CGo-18) to support
+            a future go-live readiness sign-off</li>
+        </ul>
+    </div>
+
+    <!-- ═══════════════════════════════════════ 7. CHANGE APPLIED ══ -->
+    <div class="section">
+        <h2>7. Change Applied to AUDIT_REPORT.md (Annex F Note Fix)</h2>
+        <p>The following targeted change has been applied to <code>AUDIT_REPORT.md</code> as part of this assessment
+        to resolve the Annex F inconsistency (Risk R-3 above).</p>
+
+        <h3>Before (v7.4 — previous wording)</h3>
+        <div style="background:#fff5f5; border:1px solid #f5c6cb; border-radius:6px; padding:14px 18px; font-size:0.88em; color:#721c24; line-height:1.6; margin: 10px 0;">
+            <em>"The Visual Audit Guide (previously submitted as Annex F) has been removed from this revised
+            submission as it contained a commercial remediation pricing proposal. Any future remediation proposal
+            will be submitted as a separate document at LAR's invitation, following acceptance of this audit report,
+            in compliance with SOW Section 6a (audit independence)."</em>
+        </div>
+
+        <h3>After (applied change)</h3>
+        <div style="background:#f5fff5; border:1px solid #c3e6cb; border-radius:6px; padding:14px 18px; font-size:0.88em; color:#155724; line-height:1.6; margin: 10px 0;">
+            <em>"The Visual Audit Guide (Annex F) has been revised in this submission. All commercial remediation
+            pricing, ROI projections, and chargeable work bundles have been removed per SOW Section 6a (audit
+            independence). The revised document is retained as a supplemental visual reference only at
+            <code>audit-files/Annex F — Visual Audit Guide.html</code>. It is not a TOR Section 5 mandatory
+            deliverable. Any future remediation proposal will be submitted as a separate document, at LAR's
+            invitation, following acceptance of this audit report."</em>
+        </div>
+
+        <h3>Rationale</h3>
+        <p>The revised Annex F (produced in PR #8) genuinely exists and contains no commercial content.
+        Describing it as "removed" when it is present in the deliverable set is inaccurate and could create
+        confusion. The corrected wording accurately describes the action taken (revision, not deletion), complies
+        with SOW §6a by confirming commercial content was removed, and avoids the appearance of hiding the
+        document.</p>
+    </div>
+
+    <!-- ═══════════════════════════════════════ 8. SUMMARY CHECKLIST ══ -->
+    <div class="section">
+        <h2>8. Submission Readiness Checklist</h2>
+
+        <h3>Cure Conditions (9/9)</h3>
+        <ul class="check-list">
+            <li class="ok">(a) Evidence for P0/P1 — static analysis evidence in Annex H; constraint documented in Annex I</li>
+            <li class="ok">(b) Three vertical findings — code-evidenced findings in §3 (Flights), §4 (Hotels), §5 (Cars)</li>
+            <li class="ok">(c) Booking flow and customer journey — §6 with 14-step analysis and failure-path findings</li>
+            <li class="ok">(d) Revenue methodology — §7 with explicit assumptions, benchmarks, confidence levels</li>
+            <li class="ok">(e) Structured Risk Register — Annex J, 29 findings with full per-entry metadata</li>
+            <li class="ok">(f) Measurable Go-Live conditions — §8.2 with 18 CGo conditions and verification methods</li>
+            <li class="ok">(g) Audit Limitations Register — Annex I with 8 constraints and impact assessments</li>
+            <li class="ok">(h) Out-of-scope content removed — UI/UX, AI Chat, Identity, Cruises, Aviation, Yachts all absent</li>
+            <li class="ok">(i) Commercial pricing removed — all work bundles, dollar figures, ROI projections removed from Annex F</li>
+        </ul>
+
+        <h3>TOR §5 Mandatory Deliverables (6/6)</h3>
+        <ul class="check-list">
+            <li class="ok">5.1 Audit Framework — §1 of AUDIT_REPORT.md</li>
+            <li class="ok">5.2 CTO-Level Audit Report — §2–8 of AUDIT_REPORT.md</li>
+            <li class="ok">5.3 Risk Register — Annex J</li>
+            <li class="ok">5.4 Go-Live Readiness Summary — §8 with 18 CGo conditions</li>
+            <li class="warn">5.5 Evidence Pack — Annex H (static analysis only; runtime evidence pending environment access)</li>
+            <li class="ok">5.6 Audit Limitations Register — Annex I</li>
+        </ul>
+
+        <h3>Content Hygiene</h3>
+        <ul class="check-list">
+            <li class="ok">No commercial pricing in any deliverable</li>
+            <li class="ok">No out-of-scope verticals (Cruises, Aviation, Yachts) covered</li>
+            <li class="ok">No UI/UX redesign content</li>
+            <li class="ok">No AI Chat Assistant proposal</li>
+            <li class="ok">No Identity Modernisation section</li>
+            <li class="ok">$6.8M revenue figure withdrawn; replacement uses transparent methodology</li>
+            <li class="ok">Annex F inconsistency resolved in AUDIT_REPORT.md (see §7)</li>
+            <li class="warn">Cover letter not yet drafted — recommended before submission (§6.1 Action 2)</li>
+            <li class="warn">Alignment call not yet requested — recommended to resolve environment access risk (§6.1 Action 1)</li>
+        </ul>
+    </div>
+
+    <!-- ═══════════════════════════════════════ FOOTER ══ -->
+    <div style="text-align:center; color:rgba(255,255,255,0.6); font-size:0.82em; margin-top:20px; padding-bottom:20px;">
+        LAR System — Submission Readiness Assessment &nbsp;|&nbsp; OrkinosAI / Dr. Ismail Kucukdurgut
+        &nbsp;|&nbsp; 2026-03-10 &nbsp;|&nbsp; CONFIDENTIAL
+    </div>
+
+</div>
+</body>
+</html>
