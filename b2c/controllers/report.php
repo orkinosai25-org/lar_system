@@ -254,9 +254,29 @@ class Report extends CI_Controller
 	/*
 	 * Flight Booking Details
 	 */
-	function flight_booking_details()
+	function flight_booking_details(): void
 	{
-		echo 'under working';exit;
+		$page_data = [];
+		$get_data = $this->input->get();
+
+		if (!valid_array($get_data) || empty($get_data['status']) || empty($get_data['reference_id']) || empty($get_data['app_reference'])) {
+			redirect('general/index/flights?event=Invalid Booking Details');
+			return;
+		}
+
+		$booking_id = trim($get_data['reference_id']);
+		$status = trim($get_data['status']);
+		$app_reference = trim($get_data['app_reference']);
+		$booking_details = $this->flight_model->get_booking_details($app_reference, $booking_id, $status);
+
+		if (!valid_array($booking_details) || $booking_details['status'] !== SUCCESS_STATUS) {
+			redirect('general/index/flights?event=Invalid Booking ID');
+			return;
+		}
+
+		$assem_book_det = $this->booking_data_formatter->format_flight_booking_data($booking_details, 'b2c');
+		$page_data['data'] = $assem_book_det['data'];
+		$this->template->view('flight/booking_details', $page_data);
 	}
 	/*
 	 * Flight Ticket
@@ -324,9 +344,35 @@ class Report extends CI_Controller
 	/*
 	 * Mail Flight Ticket
 	 */
-	function email_flight_ticket():void
+	function email_flight_ticket(string $app_reference, string $booking_source = '', string $booking_status = '', string $user_email_id = ''): void
 	{
-		echo 'under working';exit;
+		$page_data = [];
+		if (empty($app_reference)) {
+			redirect('general/index/flights?event=Invalid Details');
+			return;
+		}
+
+		$booking_details = $this->flight_model->get_booking_details($app_reference, $booking_source, $booking_status);
+
+		if ($booking_details['status'] !== SUCCESS_STATUS) {
+			header('Content-Type:application/json');
+			echo json_encode(['status' => 'failed']);
+			exit;
+		}
+
+		$this->load->library("provab_pdf");
+		$this->load->library('provab_mailer');
+
+		$page_data['booking_details'] = $booking_details;
+		$mail_template = $this->template->isolated_view('flight/get_eticket', $page_data);
+		$pdf = $this->provab_pdf->create_pdf($mail_template);
+		$user_email_id = trim($user_email_id);
+
+		$this->provab_mailer->send_mail($user_email_id, 'ProApp - Flight Ticket', $mail_template, $pdf);
+
+		header('Content-Type:application/json');
+		echo json_encode(['status' => SUCCESS_STATUS]);
+		exit;
 	}
 	
 	function monthly_booking_report():void
@@ -404,8 +450,25 @@ class Report extends CI_Controller
 		}
 	}
 
-	function pnr_status(){
-		echo "no PNR found";
+	function pnr_status(): void
+	{
+		$pnr_number = trim((string)($this->input->post('pnr_number') ?? $this->input->get('pnr_number') ?? ''));
+
+		header('Content-Type:application/json');
+
+		if (empty($pnr_number)) {
+			echo json_encode(['status' => FAILURE_STATUS, 'message' => 'No PNR provided']);
+			exit;
+		}
+
+		$booking_details = $this->flight_model->booking_guest_user($pnr_number);
+
+		if (valid_array($booking_details) && $booking_details['status'] === SUCCESS_STATUS) {
+			echo json_encode(['status' => SUCCESS_STATUS, 'message' => 'PNR found']);
+		} else {
+			echo json_encode(['status' => FAILURE_STATUS, 'message' => 'No PNR found']);
+		}
+		exit;
 	}
 	/* print the voucher for all modules for B2C*/
 	function cancel_booking(): void

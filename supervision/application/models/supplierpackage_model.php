@@ -306,4 +306,36 @@ public function get_image(int $package_id):false {
 		$this->db->where ( 'package_types_id', $id );
 		$this->db->update ( 'package_types', $add_package_data );
 	}
+
+	public function b2b_package_report(array $condition = [], bool $count = false, int $offset = 0, int $limit = 100000000000): array|int
+	{
+		$condition_str = '';
+		if (valid_array($condition)) {
+			foreach ($condition as $cond) {
+				$condition_str .= ' AND ' . $cond[0] . ' ' . $cond[1] . ' ' . $cond[2];
+			}
+		}
+
+		if ($count) {
+			$query = 'SELECT COUNT(PE.id) AS total_records
+					  FROM package_enquiry PE
+					  LEFT JOIN package P ON PE.package_id = P.package_id
+					  WHERE 1=1 ' . $condition_str;
+			$data = $this->db->query($query)->row_array();
+			return (int)($data['total_records'] ?? 0);
+		}
+
+		$query = 'SELECT PE.*, P.title AS package_name
+				  FROM package_enquiry PE
+				  LEFT JOIN package P ON PE.package_id = P.package_id
+				  WHERE 1=1 ' . $condition_str . '
+				  ORDER BY PE.date DESC, PE.id DESC
+				  LIMIT ' . (int)$offset . ', ' . (int)$limit;
+		return $this->db->query($query)->result_array();
+	}
+
+	public function b2c_package_report(array $condition = [], bool $count = false, int $offset = 0, int $limit = 100000000000): array|int
+	{
+		return $this->b2b_package_report($condition, $count, $offset, $limit);
+	}
 }

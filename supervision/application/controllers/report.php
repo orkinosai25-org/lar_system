@@ -17,6 +17,7 @@ class Report extends CI_Controller
         $this->load->model('flight_model');
         $this->load->model('car_model');
         $this->load->model('user_model');
+        $this->load->model('supplierpackage_model');
         $this->load->library('booking_data_formatter');
         $this->current_module = $this->config->item('current_module');
         //		$this->load->library('export');
@@ -918,7 +919,9 @@ class Report extends CI_Controller
     {
         load_flight_lib($booking_source);
         $this->flight_lib->update_flight_booking_details($app_reference);
-        //FIXME: Return the status
+        header('Content-Type:application/json');
+        echo json_encode(['status' => SUCCESS_STATUS]);
+        exit;
     }
     /**
      * Sagar Wakchaure
@@ -939,17 +942,93 @@ class Report extends CI_Controller
 
     public function package(): void
     {
-        echo '<h4>Under Working</h4>';
+        redirect('report/b2c_package_report');
     }
 
-    public function b2b_package_report(): void
+    public function b2b_package_report(int $offset = 0): void
     {
-        echo '<h4>Under Working</h4>';
+        $page_data = [];
+        $config = [];
+        $condition = [];
+        $get_data = $this->input->get();
+
+        if (valid_array($get_data)) {
+            $from_date = trim(@$get_data['from_date']);
+            $to_date   = trim(@$get_data['to_date']);
+            if (!empty($from_date) && !empty($to_date)) {
+                $valid_dates = auto_swipe_dates($from_date, $to_date);
+                $from_date   = $valid_dates['from_date'];
+                $to_date     = $valid_dates['to_date'];
+            }
+            if (!empty($from_date)) {
+                $condition[] = ['PE.date', '>=', $this->db->escape($from_date)];
+            }
+            if (!empty($to_date)) {
+                $condition[] = ['PE.date', '<=', $this->db->escape($to_date)];
+            }
+            if (!empty($get_data['package_name'])) {
+                $condition[] = ['P.title', ' like ', $this->db->escape('%' . $get_data['package_name'] . '%')];
+            }
+            $page_data['from_date'] = $from_date ?? '';
+            $page_data['to_date']   = $to_date ?? '';
+        }
+
+        $total_records = $this->supplierpackage_model->b2b_package_report($condition, true);
+        $table_data    = $this->supplierpackage_model->b2b_package_report($condition, false, $offset, RECORDS_RANGE_2);
+        $page_data['table_data'] = $table_data;
+        $this->load->library('pagination');
+        if (count($_GET) > 0) $config['suffix'] = '?' . http_build_query($_GET, '', '&');
+        $config['base_url']  = base_url() . 'index.php/report/b2b_package_report/';
+        $config['first_url'] = $config['base_url'] . '?' . http_build_query($_GET);
+        $page_data['total_rows'] = $config['total_rows'] = $total_records;
+        $config['per_page'] = RECORDS_RANGE_2;
+        $this->pagination->initialize($config);
+        $page_data['total_records'] = $config['total_rows'];
+        $page_data['search_params'] = $get_data;
+        $this->template->view('report/b2b_report_package', $page_data);
     }
 
-    public function b2c_package_report(): void
+    public function b2c_package_report(int $offset = 0): void
     {
-        echo '<h4>Under Working</h4>';
+        $page_data = [];
+        $config = [];
+        $condition = [];
+        $get_data = $this->input->get();
+
+        if (valid_array($get_data)) {
+            $from_date = trim(@$get_data['from_date']);
+            $to_date   = trim(@$get_data['to_date']);
+            if (!empty($from_date) && !empty($to_date)) {
+                $valid_dates = auto_swipe_dates($from_date, $to_date);
+                $from_date   = $valid_dates['from_date'];
+                $to_date     = $valid_dates['to_date'];
+            }
+            if (!empty($from_date)) {
+                $condition[] = ['PE.date', '>=', $this->db->escape($from_date)];
+            }
+            if (!empty($to_date)) {
+                $condition[] = ['PE.date', '<=', $this->db->escape($to_date)];
+            }
+            if (!empty($get_data['package_name'])) {
+                $condition[] = ['P.title', ' like ', $this->db->escape('%' . $get_data['package_name'] . '%')];
+            }
+            $page_data['from_date'] = $from_date ?? '';
+            $page_data['to_date']   = $to_date ?? '';
+        }
+
+        $total_records = $this->supplierpackage_model->b2c_package_report($condition, true);
+        $table_data    = $this->supplierpackage_model->b2c_package_report($condition, false, $offset, RECORDS_RANGE_2);
+        $page_data['table_data'] = $table_data;
+        $this->load->library('pagination');
+        if (count($_GET) > 0) $config['suffix'] = '?' . http_build_query($_GET, '', '&');
+        $config['base_url']  = base_url() . 'index.php/report/b2c_package_report/';
+        $config['first_url'] = $config['base_url'] . '?' . http_build_query($_GET);
+        $page_data['total_rows'] = $config['total_rows'] = $total_records;
+        $config['per_page'] = RECORDS_RANGE_2;
+        $this->pagination->initialize($config);
+        $page_data['total_records'] = $config['total_rows'];
+        $page_data['search_params'] = $get_data;
+        $this->template->view('report/b2c_report_package', $page_data);
     }
     private function format_basic_search_filters(string $module = ''): array
     {
