@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LAR System — Annex H: Static Analysis Evidence Log</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header { text-align: center; color: white; margin-bottom: 60px; }
+        .header h1 { font-size: 2.6em; margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .header p { font-size: 1.1em; opacity: 0.9; }
+        .meta { display: flex; justify-content: center; gap: 40px; margin-top: 20px; flex-wrap: wrap; }
+        .meta-item { background: rgba(255,255,255,0.15); border-radius: 8px; padding: 10px 20px; color: white; font-size: 0.95em; }
+
+        .document-section {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            margin-bottom: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .document-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 15px;
+            font-size: 1.6em;
+        }
+        .document-section h3 { color: #667eea; margin-top: 30px; margin-bottom: 15px; font-size: 1.2em; }
+        .document-section p { color: #555; line-height: 1.7; margin-bottom: 12px; }
+
+        /* Severity badges */
+        .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.78em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+        .badge-p0 { background: #dc3545; color: white; }
+        .badge-p1 { background: #fd7e14; color: white; }
+        .badge-p2 { background: #ffc107; color: #333; }
+        .badge-info { background: #17a2b8; color: white; }
+
+        /* Tables */
+        .audit-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.88em; }
+        .audit-table th {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 10px 14px;
+            text-align: left;
+            font-weight: 600;
+        }
+        .audit-table td { padding: 9px 14px; border-bottom: 1px solid #eee; vertical-align: top; }
+        .audit-table tr:nth-child(even) td { background: #f8f9ff; }
+        .audit-table tr:hover td { background: #f0f0ff; }
+
+        /* Code blocks */
+        .code-block {
+            background: #1e1e2e;
+            color: #cdd6f4;
+            border-radius: 8px;
+            padding: 18px 22px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.83em;
+            overflow-x: auto;
+            margin: 14px 0;
+            line-height: 1.55;
+            border-left: 4px solid #667eea;
+        }
+        .code-block .err  { color: #f38ba8; font-weight: bold; }
+        .code-block .warn { color: #fab387; }
+        .code-block .ok   { color: #a6e3a1; }
+        .code-block .path { color: #89dceb; }
+        .code-block .line { color: #f9e2af; }
+        .code-block .comment { color: #6c7086; font-style: italic; }
+
+        /* Finding cards */
+        .finding-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px 24px;
+            margin: 18px 0;
+            border-left: 5px solid #667eea;
+        }
+        .finding-card.critical { border-left-color: #dc3545; background: #fff8f8; }
+        .finding-card.high     { border-left-color: #fd7e14; background: #fffaf5; }
+        .finding-card.medium   { border-left-color: #ffc107; background: #fffdf0; }
+        .finding-card .finding-title { font-weight: 700; font-size: 1.05em; margin-bottom: 6px; }
+        .finding-card .finding-detail { color: #555; font-size: 0.92em; line-height: 1.6; }
+
+        /* Summary stats row */
+        .stats-row { display: flex; gap: 20px; flex-wrap: wrap; margin: 20px 0; }
+        .stat-box {
+            flex: 1; min-width: 140px;
+            border-radius: 10px; padding: 18px 20px; text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .stat-box.red   { background: #dc3545; color: white; }
+        .stat-box.orange{ background: #fd7e14; color: white; }
+        .stat-box.yellow{ background: #ffc107; color: #333; }
+        .stat-box.blue  { background: #0d6efd; color: white; }
+        .stat-box .stat-num { font-size: 2.4em; font-weight: 800; }
+        .stat-box .stat-lbl { font-size: 0.82em; opacity: 0.9; margin-top: 4px; }
+
+        .toc { background: #f8f9ff; border-radius: 10px; padding: 20px 28px; margin-bottom: 30px; }
+        .toc h3 { color: #667eea; margin-bottom: 12px; }
+        .toc ol { padding-left: 22px; }
+        .toc li { margin: 6px 0; color: #444; font-size: 0.95em; }
+        .toc a { color: #667eea; text-decoration: none; }
+        .toc a:hover { text-decoration: underline; }
+
+        .stamp {
+            display: inline-block;
+            border: 3px solid #dc3545;
+            color: #dc3545;
+            font-size: 1.5em;
+            font-weight: 800;
+            padding: 6px 20px;
+            border-radius: 6px;
+            transform: rotate(-4deg);
+            letter-spacing: 2px;
+            margin: 10px 0;
+        }
+
+        footer { text-align: center; color: rgba(255,255,255,0.75); margin-top: 40px; font-size: 0.88em; padding: 20px 0; }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- Header -->
+    <div class="header">
+        <h1>LAR System — Annex H</h1>
+        <h2 style="font-size:1.4em; font-weight:400; margin-top:8px;">Static Analysis Evidence Log</h2>
+        <div class="meta">
+            <div class="meta-item">🗓 Run Date: 2026-03-10</div>
+            <div class="meta-item">🔒 Classification: CONFIDENTIAL — INTERNAL USE ONLY</div>
+            <div class="meta-item">📋 Report Version: v1.0</div>
+            <div class="meta-item">🛠 Method: PHP lint (php -l), grep static scan</div>
+        </div>
+    </div>
+
+    <!-- Scope -->
+    <div class="document-section">
+        <h2>Scope &amp; Methodology</h2>
+        <p>This evidence log was produced as a supplementary annex to the <strong>LAR System Audit &amp; Security Readiness Report v7.3.3</strong>. It provides raw static-analysis output — no code modifications were made. The scans cover all six application modules: <code>b2c</code>, <code>agent</code>, <code>supplier</code>, <code>ultralux</code>, <code>supervision</code>, <code>services/webservices</code>.</p>
+        <p><strong>Tools used:</strong> PHP CLI lint (<code>php -l</code>), <code>grep</code> pattern matching for security-relevant constructs.</p>
+        <p><strong>Not in scope:</strong> Runtime logs (server not running in analysis environment), penetration testing, database access.</p>
+
+        <div class="stamp">NOT PRODUCTION-READY</div>
+
+        <!-- Summary stats -->
+        <div class="stats-row" style="margin-top:24px;">
+            <div class="stat-box red"><div class="stat-num">4</div><div class="stat-lbl">PHP Parse / Fatal Errors</div></div>
+            <div class="stat-box red"><div class="stat-num">9</div><div class="stat-lbl">Hardcoded DB Passwords</div></div>
+            <div class="stat-box orange"><div class="stat-num">6</div><div class="stat-lbl">Stub / Dead-End Methods</div></div>
+            <div class="stat-box orange"><div class="stat-num">6</div><div class="stat-lbl">CSRF Disabled (all modules)</div></div>
+            <div class="stat-box orange"><div class="stat-num">6</div><div class="stat-lbl">cookie_secure = FALSE</div></div>
+            <div class="stat-box yellow"><div class="stat-num">14+</div><div class="stat-lbl">display_errors ON in prod</div></div>
+            <div class="stat-box blue"><div class="stat-num">50+</div><div class="stat-lbl">FIXME/TODO markers</div></div>
+        </div>
+
+        <!-- TOC -->
+        <div class="toc" style="margin-top:30px;">
+            <h3>Contents</h3>
+            <ol>
+                <li><a href="#sec1">PHP Parse &amp; Fatal Error Log</a></li>
+                <li><a href="#sec2">Incomplete / Stub Code Log</a></li>
+                <li><a href="#sec3">Hardcoded Credentials — Grep Report</a></li>
+                <li><a href="#sec4">CSRF Protection Disabled — All Modules</a></li>
+                <li><a href="#sec5">Cookie Security Flags Disabled</a></li>
+                <li><a href="#sec6">Verbose Error Exposure (display_errors ON)</a></li>
+                <li><a href="#sec7">Weak Password Hashing (MD5)</a></li>
+                <li><a href="#sec8">SQL Injection Risk — Unparameterised Queries</a></li>
+                <li><a href="#sec9">XSS Risk — Unescaped $_GET Output</a></li>
+                <li><a href="#sec10">Mapping to Audit Report v7.3.3 Findings</a></li>
+            </ol>
+        </div>
+    </div>
+
+    <!-- SECTION 1: PHP Parse/Fatal Errors -->
+    <div class="document-section" id="sec1">
+        <h2>1. PHP Parse &amp; Fatal Error Log</h2>
+        <p>Command: <code>php -l &lt;file&gt;</code> run against all <code>.php</code> files under application modules (excluding <code>system/</code>, <code>extras/</code>).</p>
+
+        <div class="code-block">
+<span class="comment"># Run: for f in $(find . -name "*.php" -not -path "*system*"); do php -l "$f" 2>&amp;1 | grep "Parse error\|Fatal error"; done</span>
+
+<span class="err">PHP Parse error:</span>  syntax error, unexpected token "public"
+  <span class="path">File: services/webservices/application/models/flight_model.php</span>
+  <span class="line">Line: 279</span>
+  <span class="warn">Impact: Entire services/webservices flight model fails to load — flight availability, booking, and PNR routes return 500.</span>
+
+<span class="err">PHP Parse error:</span>  Unclosed '{' on line 12
+  <span class="path">File: agent/application/controllers/hotel.php</span>
+  <span class="line">Line: 1028</span>
+  <span class="warn">Impact: Agent hotel controller fails to load — hotel search and booking unavailable for agent users.</span>
+
+<span class="err">PHP Fatal error:</span>  Cannot use string as default value for parameter $season_origin of type int
+  <span class="path">File: supplier/application/controllers/eco_stays.php</span>
+  <span class="line">Line: 700</span>
+  <span class="warn">Impact: Supplier eco-stays controller fails to instantiate — eco-stays management pages unavailable.</span>
+
+<span class="err">PHP Fatal error:</span>  Unparenthesized `a ? b : c ? d : e` is not supported. Use either `(a ? b : c) ? d : e` or `a ? b : (c ? d : e)`
+  <span class="path">File: b2c/views/template_list/template_v3/share/transfer_search.php</span>
+  <span class="line">Line: 26</span>
+  <span class="warn">Impact: Transfer search view renders fatal error for B2C customers — transfer product broken.</span>
+        </div>
+
+        <table class="audit-table">
+            <thead>
+                <tr><th>Severity</th><th>File</th><th>Line</th><th>Error</th><th>Impact</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><span class="badge badge-p0">P0</span></td>
+                    <td><code>services/webservices/application/models/flight_model.php</code></td>
+                    <td>279</td>
+                    <td>Parse error: unexpected token "public"</td>
+                    <td>Flight webservice model unloadable — booking/PNR routes fail</td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-p0">P0</span></td>
+                    <td><code>agent/application/controllers/hotel.php</code></td>
+                    <td>1028</td>
+                    <td>Parse error: Unclosed '{'</td>
+                    <td>Agent hotel controller unloadable — hotel booking broken for agents</td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-p1">P1</span></td>
+                    <td><code>supplier/application/controllers/eco_stays.php</code></td>
+                    <td>700</td>
+                    <td>Fatal error: string default for typed int param</td>
+                    <td>Eco-stays supplier controller fails — eco-stays management unavailable</td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-p1">P1</span></td>
+                    <td><code>b2c/views/.../share/transfer_search.php</code></td>
+                    <td>26</td>
+                    <td>Fatal error: unparenthesized ternary chain</td>
+                    <td>B2C transfer search view fatal — transfer product broken for customers</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- SECTION 2: Stub code -->
+    <div class="document-section" id="sec2">
+        <h2>2. Incomplete / Stub Code Log</h2>
+        <p>Command: <code>grep -rn "under working\|Under Working\|FIXME" --include="*.php"</code></p>
+        <p>Six methods across the reporting layer are hardcoded to return stub HTML/text instead of real data, blocking both B2C user-facing reports and the supervision admin panel package reports.</p>
+
+        <div class="code-block">
+<span class="comment"># b2c/controllers/report.php</span>
+<span class="line">Line 259:</span>  <span class="err">echo 'under working'; exit;</span>   <span class="comment">// function flight_booking_details()</span>
+<span class="line">Line 329:</span>  <span class="err">echo 'under working'; exit;</span>   <span class="comment">// function email_flight_ticket()</span>
+
+<span class="comment"># supervision/application/controllers/report.php</span>
+<span class="line">Line 921:</span>  <span class="warn">//FIXME: Return the status</span>   <span class="comment">// function update_flight_booking_details() — silent void return</span>
+<span class="line">Line 942:</span>  <span class="err">echo '&lt;h4&gt;Under Working&lt;/h4&gt;';</span>   <span class="comment">// function package()</span>
+<span class="line">Line 947:</span>  <span class="err">echo '&lt;h4&gt;Under Working&lt;/h4&gt;';</span>   <span class="comment">// function b2b_package_report()</span>
+<span class="line">Line 952:</span>  <span class="err">echo '&lt;h4&gt;Under Working&lt;/h4&gt;';</span>   <span class="comment">// function b2c_package_report()</span>
+        </div>
+
+        <table class="audit-table">
+            <thead>
+                <tr><th>Severity</th><th>File</th><th>Line</th><th>Function</th><th>Stub</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><span class="badge badge-p0">P0</span></td>
+                    <td><code>b2c/controllers/report.php</code></td>
+                    <td>259</td>
+                    <td><code>flight_booking_details()</code></td>
+                    <td><code>echo 'under working'; exit;</code></td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-p0">P0</span></td>
+                    <td><code>b2c/controllers/report.php</code></td>
+                    <td>329</td>
+                    <td><code>email_flight_ticket()</code></td>
+                    <td><code>echo 'under working'; exit;</code></td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-p1">P1</span></td>
+                    <td><code>supervision/.../controllers/report.php</code></td>
+                    <td>921</td>
+                    <td><code>update_flight_booking_details()</code></td>
+                    <td>Silent void return — no JSON response</td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-p1">P1</span></td>
+                    <td><code>supervision/.../controllers/report.php</code></td>
+                    <td>942</td>
+                    <td><code>package()</code></td>
+                    <td><code>echo '&lt;h4&gt;Under Working&lt;/h4&gt;';</code></td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-p1">P1</span></td>
+                    <td><code>supervision/.../controllers/report.php</code></td>
+                    <td>947</td>
+                    <td><code>b2b_package_report()</code></td>
+                    <td><code>echo '&lt;h4&gt;Under Working&lt;/h4&gt;';</code></td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-p1">P1</span></td>
+                    <td><code>supervision/.../controllers/report.php</code></td>
+                    <td>952</td>
+                    <td><code>b2c_package_report()</code></td>
+                    <td><code>echo '&lt;h4&gt;Under Working&lt;/h4&gt;';</code></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>Additional FIXME / TODO Markers (50+ total)</h3>
+        <table class="audit-table">
+            <thead>
+                <tr><th>File</th><th>Line</th><th>Marker</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>services/webservices/application/hooks/hooks.php</code></td><td>39–40</td><td>TODO: Digest Auth not implemented</td></tr>
+                <tr><td><code>services/webservices/application/models/user_model.php</code></td><td>529, 557</td><td>FIXME: send email/notification on domain admin change</td></tr>
+                <tr><td><code>services/webservices/application/models/domain_management_model.php</code></td><td>145</td><td>FIXME: send balance notification</td></tr>
+                <tr><td><code>agent/application/models/domain_management_model.php</code></td><td>409</td><td>TODO: Send SMS notification</td></tr>
+                <tr><td><code>agent/application/controllers/flight.php</code></td><td>628</td><td>FIXME: Failed booking logs</td></tr>
+                <tr><td><code>supervision/application/controllers/private_management.php</code></td><td>205, 251, 296, 336</td><td>TODO: better solution for currency conversion rate</td></tr>
+                <tr><td><code>supervision/application/models/domain_management_model.php</code></td><td>909</td><td>FIXME: Send Notification</td></tr>
+                <tr><td><code>b2c/config/constants.php</code></td><td>51–52</td><td>FIXME: CURRENT_DOMAIN_KEY and PROJECT_COOKIE_NAME</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- SECTION 3: Hardcoded Credentials -->
+    <div class="document-section" id="sec3">
+        <h2>3. Hardcoded Credentials — Grep Report <span class="badge badge-p0">P0 — Critical</span></h2>
+        <p>Command: <code>grep -rn "password.*=" --include="database.php"</code> and targeted pattern scans for API keys.</p>
+
+        <div class="finding-card critical">
+            <div class="finding-title">Production database passwords committed to source control</div>
+            <div class="finding-detail">Passwords for production and development/testing databases are stored in plaintext within versioned PHP config files. Any person with repository read access can obtain live database credentials.</div>
+        </div>
+
+        <div class="code-block">
+<span class="comment"># grep -rn "password.*=" --include="database.php" | grep -v "= ''"</span>
+
+<span class="err">agent/application/config/production/database.php:52</span>    $db['default']['password'] = '<span class="warn">LN2s]WDQ6$a%</span>';
+<span class="err">supplier/application/config/production/database.php:52</span>  $db['default']['password'] = '<span class="warn">LN2s]WDQ6$a%</span>';
+<span class="err">b2c/config/production/database.php:52</span>             $db['default']['password'] = '<span class="warn">LN2s]WDQ6$a%</span>';
+<span class="err">ultralux/application/config/production/database.php:52</span> $db['default']['password'] = '<span class="warn">LN2s]WDQ6$a%</span>';
+<span class="err">supervision/application/config/production/database.php:52</span>  $db['default']['password'] = '<span class="warn">LN2s]WDQ6$a%</span>';
+<span class="err">supervision/application/config/development/database.php:52</span>  $db['default']['password'] = '<span class="warn">32n8oL*8f</span>';
+<span class="err">supervision/application/config/development/database.php:71</span>  $db['seconddb']['password'] = '<span class="warn">5Eq8tu57%</span>';
+<span class="err">b2c/config/development/database.php:72</span>               $db['seconddb']['password'] = '<span class="warn">5Eq8tu57%</span>';
+<span class="err">services/webservices/application/config/testing/database.php:52</span>  $db['default']['password'] = '<span class="warn">Vx9u;1hR*6[9</span>';
+        </div>
+
+        <h3>Application / Payment Credentials Hardcoded</h3>
+
+        <div class="code-block">
+<span class="comment"># grep -rn "Provab@123\|4VVv\|AIzaSyALM" --include="*.php"</span>
+
+<span class="err">b2c/views/template_list/template_v1/payment/payment_page.php:3</span>
+   $password = '<span class="warn">4VVv!!vg3bd[</span>';     <span class="comment">// Payment gateway credential hardcoded in view</span>
+
+<span class="err">agent/application/controllers/auth.php:66</span>
+   $user_record['data'][0]['password'] = provab_encrypt(md5('<span class="warn">Provab@123</span>'));  <span class="comment">// Auth fallback</span>
+
+<span class="err">ultralux/application/controllers/auth.php:67</span>
+   $user_record['data'][0]['password'] = provab_encrypt(md5('<span class="warn">Provab@123</span>'));  <span class="comment">// Auth fallback</span>
+
+<span class="err">supervision/application/controllers/general.php:225</span>
+   $update['password'] = provab_encrypt(md5('<span class="warn">Provab@123</span>'));   <span class="comment">// Password reset default</span>
+
+<span class="err">supervision/application/controllers/user.php:1645</span>
+   $password = '<span class="warn">Provab@123</span>';    <span class="comment">// User management default</span>
+
+<span class="err">supplier/application/config/provab_config.php:58</span>
+   $config['google_map_api_key'] = '<span class="warn">AIzaSyALMsvTHpbDZiE1lkq7Cn9ZOmLtGCUW2bg</span>';   <span class="comment">// Google Maps API key</span>
+        </div>
+
+        <table class="audit-table">
+            <thead>
+                <tr><th>Severity</th><th>File</th><th>Line</th><th>Credential Type</th><th>Value / Pattern</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><span class="badge badge-p0">P0</span></td><td><code>*/config/production/database.php</code></td><td>52</td><td>Production DB password (5 modules)</td><td><code>LN2s]WDQ6$a%</code></td></tr>
+                <tr><td><span class="badge badge-p0">P0</span></td><td><code>supervision/.../config/development/database.php</code></td><td>52, 71</td><td>Dev/staging DB passwords</td><td><code>32n8oL*8f</code>, <code>5Eq8tu57%</code></td></tr>
+                <tr><td><span class="badge badge-p0">P0</span></td><td><code>services/.../config/testing/database.php</code></td><td>52</td><td>Testing DB password</td><td><code>Vx9u;1hR*6[9</code></td></tr>
+                <tr><td><span class="badge badge-p0">P0</span></td><td><code>b2c/views/.../payment/payment_page.php</code></td><td>3</td><td>Payment gateway password</td><td><code>4VVv!!vg3bd[</code></td></tr>
+                <tr><td><span class="badge badge-p0">P0</span></td><td><code>agent/application/controllers/auth.php</code></td><td>66</td><td>Auth fallback password (shared)</td><td><code>Provab@123</code></td></tr>
+                <tr><td><span class="badge badge-p0">P0</span></td><td><code>ultralux/.../controllers/auth.php</code></td><td>67</td><td>Auth fallback password (shared)</td><td><code>Provab@123</code></td></tr>
+                <tr><td><span class="badge badge-p0">P0</span></td><td><code>supervision/.../controllers/general.php</code></td><td>225</td><td>Password reset default</td><td><code>Provab@123</code></td></tr>
+                <tr><td><span class="badge badge-p0">P0</span></td><td><code>supervision/.../controllers/user.php</code></td><td>1645</td><td>User management default password</td><td><code>Provab@123</code></td></tr>
+                <tr><td><span class="badge badge-p1">P1</span></td><td><code>supplier/.../config/provab_config.php</code></td><td>58</td><td>Google Maps API key</td><td><code>AIzaSyALMsvTH...</code></td></tr>
+            </tbody>
+        </table>
+
+        <p><strong>Remediation (from Annex B Phase 0 — Emergency):</strong> Rotate all credentials immediately. Move all secrets to environment variables or a secret store (e.g., AWS Secrets Manager, HashiCorp Vault, GitHub Secrets). Add <code>database.php</code> production variants to <code>.gitignore</code>. Purge from git history with <code>git-filter-repo</code>.</p>
+    </div>
+
+    <!-- SECTION 4: CSRF -->
+    <div class="document-section" id="sec4">
+        <h2>4. CSRF Protection Disabled — All Modules <span class="badge badge-p1">P1</span></h2>
+        <p>Command: <code>grep -rn "csrf_protection" --include="config.php"</code></p>
+
+        <div class="code-block">
+<span class="comment"># All six modules:</span>
+<span class="err">services/webservices/application/config/config.php:297</span>   $config['csrf_protection'] = <span class="warn">FALSE</span>;
+<span class="err">agent/application/config/config.php:297</span>               $config['csrf_protection'] = <span class="warn">FALSE</span>;
+<span class="err">supplier/application/config/config.php:297</span>             $config['csrf_protection'] = <span class="warn">FALSE</span>;
+<span class="err">b2c/config/config.php:297</span>                             $config['csrf_protection'] = <span class="warn">FALSE</span>;
+<span class="err">ultralux/application/config/config.php:297</span>             $config['csrf_protection'] = <span class="warn">FALSE</span>;
+<span class="err">supervision/application/config/config.php:297</span>          $config['csrf_protection'] = <span class="warn">FALSE</span>;
+        </div>
+
+        <p>CSRF protection is disabled on all CodeIgniter configurations. POST-based booking, payment, and management forms are vulnerable to Cross-Site Request Forgery attacks. An attacker on a third-party site can trigger booking or profile changes on behalf of a logged-in user.</p>
+        <p><strong>Remediation:</strong> Set <code>$config['csrf_protection'] = TRUE;</code> across all modules and include <code>{csrf_field()}</code> in all POST forms.</p>
+    </div>
+
+    <!-- SECTION 5: Cookie Flags -->
+    <div class="document-section" id="sec5">
+        <h2>5. Cookie Security Flags Disabled <span class="badge badge-p1">P1</span></h2>
+        <p>Command: <code>grep -rn "cookie_secure\|cookie_httponly" --include="config.php"</code></p>
+
+        <div class="code-block">
+<span class="comment"># Across all six modules:</span>
+<span class="err">*/config/config.php:272</span>   $config['cookie_secure'] = <span class="warn">FALSE</span>;
+<span class="comment"># HttpOnly flag — not explicitly set in any module config (defaults may vary)</span>
+        </div>
+
+        <p><code>cookie_secure = FALSE</code> means session cookies are transmitted over plain HTTP, exposing them to network eavesdropping (session hijacking). The <code>Secure</code>, <code>HttpOnly</code>, and <code>SameSite</code> cookie attributes must be enforced on all session cookies.</p>
+        <p><strong>Remediation:</strong> Set <code>$config['cookie_secure'] = TRUE;</code> and verify <code>cookie_httponly = TRUE</code> in all modules. Deploy behind HTTPS-only (enforce HSTS).</p>
+    </div>
+
+    <!-- SECTION 6: display_errors -->
+    <div class="document-section" id="sec6">
+        <h2>6. Verbose Error Exposure (<code>display_errors ON</code>) <span class="badge badge-p0">P0</span></h2>
+        <p>Command: <code>grep -rn "display_errors\|ini_set.*display" --include="*.php"</code></p>
+
+        <div class="code-block">
+<span class="comment"># Active display_errors = 1 in production-facing controllers:</span>
+<span class="err">services/webservices/application/controllers/flight.php:3</span>    ini_set('display_errors',<span class="warn">1</span>);
+<span class="err">services/webservices/application/controllers/hotel_v3.php:4</span>  ini_set('display_errors',<span class="warn">1</span>);
+<span class="err">services/webservices/application/controllers/car.php:3</span>       ini_set('display_errors',<span class="warn">1</span>);
+<span class="err">services/webservices/index.php:50</span>                           ini_set('display_errors',<span class="warn">1</span>);
+<span class="err">services/index.php:46</span>                                       ini_set('display_errors',<span class="warn">1</span>);
+<span class="err">b2c/controllers/auth.php:3</span>                                  ini_set('display_errors',<span class="warn">1</span>);
+<span class="err">b2c/controllers/general.php:3</span>                               ini_set('display_errors',<span class="warn">1</span>);
+<span class="err">b2c/controllers/flight.php:3</span>                                ini_set('display_errors',<span class="warn">1</span>);
+<span class="err">b2c/controllers/user.php:3</span>                                  ini_set('display_errors',<span class="warn">1</span>);
+<span class="err">supplier/application/controllers/auth.php:71</span>               ini_set('display_errors','<span class="warn">1</span>');
+<span class="err">supplier/.../eco_stays/eco_stays_amenities.php:49</span>            ini_set('display_errors',<span class="warn">1</span>);
+<span class="err">agent/application/controllers/hotel.php:523</span>                error_reporting(<span class="warn">E_ALL</span>);
+<span class="err">ultralux/.../controllers/management.php:38</span>                  ini_set('display_errors',<span class="warn">1</span>);
+<span class="err">services/webservices/application/models/car_model.php:2</span>    error_reporting(<span class="warn">E_ALL</span>);
+        </div>
+
+        <p>Verbose PHP errors in customer-facing booking, payment, and flight controllers expose internal stack traces, file paths, SQL queries, and application structure to end users and attackers. This is a P0 risk (Audit v7.3.3 §1 — Verbose error exposure in payment/booking flows).</p>
+        <p><strong>Remediation:</strong> Set <code>ini_set('display_errors', 0);</code> globally in production index files. Route all errors to a secure log file only. Remove all per-controller <code>error_reporting(E_ALL)</code> / <code>display_errors=1</code> calls.</p>
+    </div>
+
+    <!-- SECTION 7: Password Hashing -->
+    <div class="document-section" id="sec7">
+        <h2>7. Weak Password Hashing (MD5) <span class="badge badge-p0">P0</span></h2>
+        <p>Command: <code>grep -rn "md5(" --include="*.php" | grep -i password</code></p>
+
+        <div class="code-block">
+<span class="comment"># Authentication using MD5 — cryptographically broken (rainbow-table / collision attacks)</span>
+
+<span class="err">services/webservices/application/hooks/hooks.php:115</span>
+   'password' =&gt; <span class="warn">md5($password)</span>
+
+<span class="err">services/webservices/application/hooks/hooks.php:167</span>
+   'password' =&gt; <span class="warn">md5($this->CI->db->escape_str($password))</span>
+
+<span class="err">services/webservices/application/models/user_model.php:40</span>
+   'password' =&gt; <span class="warn">md5($password)</span>
+
+<span class="err">agent/application/controllers/auth.php:66</span>
+   $user_record['data'][0]['password'] = provab_encrypt(<span class="warn">md5('Provab@123')</span>);
+
+<span class="err">supervision/application/controllers/general.php:225</span>
+   $update['password'] = provab_encrypt(<span class="warn">md5('Provab@123')</span>);
+        </div>
+
+        <p>MD5 is not a password hashing algorithm. It is a fast hash designed for checksums, making brute-force and rainbow-table attacks trivially fast. All user authentication must migrate to <code>password_hash()</code> with <code>PASSWORD_ARGON2ID</code> or <code>PASSWORD_BCRYPT</code> with progressive rehashing on next login.</p>
+    </div>
+
+    <!-- SECTION 8: SQL Injection -->
+    <div class="document-section" id="sec8">
+        <h2>8. SQL Injection Risk — Unparameterised Queries <span class="badge badge-p0">P0</span></h2>
+        <p>Command: <code>grep -rn "db-&gt;query.*\." --include="*.php" | grep -v "escape\|//"</code></p>
+
+        <div class="code-block">
+<span class="comment"># Unescaped variable concatenation in raw SQL strings:</span>
+
+<span class="err">services/webservices/application/models/hotel_model_v3.php:707</span>
+   $this->db->query('SELECT * FROM all_api_city_master WHERE origin=' . <span class="warn">$hotel_city_id</span>)
+
+<span class="err">supplier/application/controllers/eco_stays.php:567</span>
+   $this->db->query('SELECT ... WHERE season_origin = ' . <span class="warn">$origin</span> . ' GROUP BY ...')
+
+<span class="err">supplier/application/controllers/eco_stays.php:1264</span>
+   $this->db->query("SELECT * FROM eco_stays_room_cancellation_policy WHERE room_origin = " . <span class="warn">$room_origin</span>)
+
+<span class="err">b2c/controllers/general.php:438</span>
+   $this->db->query("SELECT AES_DECRYPT(<span class="warn">$encrypt_key</span>,SHA2('" . <span class="warn">$md5_key</span> . "',512)) AS decrypt_data")
+
+<span class="err">b2c/controllers/general.php:492, 521</span>
+   <span class="comment">// Same AES_DECRYPT pattern repeated — $encrypt_key interpolated directly into query string</span>
+
+<span class="err">agent/application/hooks/hooks.php:327</span>
+   $this->CI->db->query("SELECT AES_DECRYPT(<span class="warn">$encrypt_key</span>,SHA2('" . <span class="warn">$md5_key</span> . "',512)) AS decrypt_data")
+        </div>
+
+        <p>Multiple locations pass user-controlled or session-derived values directly into SQL query strings without parameterisation. The CodeIgniter Query Builder and prepared statements (<code>$this->db->query($sql, $params)</code>) should be used consistently. The AES_DECRYPT pattern is particularly sensitive as it occurs in authentication/decryption flows.</p>
+    </div>
+
+    <!-- SECTION 9: XSS -->
+    <div class="document-section" id="sec9">
+        <h2>9. XSS Risk — Unescaped <code>$_GET</code> Output <span class="badge badge-p1">P1</span></h2>
+        <p>Command: <code>grep -rn "echo.*\$_GET" --include="*.php"</code></p>
+
+        <div class="code-block">
+<span class="comment"># $GET values echoed without htmlspecialchars / form_input escaping:</span>
+
+<span class="err">supplier/application/views/.../report/b2c_hotel_report.php:16</span>
+   echo <span class="warn">$_GET['app_reference']</span>;   <span class="comment">// in form input value attribute</span>
+
+<span class="err">supplier/application/views/.../report/b2c_hotel_report.php:31</span>
+   echo <span class="warn">$_GET['created_datetime_from']</span>;
+
+<span class="err">supplier/application/views/.../report/b2c_hotel_report.php:32</span>
+   echo <span class="warn">$_GET['created_datetime_to']</span>;
+
+<span class="err">supervision/.../utilities/manage_promo_code.php:64</span>
+   echo generate_options($options, (array)@<span class="warn">$_GET['module']</span>);
+        </div>
+
+        <p>User-supplied GET parameters are echoed directly into HTML attributes in report search forms and the promo-code admin page without escaping. An attacker can inject arbitrary JavaScript via a crafted URL. All output of untrusted data must be wrapped with <code>htmlspecialchars()</code> or CodeIgniter's <code>html_escape()</code>.</p>
+    </div>
+
+    <!-- SECTION 10: Mapping to Report -->
+    <div class="document-section" id="sec10">
+        <h2>10. Mapping to Audit Report v7.3.3 Findings</h2>
+        <p>This evidence log provides the code-level artefacts requested in the v7.3.3 report's Evidence Gates (§8) and Annex E Checklist. Each row links a live finding in source code to the corresponding audit control.</p>
+
+        <table class="audit-table">
+            <thead>
+                <tr><th>Audit v7.3.3 Control</th><th>Priority</th><th>Evidence (This Log)</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>§1 — Verbose error exposure in payment/booking flows</td>
+                    <td><span class="badge badge-p0">P0</span></td>
+                    <td>Section 6: 14+ files with <code>display_errors=1</code> including <code>b2c/flight.php</code>, <code>b2c/auth.php</code>, <code>services/flight.php</code></td>
+                    <td>🔴 Open</td>
+                </tr>
+                <tr>
+                    <td>§1 — Plaintext / embedded secrets</td>
+                    <td><span class="badge badge-p0">P0</span></td>
+                    <td>Section 3: 9 DB passwords, 1 payment password, 1 Google Maps API key, 4 hardcoded default passwords</td>
+                    <td>🔴 Open</td>
+                </tr>
+                <tr>
+                    <td>§1 — Legacy/weak password hashing</td>
+                    <td><span class="badge badge-p0">P0</span></td>
+                    <td>Section 7: MD5 used for password storage across auth flows</td>
+                    <td>🔴 Open</td>
+                </tr>
+                <tr>
+                    <td>§1 — Dynamic SQL paths (SQLi risk)</td>
+                    <td><span class="badge badge-p0">P0</span></td>
+                    <td>Section 8: 6+ locations with direct string concatenation in SQL including AES_DECRYPT calls</td>
+                    <td>🔴 Open</td>
+                </tr>
+                <tr>
+                    <td>§1 — Missing/partial CSRF</td>
+                    <td><span class="badge badge-p1">P1</span></td>
+                    <td>Section 4: <code>csrf_protection = FALSE</code> confirmed across all 6 modules</td>
+                    <td>🔴 Open</td>
+                </tr>
+                <tr>
+                    <td>§1 — Output encoding gaps (XSS)</td>
+                    <td><span class="badge badge-p1">P1</span></td>
+                    <td>Section 9: <code>$_GET</code> echoed unescaped in report views and promo-code admin</td>
+                    <td>🔴 Open</td>
+                </tr>
+                <tr>
+                    <td>§1 — Cookie flags not enforced</td>
+                    <td><span class="badge badge-p1">P1</span></td>
+                    <td>Section 5: <code>cookie_secure = FALSE</code> across all 6 modules</td>
+                    <td>🔴 Open</td>
+                </tr>
+                <tr>
+                    <td>§5 — PNR integrity &amp; flight booking detail audit trail</td>
+                    <td><span class="badge badge-p0">P0</span></td>
+                    <td>Section 2: <code>flight_booking_details()</code> and <code>email_flight_ticket()</code> stubbed out</td>
+                    <td>🔴 Open</td>
+                </tr>
+                <tr>
+                    <td>§5 — Package enquiry reports (B2B &amp; B2C)</td>
+                    <td><span class="badge badge-p1">P1</span></td>
+                    <td>Section 2: <code>package()</code>, <code>b2b_package_report()</code>, <code>b2c_package_report()</code> all return stub HTML</td>
+                    <td>🔴 Open</td>
+                </tr>
+                <tr>
+                    <td>Annex B Phase 0 — Strip debug; disable prod errors</td>
+                    <td><span class="badge badge-p0">P0</span></td>
+                    <td>Section 6: Multiple PHP parse errors and <code>display_errors=1</code> in customer-facing controllers</td>
+                    <td>🔴 Open</td>
+                </tr>
+                <tr>
+                    <td>Annex E — Scan for credential artifacts</td>
+                    <td><span class="badge badge-p0">P0</span></td>
+                    <td>Section 3: Grep report with file paths and line numbers. Rotate immediately.</td>
+                    <td>🔴 Open — rotate &amp; purge git history</td>
+                </tr>
+                <tr>
+                    <td>§9 — CI/CD Evidence Pack (Playwright / artifacts)</td>
+                    <td><span class="badge badge-p2">P2</span></td>
+                    <td>No CI pipeline detected (no <code>.github/workflows</code> Playwright config found in scoped modules)</td>
+                    <td>🟡 Pending</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>Go-Live Gate Assessment</h3>
+        <div class="finding-card critical">
+            <div class="finding-title">⛔ Phase 0 (Emergency) NOT cleared — Go-Live blocked</div>
+            <div class="finding-detail">
+                Per Annex B, go-live requires Phase 0 and Phase 1 controls to be evidenced in staging before proceeding. This static analysis confirms that Phase 0 emergency controls (rotate secrets, disable verbose errors) have <strong>not been applied</strong>. PHP parse errors on core controllers (flight model, hotel controller) mean booking flows are broken at a code level independent of any runtime configuration.
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<footer>
+    LAR System — Annex H: Static Analysis Evidence Log &nbsp;|&nbsp; Generated: 2026-03-10 &nbsp;|&nbsp; Classification: CONFIDENTIAL — INTERNAL USE ONLY<br>
+    Supplementary to: LAR_System_COLOSSAL_Audit_Security_Readiness_v7_3_3_AllAnnexesEmbedded.docx
+</footer>
+
+</body>
+</html>
