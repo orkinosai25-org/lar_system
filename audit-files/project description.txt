@@ -1,0 +1,3 @@
+We are seeking a meticulous auditor for a comprehensive evaluation of LAR (Luxury Africa Resorts), a sophisticated luxury travel platform that integrates Flights, Hotels, and Car Rentals via external GDS and supplier APIs, including Amadeus. The audit aims to rigorously assess technical accuracy, commercial risk exposure, the integrity of the customer journey, security protocols, and overall go-live readiness.
+
+Key objectives include validating end-to-end booking processes, identifying and prioritizing risks that could adversely affect revenue and customer satisfaction, and evaluating readiness for launch. Deliverables will include a detailed remediation roadmap to facilitate informed decision-making regarding go-live status.
