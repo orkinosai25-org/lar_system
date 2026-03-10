@@ -147,7 +147,20 @@
         <h2>Scope &amp; Methodology</h2>
         <p>This evidence log was produced as a supplementary annex to the <strong>LAR System Audit &amp; Security Readiness Report v7.3.3</strong>. It provides raw static-analysis output — no code modifications were made. The scans cover all six application modules: <code>b2c</code>, <code>agent</code>, <code>supplier</code>, <code>ultralux</code>, <code>supervision</code>, <code>services/webservices</code>.</p>
         <p><strong>Tools used:</strong> PHP CLI lint (<code>php -l</code>), <code>grep</code> pattern matching for security-relevant constructs.</p>
-        <p><strong>Not in scope:</strong> Runtime logs (server not running in analysis environment), penetration testing, database access.</p>
+
+        <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 14px 18px; margin: 14px 0; font-size: 0.91em; color: #664d03;">
+            <strong>⚠ Evidence Scope Statement (TOR feedback 1.1 response):</strong>
+            <p style="margin-top: 8px; line-height: 1.6;">This annex constitutes the evidence pack producible from <strong>static source code analysis only</strong>. It addresses TOR §5.5 (Evidence Pack) to the extent permitted by the access conditions of this engagement. The following evidence types required under TOR §5.5 and SOW §4 could <strong>not</strong> be produced because no pre-production environment, GDS sandbox credentials, or runtime server access was made available:</p>
+            <ul style="margin: 8px 0 0 20px; line-height: 1.8;">
+                <li>Runtime PHP / Apache / application error logs</li>
+                <li>PNR references or booking confirmation records</li>
+                <li>API request/response traces (Amadeus, GDS, supplier APIs)</li>
+                <li>Reproducible end-to-end booking test steps (Flights, Hotels, Cars)</li>
+                <li>Session lifecycle and retry behaviour traces</li>
+                <li>Payment gateway transaction logs</li>
+            </ul>
+            <p style="margin-top: 8px; line-height: 1.6;">All constraints are documented in full in <strong>Annex I — Audit Limitations &amp; Constraints Register</strong>. Each finding in this log should be treated as a <em>tentative finding based on code evidence</em> until confirmed through controlled runtime testing when environment access is provided.</p>
+        </div>
 
         <div class="stamp">NOT PRODUCTION-READY</div>
 
