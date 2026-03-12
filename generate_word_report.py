@@ -1,0 +1,820 @@
+#!/usr/bin/env python3
+"""
+generate_word_report.py
+=======================
+Generates a comprehensive Word (.docx) audit report for the LAR (Luxury Africa Resorts)
+system by combining:
+  - EXECUTIVE_SUMMARY.md
+  - AUDIT_REPORT.md  (v7.4)
+  - REMEDIATION_ROADMAP.md
+  - QUICK_REFERENCE.md
+  - audit-files/Annex F, H, I, J (HTML annexes)
+  - audit-files/Submission_Readiness_Assessment.html
+
+Output: reports/LAR_Audit_Report_v7.4.docx
+"""
+
+import os
+import re
+from pathlib import Path
+from datetime import datetime
+
+from docx import Document
+from docx.shared import Inches, Pt, RGBColor, Cm
+from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_LINE_SPACING
+from docx.enum.table import WD_TABLE_ALIGNMENT, WD_ALIGN_VERTICAL
+from docx.oxml.ns import qn
+from docx.oxml import OxmlElement
+from bs4 import BeautifulSoup
+
+# ---------------------------------------------------------------------------
+# Paths
+# ---------------------------------------------------------------------------
+BASE_DIR = Path(__file__).parent
+REPORTS_DIR = BASE_DIR / "reports"
+AUDIT_FILES_DIR = BASE_DIR / "audit-files"
+OUTPUT_PATH = REPORTS_DIR / "LAR_Audit_Report_v7.4.docx"
+
+# ---------------------------------------------------------------------------
+# Colour palette (professional audit document)
+# ---------------------------------------------------------------------------
+COLOUR_HEADING_DARK = RGBColor(0x1A, 0x1A, 0x2E)   # Very dark navy
+COLOUR_HEADING_MID  = RGBColor(0x16, 0x21, 0x3E)   # Dark navy
+COLOUR_ACCENT       = RGBColor(0x0F, 0x3C, 0x78)   # Deep blue
+COLOUR_RED          = RGBColor(0xC0, 0x39, 0x2B)   # Red for critical
+COLOUR_ORANGE       = RGBColor(0xD3, 0x54, 0x00)   # Orange for high
+COLOUR_GREEN        = RGBColor(0x1E, 0x8B, 0x4C)   # Green for met/pass
+COLOUR_GREY_LIGHT   = RGBColor(0xF5, 0xF5, 0xF5)   # Table row shading
+COLOUR_TABLE_HEADER = RGBColor(0x1A, 0x1A, 0x2E)   # Table header bg
+
+
+# ---------------------------------------------------------------------------
+# Helper: set paragraph shading / run colours
+# ---------------------------------------------------------------------------
+
+def set_cell_background(cell, hex_colour: str):
+    """Set a table cell background colour."""
+    tc_pr = cell._tc.get_or_add_tcPr()
+    shd = OxmlElement("w:shd")
+    shd.set(qn("w:val"), "clear")
+    shd.set(qn("w:color"), "auto")
+    shd.set(qn("w:fill"), hex_colour)
+    tc_pr.append(shd)
+
+
+def set_paragraph_border_bottom(paragraph, colour: str = "CCCCCC"):
+    """Add a bottom border to a paragraph (used for section dividers)."""
+    pPr = paragraph._p.get_or_add_pPr()
+    pBdr = OxmlElement("w:pBdr")
+    bottom = OxmlElement("w:bottom")
+    bottom.set(qn("w:val"), "single")
+    bottom.set(qn("w:sz"), "4")
+    bottom.set(qn("w:space"), "1")
+    bottom.set(qn("w:color"), colour)
+    pBdr.append(bottom)
+    pPr.append(pBdr)
+
+
+# ---------------------------------------------------------------------------
+# Document setup helpers
+# ---------------------------------------------------------------------------
+
+def create_document() -> Document:
+    doc = Document()
+    # Page margins: 2.5 cm all sides
+    for section in doc.sections:
+        section.top_margin    = Cm(2.5)
+        section.bottom_margin = Cm(2.5)
+        section.left_margin   = Cm(2.8)
+        section.right_margin  = Cm(2.8)
+    return doc
+
+
+def add_styles(doc: Document):
+    """Configure built-in heading styles."""
+    styles = doc.styles
+
+    # Normal
+    normal = styles["Normal"]
+    normal.font.name = "Calibri"
+    normal.font.size = Pt(11)
+
+    # Heading 1
+    h1 = styles["Heading 1"]
+    h1.font.name = "Calibri"
+    h1.font.size = Pt(18)
+    h1.font.bold = True
+    h1.font.color.rgb = COLOUR_HEADING_DARK
+    h1.paragraph_format.space_before = Pt(20)
+    h1.paragraph_format.space_after  = Pt(6)
+
+    # Heading 2
+    h2 = styles["Heading 2"]
+    h2.font.name = "Calibri"
+    h2.font.size = Pt(14)
+    h2.font.bold = True
+    h2.font.color.rgb = COLOUR_ACCENT
+    h2.paragraph_format.space_before = Pt(14)
+    h2.paragraph_format.space_after  = Pt(4)
+
+    # Heading 3
+    h3 = styles["Heading 3"]
+    h3.font.name = "Calibri"
+    h3.font.size = Pt(12)
+    h3.font.bold = True
+    h3.font.color.rgb = COLOUR_HEADING_MID
+    h3.paragraph_format.space_before = Pt(10)
+    h3.paragraph_format.space_after  = Pt(3)
+
+    # Heading 4
+    h4 = styles["Heading 4"]
+    h4.font.name = "Calibri"
+    h4.font.size = Pt(11)
+    h4.font.bold = True
+    h4.font.italic = True
+    h4.font.color.rgb = COLOUR_HEADING_MID
+    h4.paragraph_format.space_before = Pt(8)
+    h4.paragraph_format.space_after  = Pt(2)
+
+    # List Bullet
+    try:
+        lb = styles["List Bullet"]
+        lb.font.name = "Calibri"
+        lb.font.size = Pt(11)
+    except KeyError:
+        pass
+
+
+# ---------------------------------------------------------------------------
+# Cover page
+# ---------------------------------------------------------------------------
+
+def add_cover_page(doc: Document):
+    """Generate a professional cover page."""
+    # Spacer
+    for _ in range(4):
+        doc.add_paragraph()
+
+    # Organisation
+    org_p = doc.add_paragraph()
+    org_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = org_p.add_run("OrkinosAI")
+    run.font.name = "Calibri"
+    run.font.size = Pt(14)
+    run.font.color.rgb = COLOUR_ACCENT
+    run.font.bold = True
+
+    # Main title
+    title_p = doc.add_paragraph()
+    title_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    title_run = title_p.add_run("LAR (Luxury Africa Resorts) System")
+    title_run.font.name = "Calibri"
+    title_run.font.size = Pt(28)
+    title_run.font.bold = True
+    title_run.font.color.rgb = COLOUR_HEADING_DARK
+
+    subtitle_p = doc.add_paragraph()
+    subtitle_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    subtitle_run = subtitle_p.add_run("Comprehensive Audit, Security & Go-Live Readiness Report")
+    subtitle_run.font.name = "Calibri"
+    subtitle_run.font.size = Pt(18)
+    subtitle_run.font.bold = False
+    subtitle_run.font.color.rgb = COLOUR_ACCENT
+
+    doc.add_paragraph()
+
+    # Metadata table
+    table = doc.add_table(rows=8, cols=2)
+    table.alignment = WD_TABLE_ALIGNMENT.CENTER
+    table.style = "Table Grid"
+
+    meta = [
+        ("Report Reference",    "LAR-AUDIT-v7.4-REVISED"),
+        ("Submission Date",     "2026-03-10"),
+        ("Report Version",      "v7.4"),
+        ("Auditor Organisation","OrkinosAI"),
+        ("Lead Auditor",        "Dr. Ismail Kucukdurgut"),
+        ("Classification",      "CONFIDENTIAL — FOR LAR REVIEW"),
+        ("Engagement Basis",    "TOR v1.01 / SOW"),
+        ("Document Generated",  datetime.now().strftime("%Y-%m-%d")),
+    ]
+    for i, (label, value) in enumerate(meta):
+        row = table.rows[i]
+        cell_l, cell_r = row.cells[0], row.cells[1]
+        set_cell_background(cell_l, "1A1A2E")
+        cell_l.paragraphs[0].clear()
+        run_l = cell_l.paragraphs[0].add_run(label)
+        run_l.font.bold = True
+        run_l.font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
+        run_l.font.name = "Calibri"
+        run_l.font.size = Pt(11)
+        cell_r.paragraphs[0].text = value
+        cell_r.paragraphs[0].runs[0].font.name = "Calibri"
+        cell_r.paragraphs[0].runs[0].font.size = Pt(11)
+
+    # Column widths
+    for row in table.rows:
+        row.cells[0].width = Cm(6)
+        row.cells[1].width = Cm(10)
+
+    doc.add_paragraph()
+    verdict_p = doc.add_paragraph()
+    verdict_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    verdict_run = verdict_p.add_run(
+        "VERDICT: CONDITIONAL GO — NOT CLEARED FOR LAUNCH"
+    )
+    verdict_run.font.name = "Calibri"
+    verdict_run.font.size = Pt(14)
+    verdict_run.font.bold = True
+    verdict_run.font.color.rgb = COLOUR_RED
+
+    doc.add_page_break()
+
+
+# ---------------------------------------------------------------------------
+# Markdown → DOCX converter
+# ---------------------------------------------------------------------------
+
+def _is_emoji(char: str) -> bool:
+    """Return True if the character is an emoji or presentation modifier."""
+    cp = ord(char)
+    return (
+        (0x1F600 <= cp <= 0x1F64F)   # Emoticons
+        or (0x1F300 <= cp <= 0x1F5FF) # Misc symbols and pictographs
+        or (0x1F680 <= cp <= 0x1F9FF) # Transport, map, supplemental
+        or (0x2600  <= cp <= 0x27BF)  # Misc symbols (checkmarks, etc.)
+        or (0x1FA00 <= cp <= 0x1FA9F) # Chess / extended symbols
+        or cp == 0x200D               # Zero-width joiner
+        or cp == 0xFE0F               # Variation selector-16
+    )
+
+
+def clean(text: str) -> str:
+    """Strip emojis and tidy whitespace."""
+    text = "".join(c for c in text if not _is_emoji(c))
+    text = re.sub(r"\s{2,}", " ", text)
+    return text.strip()
+
+
+def _apply_inline_formatting(run_container, text: str):
+    """
+    Parse simple inline Markdown (**bold**, *italic*, `code`) and add
+    appropriately formatted runs to run_container (a Paragraph or similar).
+    """
+    # Pattern: **bold**, *italic*, `code`
+    parts = re.split(r"(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)", text)
+    for part in parts:
+        if part.startswith("**") and part.endswith("**"):
+            r = run_container.add_run(part[2:-2])
+            r.bold = True
+        elif part.startswith("*") and part.endswith("*"):
+            r = run_container.add_run(part[1:-1])
+            r.italic = True
+        elif part.startswith("`") and part.endswith("`"):
+            r = run_container.add_run(part[1:-1])
+            r.font.name = "Courier New"
+            r.font.size = Pt(10)
+        else:
+            if part:
+                run_container.add_run(part)
+
+
+def add_markdown_table(doc: Document, table_lines: list[str]):
+    """Parse a Markdown table and add it to the document."""
+    # Filter out separator lines like |---|---|
+    rows = [line for line in table_lines
+            if not re.match(r"^\|[-| :]+\|$", line.strip())]
+    if not rows:
+        return
+
+    parsed = []
+    for row in rows:
+        cells = [c.strip() for c in row.strip().strip("|").split("|")]
+        parsed.append(cells)
+
+    if not parsed:
+        return
+
+    n_cols = max(len(r) for r in parsed)
+    n_rows = len(parsed)
+
+    table = doc.add_table(rows=n_rows, cols=n_cols)
+    table.style = "Table Grid"
+    table.alignment = WD_TABLE_ALIGNMENT.LEFT
+
+    for r_idx, row in enumerate(parsed):
+        tr = table.rows[r_idx]
+        # Ensure we have enough cells (can differ)
+        for c_idx in range(n_cols):
+            cell_text = clean(row[c_idx]) if c_idx < len(row) else ""
+            cell = tr.cells[c_idx]
+            cell.paragraphs[0].clear()
+            if r_idx == 0:
+                # Header row
+                set_cell_background(cell, "1A1A2E")
+                run = cell.paragraphs[0].add_run(cell_text)
+                run.font.bold = True
+                run.font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
+                run.font.name = "Calibri"
+                run.font.size = Pt(10)
+            else:
+                if r_idx % 2 == 0:
+                    set_cell_background(cell, "F0F4F8")
+                p = cell.paragraphs[0]
+                _apply_inline_formatting(p, cell_text)
+                for run in p.runs:
+                    run.font.name = "Calibri"
+                    run.font.size = Pt(10)
+
+
+def md_to_docx(doc: Document, md_text: str, section_label: str = ""):
+    """Convert Markdown text to DOCX content appended to doc."""
+    lines = md_text.splitlines()
+    i = 0
+    table_buffer: list[str] = []
+
+    while i < len(lines):
+        line = lines[i]
+
+        # --- Flush table buffer if we leave a table block ---
+        if table_buffer and not line.startswith("|"):
+            add_markdown_table(doc, table_buffer)
+            table_buffer = []
+
+        # --- Markdown table row ---
+        if line.startswith("|"):
+            table_buffer.append(line)
+            i += 1
+            continue
+
+        # --- Page break markers ---
+        if line.strip() in ("---", "***", "___"):
+            # Horizontal rule → blank paragraph with border
+            p = doc.add_paragraph()
+            set_paragraph_border_bottom(p, "AAAAAA")
+            i += 1
+            continue
+
+        # --- Headings ---
+        m = re.match(r"^(#{1,6})\s+(.*)", line)
+        if m:
+            level = len(m.group(1))
+            heading_text = clean(m.group(2))
+            # Strip trailing # chars
+            heading_text = re.sub(r"\s+#+\s*$", "", heading_text)
+            style_map = {1: "Heading 1", 2: "Heading 2",
+                         3: "Heading 3", 4: "Heading 4",
+                         5: "Heading 4", 6: "Heading 4"}
+            doc.add_heading(heading_text, level=min(level, 4))
+            i += 1
+            continue
+
+        # --- Blockquote ---
+        if line.startswith(">"):
+            bq_text = clean(line.lstrip("> "))
+            p = doc.add_paragraph(style="Normal")
+            p.paragraph_format.left_indent = Cm(1)
+            p.paragraph_format.space_before = Pt(2)
+            p.paragraph_format.space_after  = Pt(2)
+            run = p.add_run(bq_text)
+            run.italic = True
+            run.font.color.rgb = RGBColor(0x55, 0x55, 0x55)
+            run.font.name = "Calibri"
+            i += 1
+            continue
+
+        # --- Ordered list item ---
+        m_ol = re.match(r"^\d+\.\s+(.*)", line)
+        if m_ol:
+            p = doc.add_paragraph(style="List Number")
+            _apply_inline_formatting(p, clean(m_ol.group(1)))
+            for run in p.runs:
+                run.font.name = "Calibri"
+                run.font.size = Pt(11)
+            i += 1
+            continue
+
+        # --- Unordered list item ---
+        m_ul = re.match(r"^[-*+]\s+(.*)", line)
+        if m_ul:
+            p = doc.add_paragraph(style="List Bullet")
+            _apply_inline_formatting(p, clean(m_ul.group(1)))
+            for run in p.runs:
+                run.font.name = "Calibri"
+                run.font.size = Pt(11)
+            i += 1
+            continue
+
+        # --- Indented sub-list ---
+        m_sub = re.match(r"^\s{2,4}[-*+•]\s+(.*)", line)
+        if m_sub:
+            p = doc.add_paragraph(style="List Bullet 2")
+            _apply_inline_formatting(p, clean(m_sub.group(1)))
+            for run in p.runs:
+                run.font.name = "Calibri"
+                run.font.size = Pt(10)
+            i += 1
+            continue
+
+        # --- Code block (fenced) ---
+        if line.startswith("```"):
+            code_lines = []
+            i += 1
+            while i < len(lines) and not lines[i].startswith("```"):
+                code_lines.append(lines[i])
+                i += 1
+            i += 1  # skip closing ```
+            for cl in code_lines:
+                p = doc.add_paragraph()
+                p.paragraph_format.left_indent = Cm(1)
+                run = p.add_run(cl)
+                run.font.name = "Courier New"
+                run.font.size = Pt(9)
+                run.font.color.rgb = RGBColor(0x20, 0x20, 0x20)
+            continue
+
+        # --- Empty line ---
+        if not line.strip():
+            i += 1
+            continue
+
+        # --- Normal paragraph ---
+        p = doc.add_paragraph(style="Normal")
+        p.paragraph_format.space_after = Pt(6)
+        _apply_inline_formatting(p, clean(line))
+        for run in p.runs:
+            run.font.name = "Calibri"
+            run.font.size = Pt(11)
+        i += 1
+
+    # Flush any remaining table buffer
+    if table_buffer:
+        add_markdown_table(doc, table_buffer)
+
+
+# ---------------------------------------------------------------------------
+# HTML annex → DOCX converter
+# ---------------------------------------------------------------------------
+
+def html_annex_to_docx(doc: Document, html_path: Path, annex_title: str):
+    """Extract key textual content from an HTML annex and add to doc."""
+    with open(html_path, encoding="utf-8") as f:
+        soup = BeautifulSoup(f, "html.parser")
+
+    # Remove script/style tags
+    for tag in soup(["script", "style", "nav", "footer"]):
+        tag.decompose()
+
+    doc.add_heading(annex_title, level=1)
+
+    # Walk through top-level content
+    body = soup.find("body") or soup
+    _process_html_node(doc, body)
+
+
+def _process_html_node(doc: Document, node, depth: int = 0):
+    """Recursively convert HTML nodes to DOCX paragraphs."""
+    if isinstance(node, str):
+        return
+
+    tag_name = getattr(node, "name", None)
+    if tag_name is None:
+        return
+
+    # Headings
+    if tag_name in ("h1", "h2", "h3", "h4", "h5", "h6"):
+        level = int(tag_name[1])
+        text = clean(node.get_text(separator=" ", strip=True))
+        if text:
+            doc.add_heading(text, level=min(level, 4))
+        return
+
+    # Paragraphs / divs with text
+    if tag_name in ("p", "div"):
+        # Check if only contains a heading child — skip wrapper
+        child_tags = [c.name for c in node.children
+                      if hasattr(c, "name") and c.name]
+        if len(child_tags) == 1 and child_tags[0] in ("h1","h2","h3","h4","h5","h6"):
+            _process_html_node(doc, list(node.children)[0], depth)
+            return
+
+        text = clean(node.get_text(separator=" ", strip=True))
+        if text and len(text) > 2:
+            # Only add paragraph if there are no block-level children
+            block_tags = {"div","p","table","ul","ol","h1","h2","h3","h4","h5","h6","blockquote","pre"}
+            has_block = any(
+                getattr(c, "name", None) in block_tags
+                for c in node.children
+            )
+            if not has_block:
+                p = doc.add_paragraph(style="Normal")
+                p.paragraph_format.space_after = Pt(6)
+                # Handle inline bold/italic
+                _process_html_inline(p, node)
+                return
+            else:
+                for child in node.children:
+                    _process_html_node(doc, child, depth + 1)
+                return
+        else:
+            for child in node.children:
+                _process_html_node(doc, child, depth + 1)
+            return
+
+    # Tables
+    if tag_name == "table":
+        _html_table_to_docx(doc, node)
+        return
+
+    # Unordered list
+    if tag_name == "ul":
+        for li in node.find_all("li", recursive=False):
+            p = doc.add_paragraph(style="List Bullet")
+            text = clean(li.get_text(separator=" ", strip=True))
+            _apply_inline_formatting(p, text)
+            for run in p.runs:
+                run.font.name = "Calibri"
+                run.font.size = Pt(11)
+        return
+
+    # Ordered list
+    if tag_name == "ol":
+        for li in node.find_all("li", recursive=False):
+            p = doc.add_paragraph(style="List Number")
+            text = clean(li.get_text(separator=" ", strip=True))
+            _apply_inline_formatting(p, text)
+            for run in p.runs:
+                run.font.name = "Calibri"
+                run.font.size = Pt(11)
+        return
+
+    # Pre / code blocks
+    if tag_name in ("pre", "code"):
+        text = node.get_text()
+        for line in text.splitlines():
+            if line.strip():
+                p = doc.add_paragraph()
+                p.paragraph_format.left_indent = Cm(1)
+                run = p.add_run(line)
+                run.font.name = "Courier New"
+                run.font.size = Pt(9)
+        return
+
+    # Blockquote
+    if tag_name == "blockquote":
+        text = clean(node.get_text(separator=" ", strip=True))
+        if text:
+            p = doc.add_paragraph(style="Normal")
+            p.paragraph_format.left_indent = Cm(1)
+            run = p.add_run(text)
+            run.italic = True
+            run.font.color.rgb = RGBColor(0x55, 0x55, 0x55)
+        return
+
+    # Horizontal rule
+    if tag_name == "hr":
+        p = doc.add_paragraph()
+        set_paragraph_border_bottom(p, "AAAAAA")
+        return
+
+    # Default: recurse into children
+    for child in node.children:
+        _process_html_node(doc, child, depth + 1)
+
+
+def _process_html_inline(paragraph, node):
+    """Add inline-formatted runs from an HTML node to a paragraph."""
+    for child in node.children:
+        if isinstance(child, str):
+            text = clean(child)
+            if text:
+                paragraph.add_run(text)
+        else:
+            tag = getattr(child, "name", None)
+            text = clean(child.get_text(separator=" ", strip=True))
+            if not text:
+                continue
+            run = paragraph.add_run(text)
+            if tag in ("strong", "b"):
+                run.bold = True
+            elif tag in ("em", "i"):
+                run.italic = True
+            elif tag in ("code", "tt"):
+                run.font.name = "Courier New"
+                run.font.size = Pt(10)
+            elif tag == "span":
+                # Check class for badge-like patterns
+                classes = child.get("class", [])
+                class_str = " ".join(classes).lower()
+                if "critical" in class_str or "badge-fail" in class_str or "p0" in class_str:
+                    run.font.color.rgb = COLOUR_RED
+                    run.bold = True
+                elif "high" in class_str or "p1" in class_str:
+                    run.font.color.rgb = COLOUR_ORANGE
+                    run.bold = True
+                elif "met" in class_str or "pass" in class_str or "badge-met" in class_str:
+                    run.font.color.rgb = COLOUR_GREEN
+                    run.bold = True
+            run.font.name = "Calibri"
+            run.font.size = Pt(11)
+
+
+def _html_table_to_docx(doc: Document, table_node):
+    """Convert an HTML table element to a DOCX table."""
+    rows_data = []
+    for tr in table_node.find_all("tr"):
+        row = []
+        for cell in tr.find_all(["th", "td"]):
+            row.append((clean(cell.get_text(separator=" ", strip=True)),
+                        cell.name == "th"))
+        if row:
+            rows_data.append(row)
+
+    if not rows_data:
+        return
+
+    n_cols = max(len(r) for r in rows_data)
+    n_rows = len(rows_data)
+
+    table = doc.add_table(rows=n_rows, cols=n_cols)
+    table.style = "Table Grid"
+    table.alignment = WD_TABLE_ALIGNMENT.LEFT
+
+    for r_idx, row in enumerate(rows_data):
+        tr = table.rows[r_idx]
+        for c_idx in range(n_cols):
+            cell = tr.cells[c_idx]
+            cell_text, is_header = (row[c_idx] if c_idx < len(row)
+                                    else ("", False))
+            cell.paragraphs[0].clear()
+            if is_header or r_idx == 0:
+                set_cell_background(cell, "1A1A2E")
+                run = cell.paragraphs[0].add_run(cell_text)
+                run.font.bold = True
+                run.font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
+                run.font.name = "Calibri"
+                run.font.size = Pt(10)
+            else:
+                if r_idx % 2 == 0:
+                    set_cell_background(cell, "F0F4F8")
+                _apply_inline_formatting(cell.paragraphs[0], cell_text)
+                for run in cell.paragraphs[0].runs:
+                    run.font.name = "Calibri"
+                    run.font.size = Pt(10)
+
+
+# ---------------------------------------------------------------------------
+# Section separator helper
+# ---------------------------------------------------------------------------
+
+def add_section_separator(doc: Document, label: str):
+    doc.add_page_break()
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = p.add_run(label.upper())
+    run.font.name = "Calibri"
+    run.font.size = Pt(11)
+    run.font.bold = True
+    run.font.color.rgb = RGBColor(0xAA, 0xAA, 0xAA)
+    set_paragraph_border_bottom(p, "AAAAAA")
+    doc.add_paragraph()
+
+
+# ---------------------------------------------------------------------------
+# Table of Contents placeholder
+# ---------------------------------------------------------------------------
+
+def add_toc_placeholder(doc: Document):
+    doc.add_heading("Table of Contents", level=1)
+    p = doc.add_paragraph()
+    run = p.add_run(
+        "Right-click this area in Microsoft Word and select "
+        '"Update Field" to generate the Table of Contents.'
+    )
+    run.italic = True
+    run.font.color.rgb = RGBColor(0x88, 0x88, 0x88)
+    run.font.name = "Calibri"
+    run.font.size = Pt(11)
+
+    # Insert actual TOC field (Word will render it)
+    fldChar_begin = OxmlElement("w:fldChar")
+    fldChar_begin.set(qn("w:fldCharType"), "begin")
+
+    instrText = OxmlElement("w:instrText")
+    instrText.set(qn("xml:space"), "preserve")
+    instrText.text = 'TOC \\o "1-3" \\h \\z \\u'
+
+    fldChar_sep = OxmlElement("w:fldChar")
+    fldChar_sep.set(qn("w:fldCharType"), "separate")
+
+    fldChar_end = OxmlElement("w:fldChar")
+    fldChar_end.set(qn("w:fldCharType"), "end")
+
+    toc_para = doc.add_paragraph()
+    run_toc = toc_para.add_run()
+    run_toc._r.append(fldChar_begin)
+    run_toc._r.append(instrText)
+    run_toc._r.append(fldChar_sep)
+    run_toc._r.append(fldChar_end)
+
+    doc.add_page_break()
+
+
+# ---------------------------------------------------------------------------
+# Main build function
+# ---------------------------------------------------------------------------
+
+def build_report():
+    print("Building LAR Audit Report v7.4 Word document…")
+
+    doc = create_document()
+    add_styles(doc)
+
+    # 1. Cover page
+    print("  → Cover page")
+    add_cover_page(doc)
+
+    # 2. Table of contents placeholder
+    print("  → Table of Contents")
+    add_toc_placeholder(doc)
+
+    # 3. Executive Summary
+    print("  → Executive Summary")
+    exec_path = BASE_DIR / "EXECUTIVE_SUMMARY.md"
+    add_section_separator(doc, "Part I — Executive Summary")
+    md_to_docx(doc, exec_path.read_text(encoding="utf-8"))
+
+    # 4. Main Audit Report (v7.4)
+    print("  → Audit Report (AUDIT_REPORT.md v7.4)")
+    audit_path = BASE_DIR / "AUDIT_REPORT.md"
+    add_section_separator(doc, "Part II — Comprehensive Audit Report (v7.4)")
+    md_to_docx(doc, audit_path.read_text(encoding="utf-8"))
+
+    # 5. Remediation Roadmap
+    print("  → Remediation Roadmap")
+    rr_path = BASE_DIR / "REMEDIATION_ROADMAP.md"
+    add_section_separator(doc, "Part III — Remediation Roadmap")
+    md_to_docx(doc, rr_path.read_text(encoding="utf-8"))
+
+    # 6. Quick Reference Guide
+    print("  → Quick Reference Guide")
+    qr_path = BASE_DIR / "QUICK_REFERENCE.md"
+    add_section_separator(doc, "Part IV — Quick Reference Guide")
+    md_to_docx(doc, qr_path.read_text(encoding="utf-8"))
+
+    # 7. Submission Readiness Assessment (HTML)
+    print("  → Submission Readiness Assessment")
+    add_section_separator(doc, "Part V — Submission Readiness Assessment")
+    html_annex_to_docx(
+        doc,
+        AUDIT_FILES_DIR / "Submission_Readiness_Assessment.html",
+        "Submission Readiness Assessment — v7.4 vs. Cure Conditions"
+    )
+
+    # 8. Annex F — Visual Audit Guide
+    print("  → Annex F: Visual Audit Guide")
+    add_section_separator(doc, "Annex F — Visual Audit Guide")
+    html_annex_to_docx(
+        doc,
+        AUDIT_FILES_DIR / "Annex F \u2014 Visual Audit Guide.html",
+        "Annex F: Visual Audit Guide"
+    )
+
+    # 9. Annex H — Static Analysis Evidence Log
+    print("  → Annex H: Static Analysis Evidence Log")
+    add_section_separator(doc, "Annex H — Static Analysis Evidence Log")
+    html_annex_to_docx(
+        doc,
+        AUDIT_FILES_DIR / "Annex_H_Static_Analysis_Evidence_Log.html",
+        "Annex H: Static Analysis Evidence Log"
+    )
+
+    # 10. Annex I — Audit Limitations & Constraints Register
+    print("  → Annex I: Audit Limitations & Constraints Register")
+    add_section_separator(doc, "Annex I — Audit Limitations & Constraints Register")
+    html_annex_to_docx(
+        doc,
+        AUDIT_FILES_DIR / "Annex_I_Audit_Limitations_and_Constraints_Register.html",
+        "Annex I: Audit Limitations & Constraints Register"
+    )
+
+    # 11. Annex J — Risk Register & Remediation Backlog
+    print("  → Annex J: Risk Register & Remediation Backlog")
+    add_section_separator(doc, "Annex J — Risk Register & Remediation Backlog")
+    html_annex_to_docx(
+        doc,
+        AUDIT_FILES_DIR / "Annex_J_Risk_Register_and_Remediation_Backlog.html",
+        "Annex J: Risk Register & Remediation Backlog"
+    )
+
+    # Save
+    REPORTS_DIR.mkdir(exist_ok=True)
+    doc.save(OUTPUT_PATH)
+    size_kb = OUTPUT_PATH.stat().st_size // 1024
+    print(f"\n  Report saved to: {OUTPUT_PATH}")
+    print(f"  File size: {size_kb} KB")
+    print("Done.")
+
+
+if __name__ == "__main__":
+    build_report()

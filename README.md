@@ -59,14 +59,24 @@ A comprehensive technical, security, and compliance audit has been conducted on 
 
 ### 📋 Audit Documents
 
+**Word Document (all-in-one):**
+- **[reports/LAR_Audit_Report_v7.4.docx](./reports/LAR_Audit_Report_v7.4.docx)** - ⭐ **NEW:** Complete audit report in Word format — includes Executive Summary, full Audit Report v7.4, Remediation Roadmap, Quick Reference Guide, and all Annexes (F, H, I, J) in a single professionally formatted document
+- Run `python3 generate_word_report.py` to regenerate this document from the source Markdown/HTML files
+
 **For Management & Stakeholders:**
 - **[EXECUTIVE_SUMMARY.md](./EXECUTIVE_SUMMARY.md)** - High-level findings and recommendations (10 pages)
 - **[DEVELOPMENT_PLAN_SUMMARY.md](./DEVELOPMENT_PLAN_SUMMARY.md)** - ⭐ **NEW:** Executive summary of development plan with features, timelines, and pricing
 
 **For Technical Teams:**
-- **[AUDIT_REPORT.md](./AUDIT_REPORT.md)** - Comprehensive technical audit report (150+ pages)
+- **[AUDIT_REPORT.md](./AUDIT_REPORT.md)** - Comprehensive technical audit report (v7.4, revised per client feedback)
 - **[REMEDIATION_ROADMAP.md](./REMEDIATION_ROADMAP.md)** - Detailed implementation guide (130+ pages)
 - **[QUICK_REFERENCE.md](./QUICK_REFERENCE.md)** - Quick reference for critical issues
+
+**Annexes (HTML):**
+- **[audit-files/Annex_H_Static_Analysis_Evidence_Log.html](./audit-files/Annex_H_Static_Analysis_Evidence_Log.html)** - TOR 5.5 Evidence Pack
+- **[audit-files/Annex_I_Audit_Limitations_and_Constraints_Register.html](./audit-files/Annex_I_Audit_Limitations_and_Constraints_Register.html)** - TOR 5.6 Limitations Register
+- **[audit-files/Annex_J_Risk_Register_and_Remediation_Backlog.html](./audit-files/Annex_J_Risk_Register_and_Remediation_Backlog.html)** - TOR 5.3 Risk Register
+- **[audit-files/Submission_Readiness_Assessment.html](./audit-files/Submission_Readiness_Assessment.html)** - Cure condition status assessment
 
 **For Project Planning:**
 - **[DEVELOPMENT_PLAN.md](./DEVELOPMENT_PLAN.md)** - ⭐ **NEW:** Complete development plan with features, remediation details, timelines, pricing ($465,840), resource allocation, risk management, and KPIs (1,964 lines)
