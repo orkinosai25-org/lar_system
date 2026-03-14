@@ -5,13 +5,13 @@ generate_word_report.py
 Generates a comprehensive Word (.docx) audit report for the LAR (Luxury Africa Resorts)
 system by combining:
   - EXECUTIVE_SUMMARY.md
-  - AUDIT_REPORT.md  (v7.4)
+  - AUDIT_REPORT.md  (v7.5)
   - REMEDIATION_ROADMAP.md
   - QUICK_REFERENCE.md
   - audit-files/Annex F, H, I, J (HTML annexes)
   - audit-files/Submission_Readiness_Assessment.html
 
-Output: reports/LAR_Audit_Report_v7.4.docx
+Output: reports/LAR_Audit_Report_v7.5.docx
 """
 
 import os
@@ -33,7 +33,7 @@ from bs4 import BeautifulSoup
 BASE_DIR = Path(__file__).parent
 REPORTS_DIR = BASE_DIR / "reports"
 AUDIT_FILES_DIR = BASE_DIR / "audit-files"
-OUTPUT_PATH = REPORTS_DIR / "LAR_Audit_Report_v7.4.docx"
+OUTPUT_PATH = REPORTS_DIR / "LAR_Audit_Report_v7.5.docx"
 
 # ---------------------------------------------------------------------------
 # Colour palette (professional audit document)
@@ -189,9 +189,9 @@ def add_cover_page(doc: Document):
     table.style = "Table Grid"
 
     meta = [
-        ("Report Reference",    "LAR-AUDIT-v7.4-REVISED"),
-        ("Submission Date",     "2026-03-10"),
-        ("Report Version",      "v7.4"),
+        ("Report Reference",    "LAR-AUDIT-v7.5-REVISED"),
+        ("Submission Date",     "2026-03-12"),
+        ("Report Version",      "v7.5"),
         ("Auditor Organisation","OrkinosAI"),
         ("Lead Auditor",        "Dr. Ismail Kucukdurgut"),
         ("Classification",      "CONFIDENTIAL — FOR LAR REVIEW"),
@@ -725,7 +725,7 @@ def add_toc_placeholder(doc: Document):
 # ---------------------------------------------------------------------------
 
 def build_report():
-    print("Building LAR Audit Report v7.4 Word document…")
+    print("Building LAR Audit Report v7.5 Word document…")
 
     doc = create_document()
     add_styles(doc)
@@ -744,10 +744,10 @@ def build_report():
     add_section_separator(doc, "Part I — Executive Summary")
     md_to_docx(doc, exec_path.read_text(encoding="utf-8"))
 
-    # 4. Main Audit Report (v7.4)
-    print("  → Audit Report (AUDIT_REPORT.md v7.4)")
+    # 4. Main Audit Report (v7.5)
+    print("  → Audit Report (AUDIT_REPORT.md v7.5)")
     audit_path = BASE_DIR / "AUDIT_REPORT.md"
-    add_section_separator(doc, "Part II — Comprehensive Audit Report (v7.4)")
+    add_section_separator(doc, "Part II — Comprehensive Audit Report (v7.5)")
     md_to_docx(doc, audit_path.read_text(encoding="utf-8"))
 
     # 5. Remediation Roadmap
@@ -768,7 +768,7 @@ def build_report():
     html_annex_to_docx(
         doc,
         AUDIT_FILES_DIR / "Submission_Readiness_Assessment.html",
-        "Submission Readiness Assessment — v7.4 vs. Cure Conditions"
+        "Submission Readiness Assessment — v7.5 vs. Cure Conditions"
     )
 
     # 8. Annex F — Visual Audit Guide
