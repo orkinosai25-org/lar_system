@@ -1,17 +1,21 @@
 # LAR (Luxury Africa Resorts) System — Audit, Security & Readiness Report
 
-**Report Reference:** LAR-AUDIT-v7.4-REVISED  
-**Submission Date:** 2026-03-10  
-**Revision Basis:** Client feedback dated 2026-03-09 (J. Zabula, Co-Founder / CTO)  
+**Report Reference:** LAR-AUDIT-v7.5-REVISED  
+**Submission Date:** 2026-03-12  
+**Revision Basis:** Client feedback dated 2026-03-09 (J. Zabula, Co-Founder / CTO); internal review 2026-03-12  
 **Auditor Organisation:** OrkinosAI  
 **Lead Auditor:** Dr. Ismail Kucukdurgut  
 **Classification:** CONFIDENTIAL — DRAFT FOR LAR REVIEW  
 **Engagement Basis:** TOR v1.01 / SOW
 
-> **Revision Notice:** This document is a full revised resubmission responding to the
-> non-acceptance notice issued by LAR on 2026-03-09. It supersedes v7.3.3 (dated 2026-03-05).
-> All items cited in the non-acceptance notice are addressed below or in the supporting
-> annexes. Out-of-scope material that appeared in v7.3.3 has been removed in full.
+> **Revision Notice (v7.5):** This document supersedes v7.4 (dated 2026-03-10) and v7.3.3
+> (dated 2026-03-05). All items cited in the LAR non-acceptance notice (2026-03-09) are
+> addressed below or in the supporting annexes. All commercial remediation pricing has been
+> removed from this document in full and maintained in a separate internal pricing reference
+> (`REMEDIATION_PRICING_PROPOSAL.md`) which is **not** part of this submission and will only
+> be shared with LAR at their explicit invitation following acceptance of this audit report,
+> in accordance with SOW Section 6a. Out-of-scope material that appeared in v7.3.3 has been
+> removed in full.
 
 ---
 
@@ -935,13 +939,15 @@ each constraint.**
 | **Annex I** | Audit Limitations & Constraints Register | `audit-files/Annex_I_Audit_Limitations_and_Constraints_Register.html` | HTML |
 | **Annex J** | Risk Register & Remediation Backlog | `audit-files/Annex_J_Risk_Register_and_Remediation_Backlog.html` | HTML |
 
-> **Note on Annex F:** The Visual Audit Guide (Annex F) has been **revised** in this
-> submission. All commercial remediation pricing, ROI projections, and chargeable work
-> bundles have been removed per SOW Section 6a (audit independence). The revised document
-> is retained as a supplemental visual reference only at
-> `audit-files/Annex F — Visual Audit Guide.html`. It is not a TOR Section 5 mandatory
-> deliverable. Any future remediation proposal will be submitted as a separate document,
-> at LAR's invitation, following acceptance of this audit report.
+> **Note on pricing and commercial proposals:** All commercial remediation pricing,
+> ROI projections, and chargeable work bundles have been removed from this audit
+> submission per SOW Section 6a (audit independence). A separate internal pricing
+> reference document (`REMEDIATION_PRICING_PROPOSAL.md`) has been prepared for the
+> auditor's internal use only and will not be shared with LAR until formal acceptance
+> of this audit report and an explicit invitation from LAR to submit a remediation
+> proposal. The Annex F Visual Audit Guide has been retained as a supplemental visual
+> reference at `audit-files/Annex F — Visual Audit Guide.html`; it contains no pricing
+> and is not a TOR Section 5 mandatory deliverable.
 
 ---
 
@@ -951,9 +957,10 @@ each constraint.**
 |---------|------|---------------|
 | v7.3.3 | 2026-03-05 | Original submission (not accepted by LAR) |
 | v7.4 | 2026-03-10 | Full revision per LAR non-acceptance notice (2026-03-09): evidence references added, out-of-scope material removed, commercial pricing removed, all TOR mandatory deliverables addressed, revenue methodology stated, Go-Live conditions made measurable, Annexes H/I/J added |
+| v7.5 | 2026-03-12 | Final revision: commercial remediation pricing fully separated into standalone internal document (`REMEDIATION_PRICING_PROPOSAL.md`, not for client distribution); revision notice updated; submission date updated |
 
 ---
 
 **Report Prepared By:** Dr. Ismail Kucukdurgut, OrkinosAI  
-**Submission Date:** 2026-03-10  
+**Submission Date:** 2026-03-12  
 **Engagement Reference:** LAR Technical & Commercial Audit — TOR v1.01
