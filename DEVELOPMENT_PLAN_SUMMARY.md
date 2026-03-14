@@ -26,10 +26,10 @@
 - **25/100 Compliance Score** (non-compliant)
 
 ### Financial Impact
-- **Revenue at Risk:** $675,000 annually (40% search abandonment, 35% cart abandonment)
-- **Potential Data Breach Cost:** $4,500,000 average
+- **Revenue leakage risk:** High (40% search abandonment, 35% cart abandonment)
+- **Potential Data Breach:** Significant liability per GDPR/PCI DSS regulations
 - **GDPR Fine Risk:** Up to €20,000,000
-- **PCI Fine Risk:** $10,000/month
+- **PCI Fine Risk:** Per card-brand schedules
 
 ---
 
@@ -291,7 +291,7 @@
 **Business:**
 - Cart abandonment: <20% (from 35%)
 - Search abandonment: <15% (from 40%)
-- Revenue leakage: <$100K/year (from $675K)
+- Revenue leakage: Minimised (from 35%+ cart abandonment baseline)
 - Customer satisfaction: >8.5/10
 
 ---
@@ -426,11 +426,11 @@ A: Yes, but with significant risks. A 10-week fast-track option ($180K) fixes on
 
 **Q: What if we don't fix these issues?**  
 A: You face:
-- Data breach risk ($4.5M average cost)
+- Data breach risk (significant liability per GDPR/PCI DSS regulations)
 - GDPR fines (up to €20M)
-- PCI fines ($10K/month)
+- PCI fines (per card-brand schedules)
 - Payment processor suspension (revenue loss)
-- Continued $675K annual revenue leakage
+- Continued revenue leakage from high abandonment rates
 - Reputational damage
 
 **Q: Can we phase the investment?**  

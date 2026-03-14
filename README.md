@@ -89,10 +89,9 @@ A comprehensive technical, security, and compliance audit has been conducted on 
 - 🔴 **8 Critical Security Vulnerabilities** identified (must fix before launch)
 - 🟠 **12 High-Priority Technical Risks** requiring immediate attention
 - 🟡 **Compliance Gaps:** PCI DSS, GDPR, POPIA require remediation
-- 💰 **Revenue at Risk:** $675,000 annually due to technical issues
+- 💰 **Revenue Leakage Risk:** High — 40% search abandonment, 35% cart abandonment
 
-**Required Timeline:** 20 weeks to achieve production readiness  
-**Investment Required:** $465,840 for full remediation and compliance
+**Required Timeline:** 20 weeks to achieve production readiness
 
 ### 🗺️ Development Plan (NEW - February 27, 2026)
 

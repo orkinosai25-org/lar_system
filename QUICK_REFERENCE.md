@@ -66,8 +66,8 @@ ini_set('display_errors', 1);  // PRODUCTION!
 | **Security** | 8 critical vulnerabilities | Data breach risk |
 | **Compliance** | PCI DSS not compliant | Cannot process payments |
 | **Testing** | 0% code coverage | High bug risk |
-| **Revenue** | $675k leakage annually | Lost bookings |
-| **Investment** | $436,800 required | 20 weeks to fix |
+| **Revenue** | High leakage (35%+ abandonment) | Lost bookings |
+| **Investment** | Remediation required | 20 weeks to fix |
 
 ---
 
