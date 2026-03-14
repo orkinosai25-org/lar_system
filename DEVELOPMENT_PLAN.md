@@ -22,6 +22,7 @@
 10. [Risk Management](#10-risk-management)
 11. [Success Metrics & KPIs](#11-success-metrics--kpis)
 12. [Implementation Phases](#12-implementation-phases)
+13. [AI-Assisted Booking & Loss-Prevention Features (Optional)](#13-ai-assisted-booking--loss-prevention-features-optional)
 
 ---
 
@@ -37,7 +38,7 @@
 ### Development Goals
 1. Achieve production-ready security posture
 2. Implement PCI DSS and GDPR compliance
-3. Reduce revenue leakage from $675K to <$100K annually
+3. Reduce estimated revenue leakage of ~$177k–$1.7M annually (benchmark-derived; see AUDIT_REPORT.md §7 for methodology)
 4. Achieve 70%+ automated test coverage
 5. Improve performance metrics (page load <2s, 99.9% uptime)
 
@@ -1456,7 +1457,7 @@ Project Governance
 | Booking conversion rate | Unknown | >5% | Daily |
 | Average order value | Unknown | Track | Daily |
 | Revenue per visitor | Unknown | Track | Daily |
-| Annual revenue leakage | $675K | <$100K | Quarterly |
+| Annual revenue leakage | ~$177k–$1.7M est.* | Minimised | Quarterly |
 
 **Customer Experience Metrics**
 | Metric | Current | Target | Measured |
@@ -1936,6 +1937,119 @@ Project Governance
 - **TLS:** Transport Layer Security
 - **UAT:** User Acceptance Testing
 - **XSS:** Cross-Site Scripting
+
+---
+
+## 13. AI-Assisted Booking & Loss-Prevention Features (Optional)
+
+> **Classification:** Post-launch optional enhancements — not required for go-live.
+> Recommended for Year 1 post-launch once booking volume data is available to train and
+> calibrate AI models. These features directly target the three revenue-leakage scenarios
+> identified in AUDIT_REPORT.md §7 and are expected to reduce the estimated
+> ~$177k–$1.7M annual leakage (benchmark-based) toward the <$130k target.
+
+### 13.1 AI Booking Guidance Agent
+
+**Problem it solves:** 40% of users abandon during search (5–8s load time + unclear next
+steps). Users with complex multi-leg itineraries (flight + hotel + car) frequently drop
+off mid-funnel, accounting for a significant share of the stale-fare booking failure
+scenario (AUDIT_REPORT.md §7.2.1).
+
+**Proposed feature: Conversational booking assistant**
+- A chat-based AI agent (e.g. built on OpenAI Assistants API or a self-hosted LLM)
+  embedded in the search and checkout flow
+- Guides users through complex multi-product bookings step by step
+- Explains fare rules, availability caveats (HL/UC status), and cancellation policies
+  in plain language before payment
+- Alerts the user when a fare is about to expire during the session ("Your selected fare
+  is held for 8 minutes — complete checkout to lock in this price")
+- Reduces confusion-driven abandonment and silent post-booking failures caused by
+  customers not understanding booking status
+
+**Comparable implementations:**
+- Expedia's Virtual Agent reduced booking abandonment by 15–20% (Phocuswright 2023
+  Digital CX Report)
+- Booking.com AI assistant handles 60%+ of pre-booking queries without human agent
+  intervention (company investor briefing, Q3 2024)
+
+---
+
+### 13.2 Real-Time Fare Validity & Repricing Alert
+
+**Problem it solves:** AUDIT_REPORT.md §7.2.1 — stale fare failures account for
+$130,000–$1,440,000 in estimated annual leakage (IATA 2024: 3–8% fare invalidation
+rate for cached-fare OTAs). Without live GDS repricing, customers proceed to payment
+on expired fares and bookings fail at the supplier.
+
+**Proposed feature: AI-driven fare freshness monitor**
+- Background process that monitors the age of fares held in the session cache and
+  triggers a GDS re-query when fare age exceeds a configurable threshold (default: 3 min)
+- Presents user with updated fare before payment confirmation — not after failure
+- If the fare has increased, offers the user: "Accept new price", "Search alternatives",
+  or "Hold current itinerary" (where supplier rules allow)
+- Logs fare-change events to enable ongoing calibration of leakage estimates against
+  actual booking data
+
+**Expected impact:** Reduces stale-fare failure rate from IATA's 3–8% benchmark toward
+the <1% achievable with live repricing OTAs (e.g., Sabre SynXis, Amadeus NDC).
+
+---
+
+### 13.3 Cart Abandonment Recovery Agent
+
+**Problem it solves:** 35% cart abandonment at payment stage. Industry data (Baymard
+Institute, 2024) indicates that 18% of cart abandonment in travel is driven by payment
+friction or unexpected fees — scenarios that AI can intercept.
+
+**Proposed feature: Intelligent abandonment recovery**
+- Detects when a user stops interacting mid-checkout and triggers a contextual nudge
+  (in-session tooltip, or — if email captured — a follow-up recovery email within 1 hour)
+- Nudge content is personalised by AI: shows the specific itinerary left behind, price
+  held duration, and one-tap "Return to booking" CTA
+- Optionally offers a booking agent callback for high-value itineraries (ABV > $3,000)
+- Integrates with the B2B agent panel to route high-value abandoned bookings to a live
+  agent for assisted close
+
+**Comparable implementations:**
+- Luxury Escapes (Australia) reports 22% recovery rate on abandoned-cart emails sent
+  within 60 minutes (case study, eTourism Summit 2024)
+- &Beyond Africa uses agent-assisted follow-up for itineraries over $5,000 to prevent
+  online drop-off — a model directly applicable to LAR's luxury segment
+
+---
+
+### 13.4 Personalisation & Smart Recommendation Engine
+
+**Problem it solves:** Low conversion rate (current: unknown, target: >5%). For luxury
+travel platforms in the Sub-Saharan Africa segment, personalised recommendations
+materially increase average order value and repeat booking rate.
+
+**Proposed feature: AI recommendation layer**
+- Collaborative filtering model (e.g. based on booking history and browse behaviour)
+  that surfaces relevant upsell options: room upgrades, excursion add-ons, transfer
+  packages
+- "Guests who booked this lodge also added" style cross-sell cards on the booking
+  confirmation and post-booking email
+- Seasonal and capacity-aware recommendations (e.g. shoulder-season alternatives with
+  better availability at comparable price)
+- Reduces the current zero-upsell baseline and increases revenue per visitor metric
+  (currently unknown — baseline measurement recommended in Phase 5)
+
+---
+
+### 13.5 AI Feature Implementation Summary
+
+| Feature | Leakage Scenario Addressed | Est. Implementation Effort | Recommended Timing |
+|---------|--------------------------|--------------------------|-------------------|
+| Conversational booking assistant | §7.2.1, §7.2.2 (abandonment) | 6–8 weeks | Post-launch (Month 2–3) |
+| Fare validity & repricing alert | §7.2.1 (stale fare failures) | 3–4 weeks | Post-launch (Month 1–2) |
+| Cart abandonment recovery agent | 35% checkout abandonment | 4–5 weeks | Post-launch (Month 2–3) |
+| Personalisation & recommendation engine | Conversion rate / upsell | 8–10 weeks | Post-launch (Month 3–6) |
+
+> **Note:** All AI features require a minimum of 3–6 months of live booking data to train
+> and calibrate effectively. None are prerequisites for production launch. Implement the
+> Fare Validity Alert first — it has the clearest ROI path and the lowest model-dependency
+> (rule-based, not ML-dependent).
 
 ---
 

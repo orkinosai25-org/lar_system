@@ -343,7 +343,7 @@ MD5 is cryptographically broken. Example attack:
 │     └───────────────────────────────────┘             │
 │                                                         │
 │  Total Conversion: Only 25% complete booking!          │
-│  Revenue Lost: $675,000/year                           │
+│  Revenue Leakage: Est. $177k–$1.7M/yr* (benchmark)    │
 │                                                         │
 └─────────────────────────────────────────────────────────┘
 ```
@@ -570,7 +570,7 @@ MD5 is cryptographically broken. Example attack:
 │  Search Load Time           5-8s      →      <2s ✅            │
 │  Cart Abandonment           35%       →      <20% ✅            │
 │  Payment Success Rate       90%       →      98%+ ✅            │
-│  Revenue Leakage            $675k/yr  →      <$100k/yr ✅      │
+│  Revenue Leakage            Est. $177k–$1.7M/yr* →   Minimised ✅  │
 │                                                                 │
 │  PCI DSS Compliance         17%       →      100% ✅            │
 │  GDPR Compliance            40%       →      100% ✅            │

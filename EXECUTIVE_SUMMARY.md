@@ -47,48 +47,32 @@ The LAR platform has functional booking capabilities but contains **critical sec
 
 ### 🟠 Commercial Risk: HIGH
 
-**Revenue at Risk:** $675,000 annually
-
 **Key Issues:**
 - 40% user abandonment during search (5-8s load times)
 - 35% cart abandonment at payment stage
 - 10% payment processing failures
 - No automated testing (0% coverage)
 
----
+**Estimated Revenue Leakage: ~$177,000–$1,700,000 annually** *(benchmark-derived estimate — not validated against LAR data)*
 
-## Financial Impact Analysis
+> **Methodology:** Baseline assumed at 200–500 bookings/month, average booking value USD 1,500–3,000, representative of the Sub-Saharan Africa luxury OTA segment (Phocuswright 2024 OTA benchmarks). No actual LAR booking or transaction data was provided; all figures below are estimates and **must be validated against actual booking volumes before use in financial planning**. Full methodology: [AUDIT_REPORT.md §7](./AUDIT_REPORT.md).
 
-### Investment Required
+| Leakage Scenario | Estimated Annual Range | Benchmark Source |
+|-----------------|----------------------|-----------------|
+| Stale fare booking failures (no live repricing) | $130,000–$1,440,000 | IATA 2024: 3–8% fare invalidation rate for cached-fare OTAs |
+| Silent post-booking failures (stub confirmation flow) | $15,000–$225,000 | Industry norm: 5–15% silent failure rate without monitoring |
+| Unconfirmed hotel bookings (HL/UC not handled) | ~$32,000 | GDS benchmark: 2–5% HL/UC rate, ~$300 avg no-show charge |
+| **Combined operational leakage estimate** | **~$177,000–$1,700,000** | Low and high scenario |
 
-| Category | Amount | Timeline |
-|----------|--------|----------|
-| Security Remediation | $150,000 | 6-8 weeks |
-| Compliance (PCI/GDPR) | $95,000 | 12-16 weeks |
-| Testing & QA | $78,000 | 6 weeks |
-| Infrastructure | $30,600 | Ongoing |
-| Contingency (20%) | $72,800 | - |
-| **TOTAL** | **$436,800** | **20 weeks** |
-
-### Cost of NOT Fixing
-
-| Risk | Potential Cost |
-|------|---------------|
-| Data breach (avg) | $4,500,000 |
-| GDPR fine (max) | €20,000,000 |
-| PCI fine (monthly) | $10,000/month |
-| Revenue leakage | $675,000/year |
-| Reputational damage | Immeasurable |
-
-**ROI:** Every $1 invested prevents $10+ in losses
+*Confidence: Low. The previously cited figure of $6.8M (v7.3.3) has been withdrawn — it lacked stated assumptions and cannot be substantiated. The figure of $675,000 from earlier drafts was a single-point estimate without methodology; the range above replaces it.*
 
 ---
+
 
 ## Launch Timeline Options
 
 ### ✅ Option A: Full Compliance (RECOMMENDED)
 - **Timeline:** 20 weeks (5 months)
-- **Cost:** $436,800
 - **Risk Level:** Low
 - **Launch Confidence:** 95%
 - **Pros:** Legal compliance, secure, tested
@@ -96,7 +80,6 @@ The LAR platform has functional booking capabilities but contains **critical sec
 
 ### ⚠️ Option B: Fast-Track Security
 - **Timeline:** 10 weeks
-- **Cost:** $180,000
 - **Risk Level:** Medium
 - **Launch Confidence:** 70%
 - **Pros:** Faster launch
@@ -104,7 +87,6 @@ The LAR platform has functional booking capabilities but contains **critical sec
 
 ### ❌ Option C: MVP Launch (NOT RECOMMENDED)
 - **Timeline:** 4 weeks
-- **Cost:** $80,000
 - **Risk Level:** CRITICAL
 - **Launch Confidence:** 40%
 - **Pros:** Immediate launch
@@ -126,7 +108,7 @@ The LAR platform has functional booking capabilities but contains **critical sec
 
 ### Day 4-5: Stakeholder Communication
 1. Present audit findings to management
-2. Request budget approval ($436,800)
+2. Request budget approval for remediation
 3. Approve remediation timeline (20 weeks)
 
 ---
@@ -207,8 +189,7 @@ The LAR platform has functional booking capabilities but contains **critical sec
 - ❌ Audit logging
 - ❌ Incident response plan
 
-**Timeline to Compliance:** 16 weeks  
-**Cost:** $57,000-$95,000
+**Timeline to Compliance:** 16 weeks
 
 ### GDPR Compliance: 40% (Partial)
 
@@ -218,8 +199,7 @@ The LAR platform has functional booking capabilities but contains **critical sec
 - ❌ Encryption at rest
 - ❌ Breach notification process
 
-**Timeline to Compliance:** 8-10 weeks  
-**Cost:** $20,000-$35,000
+**Timeline to Compliance:** 8-10 weeks
 
 ---
 
@@ -231,7 +211,7 @@ The LAR platform has functional booking capabilities but contains **critical sec
 - Remove debug code
 - Add CSRF protection
 
-**Cost:** $40,000 | **Risk Reduction:** 60%
+**Risk Reduction:** 60%
 
 ### Phase 2: Security Hardening (Weeks 3-4)
 - Fix SQL injection
@@ -239,7 +219,7 @@ The LAR platform has functional booking capabilities but contains **critical sec
 - Implement security headers
 - Secure API credentials
 
-**Cost:** $50,000 | **Risk Reduction:** 85%
+**Risk Reduction:** 85%
 
 ### Phase 3: Testing (Weeks 5-7)
 - Build unit test suite
@@ -247,7 +227,7 @@ The LAR platform has functional booking capabilities but contains **critical sec
 - Security penetration test
 - Load testing
 
-**Cost:** $78,000 | **Confidence:** +40%
+**Confidence:** +40%
 
 ### Phase 4: Compliance (Weeks 8-16)
 - PCI DSS implementation
@@ -255,7 +235,7 @@ The LAR platform has functional booking capabilities but contains **critical sec
 - Monitoring & logging
 - Documentation
 
-**Cost:** $195,000 | **Legal Risk:** Eliminated
+**Legal Risk:** Eliminated
 
 ### Phase 5: Optimization (Weeks 17-20)
 - Performance tuning
@@ -263,7 +243,7 @@ The LAR platform has functional booking capabilities but contains **critical sec
 - Mobile UX fixes
 - Final UAT
 
-**Cost:** $73,800 | **Revenue:** +25%
+**Performance Improvement:** +25%
 
 ---
 
@@ -280,7 +260,7 @@ The LAR platform has functional booking capabilities but contains **critical sec
 - Cart abandonment: <20% (from 35%)
 - Search abandonment: <15% (from 40%)
 - Conversion rate: 5%+ (from 2-3%)
-- Revenue leakage: <$100k/year (from $675k)
+- Revenue leakage: Minimised (from 35%+ cart abandonment baseline)
 - Customer satisfaction: 8.5+/10
 
 ### Compliance KPIs
@@ -302,14 +282,11 @@ The LAR platform has functional booking capabilities but contains **critical sec
 - 0.5x Security Consultant
 - 1x Project Manager
 
-**Monthly Cost:** $50,000  
-**Total:** $300,000 (6 months)
-
 ### External Services
-- PCI DSS QSA: $20,000
-- Penetration Testing: $15,000
-- GDPR Legal Review: $10,000
-- Security Monitoring: $12,000/year
+- PCI DSS QSA
+- Penetration Testing
+- GDPR Legal Review
+- Security Monitoring
 
 ---
 
@@ -351,7 +328,7 @@ The LAR platform has functional booking capabilities but contains **critical sec
 
 ## Conclusion
 
-The LAR platform has a solid functional foundation but requires **significant security and compliance work** before production launch. The recommended path is **Option A: Full Compliance** with a **20-week timeline** and **$436,800 investment**.
+The LAR platform has a solid functional foundation but requires **significant security and compliance work** before production launch. The recommended path is **Option A: Full Compliance** with a **20-week timeline**.
 
 ### Next Steps (Immediate)
 
