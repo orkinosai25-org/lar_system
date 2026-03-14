@@ -39,6 +39,7 @@
 
 ## Table of Contents
 
+0. [Response to Client Feedback Email (LAR Non-Acceptance Notice 2026-03-09)](#0-response-to-client-feedback-email)
 1. [Audit Framework (TOR 5.1)](#1-audit-framework-tor-51)
 2. [Security Findings — P0 / P1 / P2](#2-security-findings)
 3. [Vertical Audit — Flights](#3-vertical-audit--flights)
@@ -53,7 +54,193 @@
 
 ---
 
-## 1. Audit Framework (TOR 5.1)
+## 0. Response to Client Feedback Email
+
+> **Source:** LAR non-acceptance notice dated 2026-03-09, issued by J. Zabula (Co-Founder /
+> CTO). The full text of the feedback email was received by OrkinosAI on 2026-03-09 and is
+> reproduced in summary below. Each sub-section heading below corresponds directly to a
+> numbered ground for non-acceptance stated in that feedback email. This section was added
+> to v7.5 to ensure every point raised is explicitly acknowledged and addressed as a
+> standalone item.
+
+---
+
+### Feedback Email Point 1.1 — No Evidence Produced for Any P0 or P1 Finding
+
+**Feedback email text (verbatim summary):** *"The submission contains no such evidence for
+any finding. There are no log excerpts, no PNR references, no API traces, no booking
+confirmations, and no reproducible test steps."*
+
+**Our response in v7.5:**
+
+The evidence limitation arises entirely from a constraint that was not disclosed to the
+auditor at engagement outset: no access to a pre-production or staging runtime environment,
+GDS sandbox credentials, live server logs, or real transaction records was provided. All
+findings are derived from static source code analysis. Each finding in Sections 2–5 is
+marked **[STATIC]** to make this basis transparent.
+
+**What is provided as evidence in this submission:**
+
+- **Annex H — Static Analysis Evidence Log** (`audit-files/Annex_H_Static_Analysis_Evidence_Log.html`):
+  For every P0 and P1 finding, Annex H provides: file path and line-number reference,
+  the exact code excerpt exhibiting the vulnerability or gap, the static-analysis method
+  used (PHP lint, grep pattern scan, or manual review), and the OWASP / PCI DSS control
+  that is violated. This is the maximum level of evidence obtainable without runtime access.
+
+- **Runtime confirmation steps:** Each finding entry (Sections 2–5) includes an
+  "Evidence to Close" field stating precisely what runtime test, log excerpt, API trace,
+  or PNR reference would be required to formally close the finding. These steps are ready
+  for execution as soon as a pre-production environment with GDS sandbox access is
+  provisioned.
+
+**Constraint formally registered:** This limitation is recorded in **Annex I — Audit
+Limitations & Constraints Register** (C-001 through C-005 and D-001, D-002), as required
+by TOR Section 5.6.
+
+---
+
+### Feedback Email Point 1.2 — The Three Contracted Verticals Were Not Audited
+
+**Feedback email text (verbatim summary):** *"The vertical sections present control
+checklists of what should be implemented, not findings from what was tested. There is no
+evidence that any controlled booking scenario, repricing test, failure-path exercise, or
+TTL validation was executed."*
+
+**Our response in v7.5:**
+
+Each of the three contracted verticals is audited in full by static code analysis in
+Sections 3, 4, and 5 of this report. The specific gaps identified in the feedback email
+are addressed as follows:
+
+| Feedback gap (exact language) | Location addressed in this report |
+|-------------------------------|-----------------------------------|
+| Flights: fare parity validation | Section 3 — F-001 (fare repricing gap, [STATIC]) |
+| Flights: repricing test between search/booking/ticketing | Section 3 — F-001, F-002 |
+| Flights: PNR integrity check | Section 3 — F-003 (PNR status not polled post-booking) |
+| Flights: TTL or void/refund path testing | Section 3 — F-004 (no TTL expiry handling), F-005 (void/cancel not implemented) |
+| Hotels: HK/HL/UC confirmation status testing | Section 4 — H-001 (confirmation status not handled) |
+| Hotels: partial confirmation or rollback test | Section 4 — H-002 (no rollback on partial confirmation) |
+| Hotels: cancellation or no-show workflow | Section 4 — H-003 (cancellation endpoint absent) |
+| Cars: rate/availability pre-checkout verification | Section 5 — C-001 (no pre-book availability re-check) |
+| Cars: stale-cache test | Section 5 — C-002 (no cache TTL or invalidation) |
+| Cars: policy disclosure assessment | Section 5 — C-003 (policy fields unpopulated) |
+| Booking flow and customer journey (TOR 3.2) | Section 6 — full booking flow lifecycle audit |
+
+All findings state their evidence basis ([STATIC]), the exact file and line reference
+(Annex H), and the runtime test step required to close the finding.
+
+---
+
+### Feedback Email Point 1.3 — Revenue & Commercial Risk Analysis Is Unsupported
+
+**Feedback email text (verbatim summary):** *"The submission references a figure of $6.8
+million in annual revenue loss with no booking volume assumptions, no derivation, no
+methodology, and no data source."*
+
+**Our response in v7.5:**
+
+Section 7 of this report provides a fully stated methodology for all revenue impact
+estimates. Specifically:
+
+- All revenue figures are identified as **estimates** based on published industry
+  benchmarks (IATA settlement failure rate benchmarks; OTA cart-abandonment industry
+  averages).
+- Each estimate states its assumptions (booking volume range, average booking value range,
+  assumed failure rate range) and the sensitivity range.
+- The phrase "no data was provided" is explicitly stated as a constraint — the
+  `REMEDIATION_PRICING_PROPOSAL.md` limitation entries D-001 and D-002 in Annex I confirm
+  that no booking volume, conversion, or revenue data was provided by LAR.
+- No single revenue figure is presented without a stated low/high range and a clear
+  methodology caveat.
+
+This satisfies TOR Section 3.3 to the extent possible without LAR supplying booking
+volume or transaction data.
+
+---
+
+### Feedback Email Point 1.4 — Mandatory Deliverables Are Absent or Incomplete
+
+**Feedback email text (verbatim summary):** *"Audit Framework Document (5.1): Not produced
+as a standalone artefact. CTO-Level Audit Report (5.2): does not meet the standard of
+action-oriented, CTO-executable findings. Risk Register & Remediation Backlog (5.3): Annex
+C is a bullet list. Go-Live Readiness Summary (5.4): without explicit, measurable
+Conditional Go conditions. Evidence Pack (5.5): Entirely absent. Audit Limitations &
+Constraints Register (5.6): Entirely absent."*
+
+**Our response in v7.5 — each deliverable addressed individually:**
+
+| TOR Ref | Deliverable | Where addressed in v7.5 |
+|---------|-------------|-------------------------|
+| **5.1** | Audit Framework Document | **Section 1** of this report: scope, method, standards, severity framework — constitutes the standalone Audit Framework artefact. |
+| **5.2** | CTO-Level Audit Report | **Sections 2–8**: each finding includes priority, affected module, root cause, production impact, corrective action direction, and evidence-to-close — CTO-executable format. |
+| **5.3** | Risk Register & Remediation Backlog | **Annex J** (`audit-files/Annex_J_Risk_Register_and_Remediation_Backlog.html`): 29 findings in a structured register with Risk ID, priority, module, description, root cause, evidence reference, likelihood rating, impact rating, risk score, corrective action, and evidence required to close. |
+| **5.4** | Go-Live Readiness Summary | **Section 8**: 13 numbered Conditional Go (CGo) conditions, each with a measurable acceptance criterion and a reference to the finding it closes. |
+| **5.5** | Evidence Pack | **Annex H** (`audit-files/Annex_H_Static_Analysis_Evidence_Log.html`): file path, line number, code excerpt, analysis method, and OWASP/PCI control reference for every P0 and P1 finding. |
+| **5.6** | Audit Limitations & Constraints Register | **Annex I** (`audit-files/Annex_I_Audit_Limitations_and_Constraints_Register.html`) and **Section 10** summary: 8 constraints (C-001–C-005, D-001, D-002, S-001), each with constraint description, finding impact, and required remediation step. |
+
+---
+
+### Feedback Email Point 1.5 — Out-of-Scope Material Included, Including a Commercial Proposal
+
+**Feedback email text (verbatim summary):** *"A full UI/UX redesign section with
+before/after mockups (Annex G). Annex F — a commercial document containing chargeable work
+bundles with dollar pricing totalling in excess of $355,000. An AI Chat Assistant feature
+proposal (Section 10). An Identity & Registration Modernisation design (Section 7). Audit
+coverage of Cruises, Private Aviation, and Private Boats & Yachts."*
+
+**Our response in v7.5:**
+
+All out-of-scope material has been removed from this submission in full:
+
+- **UI/UX redesign section and Annex G** — removed. Not part of this submission.
+- **Commercial pricing / chargeable work bundles (formerly Annex F content)** — removed
+  from this document entirely. All pricing is held in the internal document
+  `REMEDIATION_PRICING_PROPOSAL.md`, which is **not** included in this submission and
+  will only be shared with LAR at their explicit invitation following audit acceptance,
+  in accordance with SOW Section 6a.
+- **AI Chat Assistant feature proposal** — removed. Not within TOR scope.
+- **Identity & Registration Modernisation design** — removed. Not within TOR scope.
+- **Cruises, Private Aviation, Private Boats & Yachts verticals** — removed. TOR Section
+  3.1 limits scope to Flights, Hotels, and Cars. See scope confirmation note on the
+  opening page of this report.
+
+The Annex F Visual Audit Guide has been retained as a supplemental visual reference at
+`audit-files/Annex F — Visual Audit Guide.html` because it contains no pricing and
+is not a TOR Section 5 mandatory deliverable; it is offered as a reference aid only.
+
+---
+
+### Feedback Email Point 1.6 — Audit Independence Has Been Compromised
+
+**Feedback email text (verbatim summary):** *"SOW Section 6a states: audit independence
+shall be maintained at all times, and audit findings shall not be influenced by any
+potential future remediation engagement. Embedding a commercial remediation proposal
+inside the audit deliverable is a direct violation of Section 6a."*
+
+**Our response in v7.5:**
+
+This point is acknowledged without reservation. Embedding commercial pricing in the v7.3.3
+audit deliverable was an error of judgement that is inconsistent with SOW Section 6a.
+
+Remedial action taken:
+
+1. All dollar figures, work bundles, and ROI projections have been removed from this
+   audit report.
+2. The commercial pricing reference has been moved to a standalone internal document
+   (`REMEDIATION_PRICING_PROPOSAL.md`) that is clearly marked **NOT FOR CLIENT
+   DISTRIBUTION** and is not submitted to LAR as part of this audit.
+3. The revision notice at the top of this document explicitly states the separation and
+   the terms under which the pricing document would be shared.
+4. This is documented in the Document Control table (version v7.5 entry) and in the
+   Annexes note at the end of this report.
+
+Audit independence is fully restored in this submission. All findings, risk scores, and
+Go-Live conditions are based solely on evidence from the code analysis and are not
+influenced by any remediation commercial consideration.
+
+---
+
+
 
 ### 1.1 Engagement Scope
 
@@ -957,7 +1144,7 @@ each constraint.**
 |---------|------|---------------|
 | v7.3.3 | 2026-03-05 | Original submission (not accepted by LAR) |
 | v7.4 | 2026-03-10 | Full revision per LAR non-acceptance notice (2026-03-09): evidence references added, out-of-scope material removed, commercial pricing removed, all TOR mandatory deliverables addressed, revenue methodology stated, Go-Live conditions made measurable, Annexes H/I/J added |
-| v7.5 | 2026-03-12 | Final revision: commercial remediation pricing fully separated into standalone internal document (`REMEDIATION_PRICING_PROPOSAL.md`, not for client distribution); revision notice updated; submission date updated |
+| v7.5 | 2026-03-12 | Final revision: commercial remediation pricing fully separated into standalone internal document (`REMEDIATION_PRICING_PROPOSAL.md`, not for client distribution); Section 0 added with explicit headings addressing each of the 6 points raised in the LAR non-acceptance feedback email (2026-03-09); revision notice updated; submission date updated |
 
 ---
 
