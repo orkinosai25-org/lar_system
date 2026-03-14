@@ -50,6 +50,25 @@
 - **Framework Upgrade** (CI 4.x): $110,000 (Year 2)
 - **Infrastructure** (Ongoing): $48,600/year
 
+### 🤖 Optional: AI-Assisted Booking & Loss-Prevention Features
+
+These post-launch AI enhancements directly target the identified revenue leakage scenarios
+(est. ~$177k–$1.7M annually — see AUDIT_REPORT.md §7) and are recommended for
+implementation once live booking data is available to calibrate models.
+Full details and implementation guidance: [DEVELOPMENT_PLAN.md §13](./DEVELOPMENT_PLAN.md).
+
+| AI Feature | Leakage Scenario Targeted | Timing |
+|-----------|--------------------------|--------|
+| **Conversational booking assistant** — AI agent guides users through complex multi-product itineraries; explains fare rules, HL/UC status, and cancellation policies before payment; alerts users to expiring fares in-session. *(Comparable: Expedia Virtual Agent — 15–20% abandonment reduction, Phocuswright 2023)* | 40% search abandonment; silent post-booking failures | Month 2–3 post-launch |
+| **Fare validity & repricing alert** — monitors session-cached fares and triggers a live GDS re-query before payment, presenting the user with the current price rather than failing at the supplier. *(Reduces stale-fare failure rate from 3–8% IATA benchmark toward <1% live-repricing OTA norm)* | Stale fare booking failures ($130k–$1.44M est.) | Month 1–2 post-launch |
+| **Cart abandonment recovery agent** — detects mid-checkout drop-off and sends a personalised recovery nudge (in-session tooltip or 1-hour follow-up email) with the specific itinerary and one-tap return link; routes high-value itineraries (>$3,000) to a live agent. *(Comparable: Luxury Escapes — 22% recovery rate on 60-minute abandoned-cart emails, eTourism Summit 2024)* | 35% payment-stage abandonment | Month 2–3 post-launch |
+| **Personalisation & recommendation engine** — AI-driven upsell layer (room upgrades, excursion add-ons, transfers) based on booking history and browse behaviour; cross-sell cards on confirmation emails. | Low conversion rate / zero upsell baseline | Month 3–6 post-launch |
+
+> **Implementation note:** Start with the Fare Validity Alert — it is rule-based (not
+> ML-dependent), has the clearest ROI path, and can be implemented without historical
+> booking data. AI/ML features (recommendation engine, recovery agent) require 3–6 months
+> of live booking data to train effectively.
+
 ---
 
 ## 🔧 What Needs Developing
