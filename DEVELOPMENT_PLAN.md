@@ -37,7 +37,7 @@
 ### Development Goals
 1. Achieve production-ready security posture
 2. Implement PCI DSS and GDPR compliance
-3. Reduce revenue leakage (40% search abandonment, 35% cart abandonment)
+3. Reduce estimated revenue leakage of ~$177k–$1.7M annually (benchmark-derived; see AUDIT_REPORT.md §7 for methodology)
 4. Achieve 70%+ automated test coverage
 5. Improve performance metrics (page load <2s, 99.9% uptime)
 
@@ -1456,7 +1456,7 @@ Project Governance
 | Booking conversion rate | Unknown | >5% | Daily |
 | Average order value | Unknown | Track | Daily |
 | Revenue per visitor | Unknown | Track | Daily |
-| Annual revenue leakage | High (35%+ abandonment) | Minimised | Quarterly |
+| Annual revenue leakage | ~$177k–$1.7M est.* | Minimised | Quarterly |
 
 **Customer Experience Metrics**
 | Metric | Current | Target | Measured |

@@ -26,8 +26,8 @@
 - **25/100 Compliance Score** (non-compliant)
 
 ### Financial Impact
-- **Revenue leakage risk:** High (40% search abandonment, 35% cart abandonment)
-- **Potential Data Breach:** Significant liability per GDPR/PCI DSS regulations
+- **Estimated Revenue Leakage:** ~$177,000–$1,700,000 annually *(benchmark-derived estimate; assumed 200–500 bookings/month at USD 1,500–3,000 ABV; Phocuswright 2024 OTA benchmarks; see AUDIT_REPORT.md §7 for full methodology — must be validated against actual LAR data)*
+- **Potential Data Breach Liability:** $86,000–$500,000 per event (Verizon DBIR 2024, Level 4 merchant)
 - **GDPR Fine Risk:** Up to €20,000,000
 - **PCI Fine Risk:** Per card-brand schedules
 
@@ -291,7 +291,7 @@
 **Business:**
 - Cart abandonment: <20% (from 35%)
 - Search abandonment: <15% (from 40%)
-- Revenue leakage: Minimised (from 35%+ cart abandonment baseline)
+- Revenue leakage: <$130k/year (reducing est. $177k–$1.7M current exposure)
 - Customer satisfaction: >8.5/10
 
 ---
@@ -426,11 +426,11 @@ A: Yes, but with significant risks. A 10-week fast-track option ($180K) fixes on
 
 **Q: What if we don't fix these issues?**  
 A: You face:
-- Data breach risk (significant liability per GDPR/PCI DSS regulations)
+- Data breach liability: $86k–$500k per event (Verizon DBIR 2024, Level 4 merchant)
 - GDPR fines (up to €20M)
 - PCI fines (per card-brand schedules)
 - Payment processor suspension (revenue loss)
-- Continued revenue leakage from high abandonment rates
+- Continued est. $177k–$1.7M annual revenue leakage (benchmark-derived — see AUDIT_REPORT.md §7)
 - Reputational damage
 
 **Q: Can we phase the investment?**  

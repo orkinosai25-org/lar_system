@@ -53,6 +53,19 @@ The LAR platform has functional booking capabilities but contains **critical sec
 - 10% payment processing failures
 - No automated testing (0% coverage)
 
+**Estimated Revenue Leakage: ~$177,000–$1,700,000 annually** *(benchmark-derived estimate — not validated against LAR data)*
+
+> **Methodology:** Baseline assumed at 200–500 bookings/month, average booking value USD 1,500–3,000, representative of the Sub-Saharan Africa luxury OTA segment (Phocuswright 2024 OTA benchmarks). No actual LAR booking or transaction data was provided; all figures below are estimates and **must be validated against actual booking volumes before use in financial planning**. Full methodology: [AUDIT_REPORT.md §7](./AUDIT_REPORT.md).
+
+| Leakage Scenario | Estimated Annual Range | Benchmark Source |
+|-----------------|----------------------|-----------------|
+| Stale fare booking failures (no live repricing) | $130,000–$1,440,000 | IATA 2024: 3–8% fare invalidation rate for cached-fare OTAs |
+| Silent post-booking failures (stub confirmation flow) | $15,000–$225,000 | Industry norm: 5–15% silent failure rate without monitoring |
+| Unconfirmed hotel bookings (HL/UC not handled) | ~$32,000 | GDS benchmark: 2–5% HL/UC rate, ~$300 avg no-show charge |
+| **Combined operational leakage estimate** | **~$177,000–$1,700,000** | Low and high scenario |
+
+*Confidence: Low. The previously cited figure of $6.8M (v7.3.3) has been withdrawn — it lacked stated assumptions and cannot be substantiated. The figure of $675,000 from earlier drafts was a single-point estimate without methodology; the range above replaces it.*
+
 ---
 
 

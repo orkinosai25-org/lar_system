@@ -89,7 +89,7 @@ A comprehensive technical, security, and compliance audit has been conducted on 
 - 🔴 **8 Critical Security Vulnerabilities** identified (must fix before launch)
 - 🟠 **12 High-Priority Technical Risks** requiring immediate attention
 - 🟡 **Compliance Gaps:** PCI DSS, GDPR, POPIA require remediation
-- 💰 **Revenue Leakage Risk:** High — 40% search abandonment, 35% cart abandonment
+- 💰 **Estimated Revenue Leakage:** ~$177,000–$1,700,000 annually *(benchmark-derived; 200–500 bookings/month at USD 1,500–3,000 ABV; Phocuswright/IATA benchmarks; see AUDIT_REPORT.md §7)*
 
 **Required Timeline:** 20 weeks to achieve production readiness
 
