@@ -112,7 +112,7 @@ and is fully managed (automatic backups, patching).
 ```bash
 DB_SERVER_NAME="lar-mysql-server"     # Must be globally unique
 DB_ADMIN_USER="laradmin"
-DB_ADMIN_PASSWORD="<YourStr0ngP@ssword!>"  # Min 8 chars, upper+lower+number+symbol
+DB_ADMIN_PASSWORD="ChangeMe_S3cure!"  # Replace with your password (min 8 chars, upper+lower+number+symbol)
 
 # Create the Flexible Server (General Purpose, 2 vCores, 20 GB storage)
 az mysql flexible-server create \
@@ -126,6 +126,11 @@ az mysql flexible-server create \
   --storage-size 20 \
   --version 8.0 \
   --public-access 0.0.0.0   # Opens firewall to Azure services; restrict later
+
+# NOTE: If you see "The requested VM size is not available in the current region", use the
+# Burstable tier instead (also suitable for audit/test deployments):
+#   --sku-name Standard_B1ms \
+#   --tier Burstable \
 
 # Create the databases (one per module)
 for DB_NAME in lar_b2c lar_agent lar_supplier lar_supervision lar_webservices lar_ultralux; do
@@ -223,17 +228,22 @@ Each Web App needs database connection settings configured as **Application Sett
 Replace the placeholder values with your actual Azure MySQL server details.
 
 ```bash
-DB_HOST="<DB_SERVER_NAME>.mysql.database.azure.com"
-DB_USER="laradmin"
-DB_PASS="<YourStr0ngP@ssword!>"
+# Re-use the variables set in Steps 1 and 2.
+# If running in a new shell session, re-declare them here:
+#   RESOURCE_GROUP="rg-lar-system"
+#   DB_SERVER_NAME="lar-mysql-server"
+#   DB_ADMIN_USER="laradmin"
+#   DB_ADMIN_PASSWORD="ChangeMe_S3cure!"   # same password as Step 2
+
+DB_HOST="${DB_SERVER_NAME}.mysql.database.azure.com"
 
 # B2C
 az webapp config appsettings set \
   --resource-group "$RESOURCE_GROUP" --name "lar-b2c" \
   --settings \
     DB_HOSTNAME="$DB_HOST" \
-    DB_USERNAME="${DB_USER}@<DB_SERVER_NAME>" \
-    DB_PASSWORD="$DB_PASS" \
+    DB_USERNAME="${DB_ADMIN_USER}@${DB_SERVER_NAME}" \
+    DB_PASSWORD="$DB_ADMIN_PASSWORD" \
     DB_DATABASE="lar_b2c" \
     ENVIRONMENT="production" \
     WEBSITE_RUN_FROM_PACKAGE="1"
@@ -243,8 +253,8 @@ az webapp config appsettings set \
   --resource-group "$RESOURCE_GROUP" --name "lar-agent" \
   --settings \
     DB_HOSTNAME="$DB_HOST" \
-    DB_USERNAME="${DB_USER}@<DB_SERVER_NAME>" \
-    DB_PASSWORD="$DB_PASS" \
+    DB_USERNAME="${DB_ADMIN_USER}@${DB_SERVER_NAME}" \
+    DB_PASSWORD="$DB_ADMIN_PASSWORD" \
     DB_DATABASE="lar_agent" \
     ENVIRONMENT="production" \
     WEBSITE_RUN_FROM_PACKAGE="1"
@@ -254,8 +264,8 @@ az webapp config appsettings set \
   --resource-group "$RESOURCE_GROUP" --name "lar-supplier" \
   --settings \
     DB_HOSTNAME="$DB_HOST" \
-    DB_USERNAME="${DB_USER}@<DB_SERVER_NAME>" \
-    DB_PASSWORD="$DB_PASS" \
+    DB_USERNAME="${DB_ADMIN_USER}@${DB_SERVER_NAME}" \
+    DB_PASSWORD="$DB_ADMIN_PASSWORD" \
     DB_DATABASE="lar_supplier" \
     ENVIRONMENT="production" \
     WEBSITE_RUN_FROM_PACKAGE="1"
@@ -265,8 +275,8 @@ az webapp config appsettings set \
   --resource-group "$RESOURCE_GROUP" --name "lar-supervision" \
   --settings \
     DB_HOSTNAME="$DB_HOST" \
-    DB_USERNAME="${DB_USER}@<DB_SERVER_NAME>" \
-    DB_PASSWORD="$DB_PASS" \
+    DB_USERNAME="${DB_ADMIN_USER}@${DB_SERVER_NAME}" \
+    DB_PASSWORD="$DB_ADMIN_PASSWORD" \
     DB_DATABASE="lar_supervision" \
     ENVIRONMENT="production" \
     WEBSITE_RUN_FROM_PACKAGE="1"
@@ -276,8 +286,8 @@ az webapp config appsettings set \
   --resource-group "$RESOURCE_GROUP" --name "lar-services" \
   --settings \
     DB_HOSTNAME="$DB_HOST" \
-    DB_USERNAME="${DB_USER}@<DB_SERVER_NAME>" \
-    DB_PASSWORD="$DB_PASS" \
+    DB_USERNAME="${DB_ADMIN_USER}@${DB_SERVER_NAME}" \
+    DB_PASSWORD="$DB_ADMIN_PASSWORD" \
     DB_DATABASE="lar_webservices" \
     ENVIRONMENT="production" \
     WEBSITE_RUN_FROM_PACKAGE="1"
@@ -393,10 +403,11 @@ After creating the databases, import your SQL schema. Use MySQL Workbench or the
 
 ```bash
 # Import schema for each database
+# (DB_SERVER_NAME, DB_ADMIN_USER and DB_ADMIN_PASSWORD were set in Step 2)
 mysql \
-  --host="<DB_SERVER_NAME>.mysql.database.azure.com" \
-  --user="laradmin@<DB_SERVER_NAME>" \
-  --password="<YourStr0ngP@ssword!>" \
+  --host="${DB_SERVER_NAME}.mysql.database.azure.com" \
+  --user="${DB_ADMIN_USER}@${DB_SERVER_NAME}" \
+  --password="${DB_ADMIN_PASSWORD}" \
   --ssl-ca=DigiCertGlobalRootCA.crt.pem \
   --ssl-mode=REQUIRED \
   lar_b2c < /path/to/your/lar_b2c_schema.sql
@@ -489,7 +500,7 @@ LOCATION="southafricanorth"
 APP_SERVICE_PLAN="asp-lar-system"
 DB_SERVER_NAME="lar-mysql-server"          # Must be globally unique
 DB_ADMIN_USER="laradmin"
-DB_ADMIN_PASSWORD="<YourStr0ngP@ssword!>"  # Change this!
+DB_ADMIN_PASSWORD="ChangeMe_S3cure!"  # Replace with your password — min 8 chars, upper+lower+number+symbol
 # -------------------------------------------------------------
 
 echo "==> Creating resource group..."
@@ -507,6 +518,8 @@ az mysql flexible-server create \
   --storage-size 20 \
   --version 8.0 \
   --public-access 0.0.0.0
+# NOTE: If "The requested VM size is not available in the current region", replace the two lines
+# above with: --sku-name Standard_B1ms --tier Burstable
 
 echo "==> Creating databases..."
 for DB_NAME in lar_b2c lar_agent lar_supplier lar_supervision lar_webservices lar_ultralux; do
