@@ -5,19 +5,18 @@ generate_word_report.py
 Generates a comprehensive Word (.docx) audit report for the LAR (Luxury Africa Resorts)
 system by combining:
   - EXECUTIVE_SUMMARY.md
-  - AUDIT_REPORT.md  (v7.6)
+  - AUDIT_REPORT.md  (v7.7)
   - REMEDIATION_ROADMAP.md
   - QUICK_REFERENCE.md
   - audit-files/Annex F, H, I, J (HTML annexes)
   - audit-files/Submission_Readiness_Assessment.html
 
-Output: reports/LAR_Audit_Report_v7.6.docx
+Output: reports/LAR_Audit_Report_v7.7.docx
 """
 
 import os
 import re
 from pathlib import Path
-from datetime import datetime
 
 from docx import Document
 from docx.shared import Inches, Pt, RGBColor, Cm
@@ -33,7 +32,13 @@ from bs4 import BeautifulSoup
 BASE_DIR = Path(__file__).parent
 REPORTS_DIR = BASE_DIR / "reports"
 AUDIT_FILES_DIR = BASE_DIR / "audit-files"
-OUTPUT_PATH = REPORTS_DIR / "LAR_Audit_Report_v7.6.docx"
+OUTPUT_PATH = REPORTS_DIR / "LAR_Audit_Report_v7.7.docx"
+
+# Report metadata — fixed values so the document is stable across re-runs
+REPORT_VERSION    = "v7.7"
+REPORT_REFERENCE  = "LAR-AUDIT-v7.7"
+SUBMISSION_DATE   = "2026-03-15"
+GENERATED_DATE    = "2026-03-15"
 
 # ---------------------------------------------------------------------------
 # Colour palette (professional audit document)
@@ -189,14 +194,14 @@ def add_cover_page(doc: Document):
     table.style = "Table Grid"
 
     meta = [
-        ("Report Reference",    "LAR-AUDIT-v7.6"),
-        ("Submission Date",     "2026-03-14"),
-        ("Report Version",      "v7.6"),
+        ("Report Reference",    REPORT_REFERENCE),
+        ("Submission Date",     SUBMISSION_DATE),
+        ("Report Version",      REPORT_VERSION),
         ("Auditor Organisation","OrkinosAI"),
         ("Lead Auditor",        "Dr. Ismail Kucukdurgut"),
         ("Classification",      "CONFIDENTIAL — FOR LAR REVIEW"),
         ("Engagement Basis",    "TOR v1.01 / SOW"),
-        ("Document Generated",  datetime.now().strftime("%Y-%m-%d")),
+        ("Document Generated",  GENERATED_DATE),
     ]
     for i, (label, value) in enumerate(meta):
         row = table.rows[i]
@@ -725,7 +730,7 @@ def add_toc_placeholder(doc: Document):
 # ---------------------------------------------------------------------------
 
 def build_report():
-    print("Building LAR Audit Report v7.6 Word document…")
+    print("Building LAR Audit Report v7.7 Word document…")
 
     doc = create_document()
     add_styles(doc)
@@ -744,10 +749,10 @@ def build_report():
     add_section_separator(doc, "Part I — Executive Summary")
     md_to_docx(doc, exec_path.read_text(encoding="utf-8"))
 
-    # 4. Main Audit Report (v7.6)
-    print("  → Audit Report (AUDIT_REPORT.md v7.6)")
+    # 4. Main Audit Report (v7.7)
+    print("  → Audit Report (AUDIT_REPORT.md v7.7)")
     audit_path = BASE_DIR / "AUDIT_REPORT.md"
-    add_section_separator(doc, "Part II — Comprehensive Audit Report (v7.6)")
+    add_section_separator(doc, "Part II — Comprehensive Audit Report (v7.7)")
     md_to_docx(doc, audit_path.read_text(encoding="utf-8"))
 
     # 5. Remediation Roadmap
@@ -768,7 +773,7 @@ def build_report():
     html_annex_to_docx(
         doc,
         AUDIT_FILES_DIR / "Submission_Readiness_Assessment.html",
-        "Submission Readiness Assessment — v7.6 vs. Cure Conditions"
+        "Submission Readiness Assessment — v7.7 vs. Cure Conditions"
     )
 
     # 8. Annex F — Visual Audit Guide
