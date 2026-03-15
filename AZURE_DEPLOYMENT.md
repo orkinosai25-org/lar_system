@@ -58,7 +58,7 @@ GitHub Actions Workflow
 
 | Service | Tier (recommended) | Purpose |
 |---|---|---|
-| Azure App Service Plan | P1v3 (Linux, PHP 8.1) | Hosts all five web apps |
+| Azure App Service Plan | P1v3 (Linux, PHP 8.2) | Hosts all five web apps |
 | Azure Database for MySQL Flexible Server | General Purpose, 2 vCores | Primary database |
 
 ---
@@ -179,7 +179,7 @@ Create a single **App Service Plan** and five **Web Apps**.
 ```bash
 APP_SERVICE_PLAN="asp-lar-system"
 
-# Create the App Service Plan (Linux, PHP 8.1, P1v3 SKU)
+# Create the App Service Plan (Linux, PHP 8.2, P1v3 SKU)
 az appservice plan create \
   --resource-group "$RESOURCE_GROUP" \
   --name "$APP_SERVICE_PLAN" \
@@ -193,7 +193,7 @@ for APP_NAME in lar-b2c lar-agent lar-supplier lar-supervision lar-services; do
     --resource-group "$RESOURCE_GROUP" \
     --plan "$APP_SERVICE_PLAN" \
     --name "$APP_NAME" \
-    --runtime "PHP|8.1"
+    --runtime "PHP|8.2"
 done
 ```
 
@@ -307,7 +307,7 @@ repository and will run automatically when you push to the `main` branch.
 
 | Job | What it does |
 |---|---|
-| **Build** | Sets up PHP 8.1, runs syntax checks across all modules — errors go into a downloadable `php-syntax-report.txt` artifact |
+| **Build** | Sets up PHP 8.2, runs syntax checks across all modules — errors go into a downloadable `php-syntax-report.txt` artifact |
 | **deploy-b2c / agent / supplier / supervision / services** | Deploys each module to its Azure Web App (runs in parallel) |
 | **collect-logs** | Waits 60 s for apps to start, enables verbose logging, downloads all PHP error logs, HTTP logs, and failed-request traces as a `azure-runtime-logs` artifact |
 
@@ -440,7 +440,7 @@ grep -r "database\|mysql\|connection\|error" /tmp/lar-b2c-logs/LogFiles/ -i
   az webapp config set \
     --resource-group "$RESOURCE_GROUP" \
     --name "lar-b2c" \
-    --generic-configurations '{"linuxFxVersion": "PHP|8.1"}'
+    --generic-configurations '{"linuxFxVersion": "PHP|8.2"}'
   ```
 
 ### `collect-logs` job fails
@@ -512,7 +512,7 @@ for APP_NAME in lar-b2c lar-agent lar-supplier lar-supervision lar-services; do
     --resource-group "$RESOURCE_GROUP" \
     --plan "$APP_SERVICE_PLAN" \
     --name "$APP_NAME" \
-    --runtime "PHP|8.1"
+    --runtime "PHP|8.2"
 done
 
 echo "==> Enabling diagnostic logging on all Web Apps..."
@@ -633,7 +633,7 @@ GitHub Actions Workflow
 
 | Service | Tier (recommended) | Purpose |
 |---|---|---|
-| Azure App Service Plan | P1v3 (Linux, PHP 8.1) | Hosts all five web apps |
+| Azure App Service Plan | P1v3 (Linux, PHP 8.2) | Hosts all five web apps |
 | Azure Database for MySQL Flexible Server | General Purpose, 2 vCores | Primary database |
 | Azure Key Vault (optional) | Standard | Secure secret storage |
 
@@ -765,7 +765,7 @@ Create a single **App Service Plan** and five **Web Apps**.
 ```bash
 APP_SERVICE_PLAN="asp-lar-system"
 
-# Create the App Service Plan (Linux, PHP 8.1, P1v3 SKU)
+# Create the App Service Plan (Linux, PHP 8.2, P1v3 SKU)
 az appservice plan create \
   --resource-group "$RESOURCE_GROUP" \
   --name "$APP_SERVICE_PLAN" \
@@ -779,7 +779,7 @@ for APP_NAME in lar-b2c lar-agent lar-supplier lar-supervision lar-services; do
     --resource-group "$RESOURCE_GROUP" \
     --plan "$APP_SERVICE_PLAN" \
     --name "$APP_NAME" \
-    --runtime "PHP|8.1"
+    --runtime "PHP|8.2"
 done
 ```
 
@@ -872,11 +872,11 @@ for APP_NAME in lar-b2c lar-agent lar-supplier lar-supervision lar-services; do
   az webapp config set \
     --resource-group "$RESOURCE_GROUP" \
     --name "$APP_NAME" \
-    --php-version "8.1"
+    --php-version "8.2"
 done
 ```
 
-The following extensions are available by default on Azure App Service PHP 8.1:
+The following extensions are available by default on Azure App Service PHP 8.2:
 `mysqli`, `mbstring`, `gd`, `curl`, `zip`, `xml`, `intl`, `pdo_mysql`
 
 ---
@@ -941,7 +941,7 @@ repository and will run automatically when you push to the `main` branch.
 
 **What the workflow does:**
 
-1. **Build job** — Checks out the code, sets up PHP 8.1, validates PHP syntax for all modules
+1. **Build job** — Checks out the code, sets up PHP 8.2, validates PHP syntax for all modules
 2. **Deploy jobs** — Deploys each module to its respective Azure Web App in parallel
 
 ---
@@ -1017,7 +1017,7 @@ done
   az webapp config set \
     --resource-group "$RESOURCE_GROUP" \
     --name "lar-b2c" \
-    --generic-configurations '{"linuxFxVersion": "PHP|8.1"}'
+    --generic-configurations '{"linuxFxVersion": "PHP|8.2"}'
   ```
 
 ### Deployment not triggering
@@ -1089,7 +1089,7 @@ for APP_NAME in lar-b2c lar-agent lar-supplier lar-supervision lar-services; do
     --resource-group "$RESOURCE_GROUP" \
     --plan "$APP_SERVICE_PLAN" \
     --name "$APP_NAME" \
-    --runtime "PHP|8.1"
+    --runtime "PHP|8.2"
 done
 
 echo "==> Configuring App Settings..."
