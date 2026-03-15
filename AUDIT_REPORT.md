@@ -1,18 +1,21 @@
 # LAR (Luxury Africa Resorts) System — Audit, Security & Readiness Report
 
-**Report Reference:** LAR-AUDIT-v7.5-REVISED  
-**Submission Date:** 2026-03-12  
-**Revision Basis:** Client feedback dated 2026-03-09 (J. Zabula, Co-Founder / CTO); internal review 2026-03-12  
+**Report Reference:** LAR-AUDIT-v7.7  
+**Submission Date:** 2026-03-15  
+**Revision Basis:** Document Generated date fix (v7.7); supersedes v7.6 (dated 2026-03-14)  
 **Auditor Organisation:** OrkinosAI  
 **Lead Auditor:** Dr. Ismail Kucukdurgut  
-**Classification:** CONFIDENTIAL — DRAFT FOR LAR REVIEW  
+**Classification:** CONFIDENTIAL — FOR LAR REVIEW  
 **Engagement Basis:** TOR v1.01 / SOW
 
-> **Revision Notice (v7.5):** This document supersedes v7.4 (dated 2026-03-10) and v7.3.3
-> (dated 2026-03-05). All items cited in the LAR non-acceptance notice (2026-03-09) are
-> addressed below or in the supporting annexes. All commercial remediation pricing has been
-> removed from this document in full and maintained in a separate internal pricing reference
-> (`REMEDIATION_PRICING_PROPOSAL.md`) which is **not** part of this submission and will only
+> **Revision Notice (v7.7):** This document supersedes v7.6 (dated 2026-03-14), v7.5 (dated
+> 2026-03-12), v7.4 (dated 2026-03-10), and v7.3.3 (dated 2026-03-05). The primary change
+> in v7.7 is replacing the dynamic "Document Generated" date (which previously showed the
+> current run-time date) with a fixed, stable date so that the generated report is
+> reproducible and its metadata is consistent across re-runs. All commercial remediation
+> pricing has been removed from this document in full and maintained in a separate internal
+> pricing reference (`REMEDIATION_PRICING_PROPOSAL.md`) which is **not** part of this
+> submission and will only
 > be shared with LAR at their explicit invitation following acceptance of this audit report,
 > in accordance with SOW Section 6a. Out-of-scope material that appeared in v7.3.3 has been
 > removed in full.
