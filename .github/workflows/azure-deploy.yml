@@ -1,0 +1,303 @@
+# ============================================================
+# GitHub Actions Workflow — Deploy LAR System to Azure Web App
+# ============================================================
+#
+# REQUIRED GITHUB SECRETS (Settings → Secrets and variables → Actions):
+#   AZUREAPPSERVICE_PUBLISHPROFILE_B2C        - Publish profile for B2C web app
+#   AZUREAPPSERVICE_PUBLISHPROFILE_AGENT      - Publish profile for Agent web app
+#   AZUREAPPSERVICE_PUBLISHPROFILE_SUPPLIER   - Publish profile for Supplier web app
+#   AZUREAPPSERVICE_PUBLISHPROFILE_SUPERVISION- Publish profile for Supervision web app
+#   AZUREAPPSERVICE_PUBLISHPROFILE_SERVICES   - Publish profile for Services web app
+#   AZURE_CREDENTIALS                         - Service principal JSON (for log collection)
+#
+# REQUIRED GITHUB VARIABLES (Settings → Secrets and variables → Actions → Variables):
+#   AZURE_RESOURCE_GROUP     - e.g. rg-lar-system
+#   AZURE_WEBAPP_NAME_B2C
+#   AZURE_WEBAPP_NAME_AGENT
+#   AZURE_WEBAPP_NAME_SUPPLIER
+#   AZURE_WEBAPP_NAME_SUPERVISION
+#   AZURE_WEBAPP_NAME_SERVICES
+#
+# See AZURE_DEPLOYMENT.md for full setup instructions.
+# ============================================================
+
+name: Deploy to Azure Web App
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:           # allow manual trigger from GitHub UI
+
+env:
+  PHP_VERSION: '8.2'
+
+jobs:
+  # ----------------------------------------------------------
+  # Job 1: Build & validate — capture all PHP errors/warnings
+  #         as a downloadable artifact for audit analysis
+  # ----------------------------------------------------------
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up PHP ${{ env.PHP_VERSION }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: mysqli, mbstring, gd, curl, zip, xml, intl
+          ini-values: display_errors=On, log_errors=On, error_reporting=E_ALL
+          coverage: none
+
+      - name: PHP syntax check — b2c (errors captured for audit)
+        run: find b2c -name "*.php" -print0 | xargs -0 -P1 -I{} php -l {} 2>&1 || true
+        continue-on-error: true
+
+      - name: PHP syntax check — agent (errors captured for audit)
+        run: find agent -name "*.php" -print0 | xargs -0 -P1 -I{} php -l {} 2>&1 || true
+        continue-on-error: true
+
+      - name: PHP syntax check — supplier (errors captured for audit)
+        run: find supplier -name "*.php" -print0 | xargs -0 -P1 -I{} php -l {} 2>&1 || true
+        continue-on-error: true
+
+      - name: PHP syntax check — supervision (errors captured for audit)
+        run: find supervision -name "*.php" -print0 | xargs -0 -P1 -I{} php -l {} 2>&1 || true
+        continue-on-error: true
+
+      - name: PHP syntax check — services (errors captured for audit)
+        run: find services -name "*.php" -print0 | xargs -0 -P1 -I{} php -l {} 2>&1 || true
+        continue-on-error: true
+
+      - name: Collect all PHP syntax errors into report
+        run: |
+          echo "=== LAR System PHP Syntax Analysis Report ===" > /tmp/php-syntax-report.txt
+          echo "Generated: $(date -u)" >> /tmp/php-syntax-report.txt
+          echo "" >> /tmp/php-syntax-report.txt
+          for MODULE in b2c agent supplier supervision services; do
+            echo "--- Module: ${MODULE} ---" >> /tmp/php-syntax-report.txt
+            find "${MODULE}" -name "*.php" -print0 \
+              | xargs -0 -P1 -I{} sh -c 'php -l "$1" 2>&1 | grep -v "No syntax errors" || true' _ {} \
+              >> /tmp/php-syntax-report.txt 2>&1 || true
+          done
+          echo "" >> /tmp/php-syntax-report.txt
+          echo "=== End of Report ===" >> /tmp/php-syntax-report.txt
+          cat /tmp/php-syntax-report.txt
+
+      - name: Upload PHP syntax report
+        uses: actions/upload-artifact@v4
+        with:
+          name: php-syntax-report
+          path: /tmp/php-syntax-report.txt
+          retention-days: 30
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lar-system-build
+          path: .
+          retention-days: 1
+
+  # ----------------------------------------------------------
+  # Job 2a: Deploy B2C (Consumer Website) — main entry point
+  # ----------------------------------------------------------
+  deploy-b2c:
+    name: Deploy B2C
+    runs-on: ubuntu-latest
+    needs: build
+    permissions: {}
+    environment:
+      name: production
+      url: ${{ steps.deploy.outputs.webapp-url }}
+
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: lar-system-build
+
+      - name: Deploy to Azure Web App (B2C)
+        id: deploy
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ vars.AZURE_WEBAPP_NAME_B2C }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_B2C }}
+          package: .
+
+  # ----------------------------------------------------------
+  # Job 2b: Deploy Agent Panel
+  # ----------------------------------------------------------
+  deploy-agent:
+    name: Deploy Agent Panel
+    runs-on: ubuntu-latest
+    needs: build
+    permissions: {}
+    environment:
+      name: production
+
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: lar-system-build
+
+      - name: Deploy to Azure Web App (Agent)
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ vars.AZURE_WEBAPP_NAME_AGENT }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_AGENT }}
+          package: .
+
+  # ----------------------------------------------------------
+  # Job 2c: Deploy Supplier Portal
+  # ----------------------------------------------------------
+  deploy-supplier:
+    name: Deploy Supplier Portal
+    runs-on: ubuntu-latest
+    needs: build
+    permissions: {}
+    environment:
+      name: production
+
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: lar-system-build
+
+      - name: Deploy to Azure Web App (Supplier)
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ vars.AZURE_WEBAPP_NAME_SUPPLIER }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_SUPPLIER }}
+          package: .
+
+  # ----------------------------------------------------------
+  # Job 2d: Deploy Supervision Panel
+  # ----------------------------------------------------------
+  deploy-supervision:
+    name: Deploy Supervision Panel
+    runs-on: ubuntu-latest
+    needs: build
+    permissions: {}
+    environment:
+      name: production
+
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: lar-system-build
+
+      - name: Deploy to Azure Web App (Supervision)
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ vars.AZURE_WEBAPP_NAME_SUPERVISION }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_SUPERVISION }}
+          package: .
+
+  # ----------------------------------------------------------
+  # Job 2e: Deploy Web Services API
+  # ----------------------------------------------------------
+  deploy-services:
+    name: Deploy Web Services
+    runs-on: ubuntu-latest
+    needs: build
+    permissions: {}
+    environment:
+      name: production
+
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: lar-system-build
+
+      - name: Deploy to Azure Web App (Services)
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ vars.AZURE_WEBAPP_NAME_SERVICES }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_SERVICES }}
+          package: .
+
+  # ----------------------------------------------------------
+  # Job 3: Collect runtime logs from all Azure Web Apps
+  #         Runs after all deploys — downloads PHP error logs,
+  #         application event logs, and HTTP access logs.
+  #         Logs are uploaded as a GitHub artifact for audit.
+  #
+  #         REQUIRES: AZURE_CREDENTIALS secret and
+  #                   AZURE_RESOURCE_GROUP variable (see above)
+  # ----------------------------------------------------------
+  collect-logs:
+    name: Collect Azure Logs
+    runs-on: ubuntu-latest
+    needs:
+      - deploy-b2c
+      - deploy-agent
+      - deploy-supplier
+      - deploy-supervision
+      - deploy-services
+    permissions: {}
+    # Run even if some deploy jobs fail so partial logs are still collected
+    if: always()
+
+    steps:
+      - name: Wait 60s for apps to start and generate errors
+        run: sleep 60
+
+      - name: Log in to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Enable filesystem logging on all Web Apps
+        run: |
+          for APP in \
+            "${{ vars.AZURE_WEBAPP_NAME_B2C }}" \
+            "${{ vars.AZURE_WEBAPP_NAME_AGENT }}" \
+            "${{ vars.AZURE_WEBAPP_NAME_SUPPLIER }}" \
+            "${{ vars.AZURE_WEBAPP_NAME_SUPERVISION }}" \
+            "${{ vars.AZURE_WEBAPP_NAME_SERVICES }}"; do
+            echo "Enabling logging for ${APP}..."
+            az webapp log config \
+              --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}" \
+              --name "${APP}" \
+              --application-logging filesystem \
+              --level verbose \
+              --web-server-logging filesystem \
+              --detailed-error-messages true \
+              --failed-request-tracing true 2>&1 || echo "WARNING: could not configure logging for ${APP}"
+          done
+
+      - name: Download logs from all Web Apps
+        run: |
+          mkdir -p /tmp/azure-logs
+          for APP in \
+            "${{ vars.AZURE_WEBAPP_NAME_B2C }}" \
+            "${{ vars.AZURE_WEBAPP_NAME_AGENT }}" \
+            "${{ vars.AZURE_WEBAPP_NAME_SUPPLIER }}" \
+            "${{ vars.AZURE_WEBAPP_NAME_SUPERVISION }}" \
+            "${{ vars.AZURE_WEBAPP_NAME_SERVICES }}"; do
+            echo "Downloading logs for ${APP}..."
+            az webapp log download \
+              --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}" \
+              --name "${APP}" \
+              --log-file "/tmp/azure-logs/${APP}-logs.zip" 2>&1 \
+              || echo "WARNING: could not download logs for ${APP}"
+          done
+          ls -lh /tmp/azure-logs/
+
+      - name: Upload Azure runtime logs as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: azure-runtime-logs
+          path: /tmp/azure-logs/
+          retention-days: 30
+
