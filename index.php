@@ -19,7 +19,7 @@ date_default_timezone_set('Asia/Kolkata');//Set India timezone
  * NOTE: If you change these, also change the error_reporting() code below
  *
  */
-	define('ENVIRONMENT', getenv('ENVIRONMENT') ?: 'development');
+	define('ENVIRONMENT', 'development');
 /* 
  *---------------------------------------------------------------
  * ERROR REPORTING
