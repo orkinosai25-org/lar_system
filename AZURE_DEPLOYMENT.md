@@ -112,7 +112,9 @@ and is fully managed (automatic backups, patching).
 ```bash
 DB_SERVER_NAME="lar-mysql-server"     # Must be globally unique
 DB_ADMIN_USER="laradmin"
-DB_ADMIN_PASSWORD="ChangeMe_S3cure!"  # Replace with your password (min 8 chars, upper+lower+number+symbol)
+DB_ADMIN_PASSWORD='ChangeMe_S3cure!'  # Replace with your password (min 8 chars, upper+lower+number+symbol)
+# NOTE: Use single quotes around the password to prevent bash from interpreting special
+# characters such as ! (which triggers history expansion in interactive shells).
 
 # Create the Flexible Server (General Purpose, 2 vCores, 20 GB storage)
 az mysql flexible-server create \
@@ -124,7 +126,7 @@ az mysql flexible-server create \
   --sku-name Standard_D2ds_v4 \
   --tier GeneralPurpose \
   --storage-size 20 \
-  --version 8.0 \
+  --version 8.0.21 \
   --public-access 0.0.0.0   # Opens firewall to Azure services; restrict later
 
 # NOTE: If you see "The requested VM size is not available in the current region", use the
@@ -233,7 +235,7 @@ Replace the placeholder values with your actual Azure MySQL server details.
 #   RESOURCE_GROUP="rg-lar-system"
 #   DB_SERVER_NAME="lar-mysql-server"
 #   DB_ADMIN_USER="laradmin"
-#   DB_ADMIN_PASSWORD="ChangeMe_S3cure!"   # same password as Step 2
+#   DB_ADMIN_PASSWORD='ChangeMe_S3cure!'   # same password as Step 2
 
 DB_HOST="${DB_SERVER_NAME}.mysql.database.azure.com"
 
@@ -500,7 +502,8 @@ LOCATION="southafricanorth"
 APP_SERVICE_PLAN="asp-lar-system"
 DB_SERVER_NAME="lar-mysql-server"          # Must be globally unique
 DB_ADMIN_USER="laradmin"
-DB_ADMIN_PASSWORD="ChangeMe_S3cure!"  # Replace with your password — min 8 chars, upper+lower+number+symbol
+DB_ADMIN_PASSWORD='ChangeMe_S3cure!'  # Replace with your password — min 8 chars, upper+lower+number+symbol
+# NOTE: Use single quotes to prevent bash from interpreting ! as history expansion.
 # -------------------------------------------------------------
 
 echo "==> Creating resource group..."
@@ -516,7 +519,7 @@ az mysql flexible-server create \
   --sku-name Standard_D2ds_v4 \
   --tier GeneralPurpose \
   --storage-size 20 \
-  --version 8.0 \
+  --version 8.0.21 \
   --public-access 0.0.0.0
 # NOTE: If "The requested VM size is not available in the current region", replace the two lines
 # above with: --sku-name Standard_B1ms --tier Burstable
