@@ -1,0 +1,190 @@
+# ============================================================
+# GitHub Actions Workflow — Deploy LAR System to Azure Web App
+# ============================================================
+#
+# REQUIRED GITHUB SECRETS (Settings → Secrets and variables → Actions):
+#   AZUREAPPSERVICE_PUBLISHPROFILE_B2C        - Publish profile for B2C web app
+#   AZUREAPPSERVICE_PUBLISHPROFILE_AGENT      - Publish profile for Agent web app
+#   AZUREAPPSERVICE_PUBLISHPROFILE_SUPPLIER   - Publish profile for Supplier web app
+#   AZUREAPPSERVICE_PUBLISHPROFILE_SUPERVISION- Publish profile for Supervision web app
+#   AZUREAPPSERVICE_PUBLISHPROFILE_SERVICES   - Publish profile for Services web app
+#
+# See AZURE_DEPLOYMENT.md for full setup instructions.
+# ============================================================
+
+name: Deploy to Azure Web App
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:           # allow manual trigger from GitHub UI
+
+env:
+  PHP_VERSION: '8.1'
+
+jobs:
+  # ----------------------------------------------------------
+  # Job 1: Build & validate the application
+  # ----------------------------------------------------------
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up PHP ${{ env.PHP_VERSION }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: mysqli, mbstring, gd, curl, zip, xml, intl
+          ini-values: display_errors=Off, log_errors=On
+          coverage: none
+
+      - name: Verify PHP syntax (b2c)
+        run: find b2c -name "*.php" -print0 | xargs -0 -P4 php -l > /dev/null
+
+      - name: Verify PHP syntax (agent)
+        run: find agent -name "*.php" -print0 | xargs -0 -P4 php -l > /dev/null
+
+      - name: Verify PHP syntax (supplier)
+        run: find supplier -name "*.php" -print0 | xargs -0 -P4 php -l > /dev/null
+
+      - name: Verify PHP syntax (supervision)
+        run: find supervision -name "*.php" -print0 | xargs -0 -P4 php -l > /dev/null
+
+      - name: Verify PHP syntax (services)
+        run: find services -name "*.php" -print0 | xargs -0 -P4 php -l > /dev/null
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lar-system-build
+          path: .
+          retention-days: 1
+
+  # ----------------------------------------------------------
+  # Job 2a: Deploy B2C (Consumer Website) — main entry point
+  # ----------------------------------------------------------
+  deploy-b2c:
+    name: Deploy B2C
+    runs-on: ubuntu-latest
+    needs: build
+    permissions: {}
+    environment:
+      name: production
+      url: ${{ steps.deploy.outputs.webapp-url }}
+
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: lar-system-build
+
+      - name: Deploy to Azure Web App (B2C)
+        id: deploy
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ vars.AZURE_WEBAPP_NAME_B2C }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_B2C }}
+          package: .
+
+  # ----------------------------------------------------------
+  # Job 2b: Deploy Agent Panel
+  # ----------------------------------------------------------
+  deploy-agent:
+    name: Deploy Agent Panel
+    runs-on: ubuntu-latest
+    needs: build
+    permissions: {}
+    environment:
+      name: production
+
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: lar-system-build
+
+      - name: Deploy to Azure Web App (Agent)
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ vars.AZURE_WEBAPP_NAME_AGENT }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_AGENT }}
+          package: .
+
+  # ----------------------------------------------------------
+  # Job 2c: Deploy Supplier Portal
+  # ----------------------------------------------------------
+  deploy-supplier:
+    name: Deploy Supplier Portal
+    runs-on: ubuntu-latest
+    needs: build
+    permissions: {}
+    environment:
+      name: production
+
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: lar-system-build
+
+      - name: Deploy to Azure Web App (Supplier)
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ vars.AZURE_WEBAPP_NAME_SUPPLIER }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_SUPPLIER }}
+          package: .
+
+  # ----------------------------------------------------------
+  # Job 2d: Deploy Supervision Panel
+  # ----------------------------------------------------------
+  deploy-supervision:
+    name: Deploy Supervision Panel
+    runs-on: ubuntu-latest
+    needs: build
+    permissions: {}
+    environment:
+      name: production
+
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: lar-system-build
+
+      - name: Deploy to Azure Web App (Supervision)
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ vars.AZURE_WEBAPP_NAME_SUPERVISION }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_SUPERVISION }}
+          package: .
+
+  # ----------------------------------------------------------
+  # Job 2e: Deploy Web Services API
+  # ----------------------------------------------------------
+  deploy-services:
+    name: Deploy Web Services
+    runs-on: ubuntu-latest
+    needs: build
+    permissions: {}
+    environment:
+      name: production
+
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: lar-system-build
+
+      - name: Deploy to Azure Web App (Services)
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ vars.AZURE_WEBAPP_NAME_SERVICES }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_SERVICES }}
+          package: .
