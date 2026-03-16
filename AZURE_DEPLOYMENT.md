@@ -328,21 +328,27 @@ az webapp config appsettings set \
     WEBSITE_RUN_FROM_PACKAGE="1"
 ```
 
-### Required PHP extensions
+### PHP version and extensions
 
-Enable the necessary PHP extensions on each Web App:
+Because the App Service Plan was created with `--is-linux`, the PHP version is already
+embedded in the `linuxFxVersion` property set at creation time via `--runtime "PHP|8.2"`.
+**No additional command is required** — do **not** run `az webapp config set --php-version`
+on a Linux web app; it applies only to Windows-based plans and will return
+`Operation returned an invalid status 'Bad Request'` on Linux.
+
+To confirm the runtime version is correct on any web app:
 
 ```bash
-for APP_NAME in lar-b2c lar-agent lar-supplier lar-supervision lar-services; do
-  az webapp config set \
-    --resource-group "$RESOURCE_GROUP" \
-    --name "$APP_NAME" \
-    --php-version "8.2"
-done
+az webapp config show \
+  --resource-group "$RESOURCE_GROUP" \
+  --name "lar-b2c" \
+  --query linuxFxVersion \
+  --output tsv
+# Expected output: PHP|8.2
 ```
 
-The following extensions are available by default on Azure App Service PHP 8.2:
-`mysqli`, `mbstring`, `gd`, `curl`, `zip`, `xml`, `intl`, `pdo_mysql`
+The following extensions are available by default on Azure App Service PHP 8.2 (Linux):
+`mysqli`, `pdo_mysql`, `mbstring`, `gd`, `curl`, `zip`, `xml`, `intl`
 
 ---
 
@@ -523,6 +529,41 @@ curl -o DigiCertGlobalRootCA.crt.pem \
     --name "lar-b2c" \
     --generic-configurations '{"linuxFxVersion": "PHP|8.2"}'
   ```
+
+### `Operation returned an invalid status 'Bad Request'` from `az webapp config set`
+
+If you ran the `--php-version` flag on a Linux web app:
+
+```bash
+# ❌ WRONG — --php-version is for Windows App Service plans only
+az webapp config set --resource-group "$RESOURCE_GROUP" --name "$APP_NAME" --php-version "8.2"
+```
+
+you will get `Operation returned an invalid status 'Bad Request'` for every app. This flag
+is not supported on Linux-based App Service plans.
+
+For Linux web apps the PHP version is baked in at creation time via `--runtime "PHP|8.2"`.
+No additional command is needed. To verify the version is correct, run:
+
+```bash
+az webapp config show \
+  --resource-group "$RESOURCE_GROUP" \
+  --name "lar-b2c" \
+  --query linuxFxVersion \
+  --output tsv
+# Expected: PHP|8.2
+```
+
+If the value is wrong, correct it with:
+
+```bash
+for APP_NAME in lar-b2c lar-agent lar-supplier lar-supervision lar-services; do
+  az webapp config set \
+    --resource-group "$RESOURCE_GROUP" \
+    --name "$APP_NAME" \
+    --linux-fx-version "PHP|8.2"
+done
+```
 
 ### `InvalidApiVersionParameter` error when running Azure CLI commands
 
