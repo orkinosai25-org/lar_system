@@ -116,6 +116,9 @@ DB_ADMIN_PASSWORD='ChangeMe_S3cure!'  # Replace with your password (min 8 chars,
 # NOTE: Use single quotes around the password to prevent bash from interpreting special
 # characters such as ! (which triggers history expansion in interactive shells).
 
+# Ensure Azure CLI and extensions are up to date to avoid api-version errors
+az upgrade --yes --all
+
 # Create the Flexible Server (General Purpose, 2 vCores, 20 GB storage)
 az mysql flexible-server create \
   --resource-group "$RESOURCE_GROUP" \
@@ -139,7 +142,9 @@ for DB_NAME in lar_b2c lar_agent lar_supplier lar_supervision lar_webservices la
   az mysql flexible-server db create \
     --resource-group "$RESOURCE_GROUP" \
     --server-name "$DB_SERVER_NAME" \
-    --database-name "$DB_NAME"
+    --database-name "$DB_NAME" \
+    --charset utf8mb4 \
+    --collation utf8mb4_unicode_ci
 done
 ```
 
@@ -474,6 +479,60 @@ done
     --generic-configurations '{"linuxFxVersion": "PHP|8.2"}'
   ```
 
+### `InvalidApiVersionParameter` error when running Azure CLI commands
+
+If you see an error like:
+```
+(InvalidApiVersionParameter) The api-version '2025-06-01-preview' is invalid.
+```
+this means your Azure CLI or one of its extensions is using a preview API version that is
+not yet available on your Azure subscription. Fix it by upgrading the CLI and all extensions:
+
+```bash
+az upgrade --yes --all
+```
+
+Then retry the failed command. This issue commonly affects `az mysql flexible-server` commands
+in Azure Cloud Shell when the `rdbms` extension is ahead of the stable API surface.
+
+### GitHub Actions: "No credentials found" on deploy jobs
+
+If the deploy jobs fail with:
+```
+Deployment Failed, Error: No credentials found. Add an Azure login action before this action.
+```
+ensure the `AZURE_CREDENTIALS` secret is set in your repository
+(**Settings → Secrets and variables → Actions → Secrets**). This secret is required for
+all deploy jobs as well as the log-collection job. Generate it with:
+
+```bash
+SUBSCRIPTION_ID=$(az account show --query id -o tsv)
+az ad sp create-for-rbac \
+  --name "lar-github-actions" \
+  --role contributor \
+  --scopes "/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP}" \
+  --json-auth > /tmp/azure-credentials.json
+cat /tmp/azure-credentials.json
+```
+
+Paste the entire JSON output as the `AZURE_CREDENTIALS` secret. The `--json-auth` flag
+produces the camelCase keys (`clientId`, `clientSecret`, `tenantId`, `subscriptionId`)
+required by `azure/login@v2`.
+
+### GitHub Actions: "Not all values are present. Ensure 'client-id' and 'tenant-id' are supplied"
+
+This error means the `AZURE_CREDENTIALS` secret is present but not in the expected format.
+The `azure/login@v2` action requires a JSON object with camelCase keys:
+```json
+{
+  "clientId": "...",
+  "clientSecret": "...",
+  "tenantId": "...",
+  "subscriptionId": "..."
+}
+```
+Regenerate the secret using `az ad sp create-for-rbac --json-auth` as shown above.
+
 ### Deployment not triggering
 
 - Confirm the workflow file is in `.github/workflows/azure-deploy.yml`
@@ -506,6 +565,10 @@ DB_ADMIN_PASSWORD='ChangeMe_S3cure!'  # Replace with your password — min 8 cha
 # NOTE: Use single quotes to prevent bash from interpreting ! as history expansion.
 # -------------------------------------------------------------
 
+echo "==> Upgrading Azure CLI and extensions..."
+az upgrade --yes --all
+# This prevents 'InvalidApiVersionParameter' errors from outdated CLI extensions.
+
 echo "==> Creating resource group..."
 az group create --name "$RESOURCE_GROUP" --location "$LOCATION"
 
@@ -529,7 +592,9 @@ for DB_NAME in lar_b2c lar_agent lar_supplier lar_supervision lar_webservices la
   az mysql flexible-server db create \
     --resource-group "$RESOURCE_GROUP" \
     --server-name "$DB_SERVER_NAME" \
-    --database-name "$DB_NAME"
+    --database-name "$DB_NAME" \
+    --charset utf8mb4 \
+    --collation utf8mb4_unicode_ci
 done
 
 echo "==> Creating App Service Plan..."
@@ -628,7 +693,7 @@ chmod +x /tmp/azure-provision.sh
 Before triggering the workflow, confirm ALL of the following are set in GitHub:
 
 **Secrets** (Settings → Secrets and variables → Actions → Secrets):
-- [ ] `AZURE_CREDENTIALS` (service principal JSON — for log collection)
+- [ ] `AZURE_CREDENTIALS` (service principal JSON — **required for all deploy and log-collection jobs**)
 - [ ] `AZUREAPPSERVICE_PUBLISHPROFILE_B2C`
 - [ ] `AZUREAPPSERVICE_PUBLISHPROFILE_AGENT`
 - [ ] `AZUREAPPSERVICE_PUBLISHPROFILE_SUPPLIER`

@@ -3,12 +3,12 @@
 # ============================================================
 #
 # REQUIRED GITHUB SECRETS (Settings → Secrets and variables → Actions):
+#   AZURE_CREDENTIALS                         - Service principal JSON (required for ALL deploy jobs)
 #   AZUREAPPSERVICE_PUBLISHPROFILE_B2C        - Publish profile for B2C web app
 #   AZUREAPPSERVICE_PUBLISHPROFILE_AGENT      - Publish profile for Agent web app
 #   AZUREAPPSERVICE_PUBLISHPROFILE_SUPPLIER   - Publish profile for Supplier web app
 #   AZUREAPPSERVICE_PUBLISHPROFILE_SUPERVISION- Publish profile for Supervision web app
 #   AZUREAPPSERVICE_PUBLISHPROFILE_SERVICES   - Publish profile for Services web app
-#   AZURE_CREDENTIALS                         - Service principal JSON (for log collection)
 #
 # REQUIRED GITHUB VARIABLES (Settings → Secrets and variables → Actions → Variables):
 #   AZURE_RESOURCE_GROUP     - e.g. rg-lar-system
@@ -122,6 +122,11 @@ jobs:
         with:
           name: lar-system-build
 
+      - name: Log in to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
       - name: Deploy to Azure Web App (B2C)
         id: deploy
         uses: azure/webapps-deploy@v3
@@ -147,6 +152,11 @@ jobs:
         with:
           name: lar-system-build
 
+      - name: Log in to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
       - name: Deploy to Azure Web App (Agent)
         uses: azure/webapps-deploy@v3
         with:
@@ -170,6 +180,11 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: lar-system-build
+
+      - name: Log in to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Deploy to Azure Web App (Supplier)
         uses: azure/webapps-deploy@v3
@@ -195,6 +210,11 @@ jobs:
         with:
           name: lar-system-build
 
+      - name: Log in to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
       - name: Deploy to Azure Web App (Supervision)
         uses: azure/webapps-deploy@v3
         with:
@@ -218,6 +238,11 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: lar-system-build
+
+      - name: Log in to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Deploy to Azure Web App (Services)
         uses: azure/webapps-deploy@v3
