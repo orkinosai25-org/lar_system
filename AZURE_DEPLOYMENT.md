@@ -110,14 +110,23 @@ Use **Azure Database for MySQL Flexible Server** — it supports SSL, VNet integ
 and is fully managed (automatic backups, patching).
 
 ```bash
+# Re-declare the variables from Step 1 in case you are running this in a new shell session.
+# (Azure Cloud Shell sessions are ephemeral — variables do not persist across sessions.)
+RESOURCE_GROUP="rg-lar-system"
+LOCATION="southafricanorth"
+
 DB_SERVER_NAME="lar-mysql-server"     # Must be globally unique
 DB_ADMIN_USER="laradmin"
 DB_ADMIN_PASSWORD='ChangeMe_S3cure!'  # Replace with your password (min 8 chars, upper+lower+number+symbol)
 # NOTE: Use single quotes around the password to prevent bash from interpreting special
 # characters such as ! (which triggers history expansion in interactive shells).
 
-# Ensure Azure CLI and extensions are up to date to avoid api-version errors
-az upgrade --yes --all
+# Ensure the MySQL Flexible Server CLI extension is up to date to avoid api-version errors.
+# In Azure Cloud Shell the CLI binary cannot be self-updated, so update only the extension:
+az extension update --name rdbms-connect \
+  || az extension add --upgrade --name rdbms-connect \
+  || true
+# If running locally (not Cloud Shell) you can also run: az upgrade --yes --all
 
 # Create the Flexible Server (General Purpose, 2 vCores, 20 GB storage)
 az mysql flexible-server create \
@@ -485,15 +494,33 @@ If you see an error like:
 ```
 (InvalidApiVersionParameter) The api-version '2025-06-01-preview' is invalid.
 ```
-this means your Azure CLI or one of its extensions is using a preview API version that is
-not yet available on your Azure subscription. Fix it by upgrading the CLI and all extensions:
+this means the `rdbms` CLI extension installed in your session is using a preview API
+version that is not yet available on your Azure subscription.
+
+**In Azure Cloud Shell** the CLI binary cannot be self-updated (`az upgrade` will report
+"Not able to upgrade automatically"), but extensions can be updated independently:
+
+```bash
+az extension update --name rdbms-connect \
+  || az extension add --upgrade --name rdbms-connect \
+  || true
+```
+
+**On a local machine** you can upgrade the full CLI and all extensions at once:
 
 ```bash
 az upgrade --yes --all
 ```
 
-Then retry the failed command. This issue commonly affects `az mysql flexible-server` commands
-in Azure Cloud Shell when the `rdbms` extension is ahead of the stable API surface.
+Then retry the failed command. This issue commonly affects `az mysql flexible-server`
+commands in Azure Cloud Shell when the bundled `rdbms` extension uses a preview API
+that is not yet promoted to the stable API surface.
+
+> **Also check that shell variables are set.** If you see errors about an empty resource
+> group name (e.g. `resourcegroups/?api-version=…`) it means the `$RESOURCE_GROUP`
+> variable was not set in your current session. Azure Cloud Shell sessions are ephemeral —
+> variables do not persist. Re-declare all variables at the top of each command block
+> before running it.
 
 ### GitHub Actions: "No credentials found" on deploy jobs
 
@@ -565,9 +592,14 @@ DB_ADMIN_PASSWORD='ChangeMe_S3cure!'  # Replace with your password — min 8 cha
 # NOTE: Use single quotes to prevent bash from interpreting ! as history expansion.
 # -------------------------------------------------------------
 
-echo "==> Upgrading Azure CLI and extensions..."
-az upgrade --yes --all
-# This prevents 'InvalidApiVersionParameter' errors from outdated CLI extensions.
+echo "==> Updating MySQL Flexible Server CLI extension..."
+# In Azure Cloud Shell the CLI binary cannot be self-updated; update the extension only.
+# On a local machine, replace the two lines below with: az upgrade --yes --all
+az extension update --name rdbms-connect \
+  || az extension add --upgrade --name rdbms-connect \
+  || echo "NOTE: Extension update skipped — retry the commands below if you see InvalidApiVersionParameter errors."
+# Updating the extension prevents 'InvalidApiVersionParameter' errors caused by the rdbms
+# extension using a preview API version not yet available in the management plane.
 
 echo "==> Creating resource group..."
 az group create --name "$RESOURCE_GROUP" --location "$LOCATION"
