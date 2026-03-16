@@ -219,6 +219,10 @@ wget -O DigiCertGlobalRootCA.crt.pem \
 Create a single **App Service Plan** and five **Web Apps**.
 
 ```bash
+# Re-declare all variables if running in a new shell session.
+# (Azure Cloud Shell sessions are ephemeral — variables do not persist across sessions.)
+RESOURCE_GROUP="rg-lar-system"
+LOCATION="southafricanorth"
 APP_SERVICE_PLAN="asp-lar-system"
 
 # Create the App Service Plan (Linux, PHP 8.2, P1v3 SKU)
@@ -259,12 +263,12 @@ Each Web App needs database connection settings configured as **Application Sett
 Replace the placeholder values with your actual Azure MySQL server details.
 
 ```bash
-# Re-use the variables set in Steps 1 and 2.
-# If running in a new shell session, re-declare them here:
-#   RESOURCE_GROUP="rg-lar-system"
-#   DB_SERVER_NAME="lar-mysql-server"
-#   DB_ADMIN_USER="laradmin"
-#   DB_ADMIN_PASSWORD='ChangeMe_S3cure!'   # same password as Step 2
+# Re-declare variables if running in a new shell session.
+# (Azure Cloud Shell sessions are ephemeral — variables do not persist across sessions.)
+RESOURCE_GROUP="rg-lar-system"
+DB_SERVER_NAME="lar-mysql-server"
+DB_ADMIN_USER="laradmin"
+DB_ADMIN_PASSWORD='YOUR_SECURE_PASSWORD_HERE'  # same password as Step 2
 
 DB_HOST="${DB_SERVER_NAME}.mysql.database.azure.com"
 
@@ -366,6 +370,7 @@ The `collect-logs` job needs Azure management API access. Create a service princ
 scoped to the resource group:
 
 ```bash
+RESOURCE_GROUP="rg-lar-system"
 SUBSCRIPTION_ID=$(az account show --query id -o tsv)
 
 az ad sp create-for-rbac \
@@ -564,6 +569,7 @@ ensure the `AZURE_CREDENTIALS` secret is set in your repository
 all deploy jobs as well as the log-collection job. Generate it with:
 
 ```bash
+RESOURCE_GROUP="rg-lar-system"
 SUBSCRIPTION_ID=$(az account show --query id -o tsv)
 az ad sp create-for-rbac \
   --name "lar-github-actions" \
@@ -747,6 +753,13 @@ Save this script as `/tmp/azure-provision.sh`, update the variables, and run:
 ```bash
 chmod +x /tmp/azure-provision.sh
 /tmp/azure-provision.sh
+```
+
+The script is also included in this repository as `azure-provision.sh`. In Azure Cloud Shell
+you can run it directly after cloning (or downloading) the repository:
+
+```bash
+bash azure-provision.sh
 ```
 
 ---
