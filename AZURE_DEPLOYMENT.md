@@ -189,13 +189,28 @@ az mysql flexible-server firewall-rule create \
 
 ### SSL Certificate
 
-Azure MySQL Flexible Server requires SSL. Download the DigiCert CA bundle:
+Azure MySQL Flexible Server requires SSL. The `DigiCertGlobalRootCA.crt.pem` file is
+**already included in this repository root** — no download is needed. It will be deployed
+automatically with the application by GitHub Actions.
+
+If you ever need to refresh the certificate manually (e.g., after a CA rotation), run one
+of the following commands from the repository root **on a local machine** (Azure Cloud Shell
+can block connections to external certificate authorities):
 
 ```bash
-# Download to the repository root so it is deployed with the app
+# Option A — curl (recommended on a local machine)
 curl -o DigiCertGlobalRootCA.crt.pem \
   https://dl.cacerts.digicert.com/DigiCertGlobalRootCA.crt.pem
+
+# Option B — wget fallback
+wget -O DigiCertGlobalRootCA.crt.pem \
+  https://dl.cacerts.digicert.com/DigiCertGlobalRootCA.crt.pem
 ```
+
+> **Azure Cloud Shell note:** If you see `curl: (35) TLS connect error` when running the
+> download command above, this is a known TLS handshake restriction in some Cloud Shell
+> sessions. Use the pre-bundled certificate already present in the repository — it is the
+> standard DigiCert Global Root CA and is identical to the file hosted on DigiCert's CDN.
 
 ---
 
@@ -468,14 +483,30 @@ done
 - Verify the MySQL firewall rule allows Azure services (IP `0.0.0.0` to `0.0.0.0`)
 - For MySQL 8.0 on Azure, the username format must include the server name:
   `laradmin@lar-mysql-server`
-- Ensure SSL is not required in the connection if the `DigiCertGlobalRootCA.crt.pem`
-  file is not deployed; disable SSL requirement on the server if needed for initial testing:
+- Ensure SSL is not required in the connection. The `DigiCertGlobalRootCA.crt.pem`
+  file is bundled in this repository and will be deployed automatically; however, if you
+  need to disable SSL temporarily for initial testing:
   ```bash
   az mysql flexible-server update \
     --resource-group "$RESOURCE_GROUP" \
     --name "$DB_SERVER_NAME" \
     --require-secure-transport OFF
   ```
+
+### `curl: (35) TLS connect error` when downloading the SSL certificate
+
+Azure Cloud Shell occasionally blocks outbound TLS connections to external certificate
+authorities (e.g. `dl.cacerts.digicert.com`). You do **not** need to download the
+certificate — `DigiCertGlobalRootCA.crt.pem` is already bundled in this repository and
+will be deployed alongside the application code automatically.
+
+If you need to refresh it in the future, run the download command from a **local
+machine** (outside Cloud Shell) where outbound TLS is unrestricted:
+
+```bash
+curl -o DigiCertGlobalRootCA.crt.pem \
+  https://dl.cacerts.digicert.com/DigiCertGlobalRootCA.crt.pem
+```
 
 ### CodeIgniter routing issues (404 on all pages except home)
 
