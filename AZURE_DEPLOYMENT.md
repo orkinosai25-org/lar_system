@@ -393,9 +393,9 @@ the `AZURE_CREDENTIALS` secret.
 ### Add GitHub Secrets
 
 Go to your repository on GitHub:
-**Settings → Secrets and variables → Actions → New repository secret**
+**Settings → Secrets and variables → Actions → Secrets tab → New repository secret**
 
-Add the following **Secrets** (paste the full XML content from each publish profile file):
+Add the following **Secrets**:
 
 | Secret Name | Value |
 |---|---|
@@ -405,19 +405,17 @@ Add the following **Secrets** (paste the full XML content from each publish prof
 | `AZUREAPPSERVICE_PUBLISHPROFILE_SUPPLIER` | Contents of `publishprofile-lar-supplier.xml` |
 | `AZUREAPPSERVICE_PUBLISHPROFILE_SUPERVISION` | Contents of `publishprofile-lar-supervision.xml` |
 | `AZUREAPPSERVICE_PUBLISHPROFILE_SERVICES` | Contents of `publishprofile-lar-services.xml` |
-
-### Add GitHub Variables
-
-Go to: **Settings → Secrets and variables → Actions → Variables tab → New repository variable**
-
-| Variable Name | Value |
-|---|---|
 | `AZURE_RESOURCE_GROUP` | `rg-lar-system` |
 | `AZURE_WEBAPP_NAME_B2C` | `lar-b2c` |
 | `AZURE_WEBAPP_NAME_AGENT` | `lar-agent` |
 | `AZURE_WEBAPP_NAME_SUPPLIER` | `lar-supplier` |
 | `AZURE_WEBAPP_NAME_SUPERVISION` | `lar-supervision` |
 | `AZURE_WEBAPP_NAME_SERVICES` | `lar-services` |
+
+If you are using a GitHub environment named `production`, you can add these secrets under the
+environment instead:
+
+Go to: **Settings → Environments → production → Environment secrets → Add secret**
 
 ---
 
@@ -805,19 +803,19 @@ bash azure-provision.sh
 
 ---
 
-## Summary — GitHub Secrets & Variables Checklist
+## Summary — GitHub Secrets Checklist
 
-Before triggering the workflow, confirm ALL of the following are set in GitHub:
+Before triggering the workflow, confirm ALL of the following are set as **Secrets** in GitHub
+(Settings → Secrets and variables → Actions → Secrets tab, or under the `production` environment's
+"Environment secrets" section):
 
-**Secrets** (Settings → Secrets and variables → Actions → Secrets):
+**Secrets** (Settings → Secrets and variables → Actions → **Secrets tab**):
 - [ ] `AZURE_CREDENTIALS` (service principal JSON — **required for all deploy and log-collection jobs**)
 - [ ] `AZUREAPPSERVICE_PUBLISHPROFILE_B2C`
 - [ ] `AZUREAPPSERVICE_PUBLISHPROFILE_AGENT`
 - [ ] `AZUREAPPSERVICE_PUBLISHPROFILE_SUPPLIER`
 - [ ] `AZUREAPPSERVICE_PUBLISHPROFILE_SUPERVISION`
 - [ ] `AZUREAPPSERVICE_PUBLISHPROFILE_SERVICES`
-
-**Variables** (Settings → Secrets and variables → Actions → Variables):
 - [ ] `AZURE_RESOURCE_GROUP` = `rg-lar-system`
 - [ ] `AZURE_WEBAPP_NAME_B2C` = `lar-b2c`
 - [ ] `AZURE_WEBAPP_NAME_AGENT` = `lar-agent`

@@ -2,21 +2,19 @@
 # GitHub Actions Workflow — Deploy LAR System to Azure Web App
 # ============================================================
 #
-# REQUIRED GITHUB SECRETS (Settings → Secrets and variables → Actions):
+# REQUIRED GITHUB SECRETS (Settings → Secrets and variables → Actions → Secrets tab):
 #   AZURE_CREDENTIALS                         - Service principal JSON (required for ALL deploy jobs)
 #   AZUREAPPSERVICE_PUBLISHPROFILE_B2C        - Publish profile for B2C web app
 #   AZUREAPPSERVICE_PUBLISHPROFILE_AGENT      - Publish profile for Agent web app
 #   AZUREAPPSERVICE_PUBLISHPROFILE_SUPPLIER   - Publish profile for Supplier web app
 #   AZUREAPPSERVICE_PUBLISHPROFILE_SUPERVISION- Publish profile for Supervision web app
 #   AZUREAPPSERVICE_PUBLISHPROFILE_SERVICES   - Publish profile for Services web app
-#
-# REQUIRED GITHUB VARIABLES (Settings → Secrets and variables → Actions → Variables):
-#   AZURE_RESOURCE_GROUP     - e.g. rg-lar-system
-#   AZURE_WEBAPP_NAME_B2C
-#   AZURE_WEBAPP_NAME_AGENT
-#   AZURE_WEBAPP_NAME_SUPPLIER
-#   AZURE_WEBAPP_NAME_SUPERVISION
-#   AZURE_WEBAPP_NAME_SERVICES
+#   AZURE_RESOURCE_GROUP                      - e.g. rg-lar-system
+#   AZURE_WEBAPP_NAME_B2C                     - e.g. lar-b2c
+#   AZURE_WEBAPP_NAME_AGENT                   - e.g. lar-agent
+#   AZURE_WEBAPP_NAME_SUPPLIER                - e.g. lar-supplier
+#   AZURE_WEBAPP_NAME_SUPERVISION             - e.g. lar-supervision
+#   AZURE_WEBAPP_NAME_SERVICES                - e.g. lar-services
 #
 # See AZURE_DEPLOYMENT.md for full setup instructions.
 # ============================================================
@@ -131,7 +129,7 @@ jobs:
         id: deploy
         uses: azure/webapps-deploy@v3
         with:
-          app-name: ${{ vars.AZURE_WEBAPP_NAME_B2C }}
+          app-name: ${{ secrets.AZURE_WEBAPP_NAME_B2C }}
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_B2C }}
           package: .
 
@@ -160,7 +158,7 @@ jobs:
       - name: Deploy to Azure Web App (Agent)
         uses: azure/webapps-deploy@v3
         with:
-          app-name: ${{ vars.AZURE_WEBAPP_NAME_AGENT }}
+          app-name: ${{ secrets.AZURE_WEBAPP_NAME_AGENT }}
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_AGENT }}
           package: .
 
@@ -189,7 +187,7 @@ jobs:
       - name: Deploy to Azure Web App (Supplier)
         uses: azure/webapps-deploy@v3
         with:
-          app-name: ${{ vars.AZURE_WEBAPP_NAME_SUPPLIER }}
+          app-name: ${{ secrets.AZURE_WEBAPP_NAME_SUPPLIER }}
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_SUPPLIER }}
           package: .
 
@@ -218,7 +216,7 @@ jobs:
       - name: Deploy to Azure Web App (Supervision)
         uses: azure/webapps-deploy@v3
         with:
-          app-name: ${{ vars.AZURE_WEBAPP_NAME_SUPERVISION }}
+          app-name: ${{ secrets.AZURE_WEBAPP_NAME_SUPERVISION }}
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_SUPERVISION }}
           package: .
 
@@ -247,7 +245,7 @@ jobs:
       - name: Deploy to Azure Web App (Services)
         uses: azure/webapps-deploy@v3
         with:
-          app-name: ${{ vars.AZURE_WEBAPP_NAME_SERVICES }}
+          app-name: ${{ secrets.AZURE_WEBAPP_NAME_SERVICES }}
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_SERVICES }}
           package: .
 
@@ -258,7 +256,7 @@ jobs:
   #         Logs are uploaded as a GitHub artifact for audit.
   #
   #         REQUIRES: AZURE_CREDENTIALS secret and
-  #                   AZURE_RESOURCE_GROUP variable (see above)
+  #                   AZURE_RESOURCE_GROUP secret (see above)
   # ----------------------------------------------------------
   collect-logs:
     name: Collect Azure Logs
@@ -285,14 +283,14 @@ jobs:
       - name: Enable filesystem logging on all Web Apps
         run: |
           for APP in \
-            "${{ vars.AZURE_WEBAPP_NAME_B2C }}" \
-            "${{ vars.AZURE_WEBAPP_NAME_AGENT }}" \
-            "${{ vars.AZURE_WEBAPP_NAME_SUPPLIER }}" \
-            "${{ vars.AZURE_WEBAPP_NAME_SUPERVISION }}" \
-            "${{ vars.AZURE_WEBAPP_NAME_SERVICES }}"; do
+            "${{ secrets.AZURE_WEBAPP_NAME_B2C }}" \
+            "${{ secrets.AZURE_WEBAPP_NAME_AGENT }}" \
+            "${{ secrets.AZURE_WEBAPP_NAME_SUPPLIER }}" \
+            "${{ secrets.AZURE_WEBAPP_NAME_SUPERVISION }}" \
+            "${{ secrets.AZURE_WEBAPP_NAME_SERVICES }}"; do
             echo "Enabling logging for ${APP}..."
             az webapp log config \
-              --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}" \
+              --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
               --name "${APP}" \
               --application-logging filesystem \
               --level verbose \
@@ -305,14 +303,14 @@ jobs:
         run: |
           mkdir -p /tmp/azure-logs
           for APP in \
-            "${{ vars.AZURE_WEBAPP_NAME_B2C }}" \
-            "${{ vars.AZURE_WEBAPP_NAME_AGENT }}" \
-            "${{ vars.AZURE_WEBAPP_NAME_SUPPLIER }}" \
-            "${{ vars.AZURE_WEBAPP_NAME_SUPERVISION }}" \
-            "${{ vars.AZURE_WEBAPP_NAME_SERVICES }}"; do
+            "${{ secrets.AZURE_WEBAPP_NAME_B2C }}" \
+            "${{ secrets.AZURE_WEBAPP_NAME_AGENT }}" \
+            "${{ secrets.AZURE_WEBAPP_NAME_SUPPLIER }}" \
+            "${{ secrets.AZURE_WEBAPP_NAME_SUPERVISION }}" \
+            "${{ secrets.AZURE_WEBAPP_NAME_SERVICES }}"; do
             echo "Downloading logs for ${APP}..."
             az webapp log download \
-              --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}" \
+              --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
               --name "${APP}" \
               --log-file "/tmp/azure-logs/${APP}-logs.zip" 2>&1 \
               || echo "WARNING: could not download logs for ${APP}"
