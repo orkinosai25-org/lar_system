@@ -1,0 +1,149 @@
+#!/bin/bash
+set -euo pipefail
+
+# ============================================================
+# LAR System — Azure Quick-Start Provisioning Script
+# Update all variables in the CONFIGURATION section below.
+#
+# Usage:
+#   chmod +x azure-provision.sh
+#   ./azure-provision.sh          # local machine
+#   bash azure-provision.sh       # Azure Cloud Shell
+#
+# IMPORTANT: Run this script from a logged-in Azure CLI session.
+#   Local machine: az login
+#   Cloud Shell:   already logged in
+# ============================================================
+
+# --- CONFIGURATION -------------------------------------------
+RESOURCE_GROUP="rg-lar-system"
+LOCATION="southafricanorth"     # Closest region to Africa; alternatives: westeurope, eastus
+APP_SERVICE_PLAN="asp-lar-system"
+DB_SERVER_NAME="lar-mysql-server"           # Must be globally unique across all Azure customers
+DB_ADMIN_USER="laradmin"
+DB_ADMIN_PASSWORD='YOUR_SECURE_PASSWORD_HERE'   # Replace — min 8 chars, upper+lower+number+symbol
+# NOTE: Use single quotes to prevent bash interpreting ! as history expansion.
+# -------------------------------------------------------------
+
+# Validate that the password has been changed from the placeholder.
+if [[ "$DB_ADMIN_PASSWORD" == 'YOUR_SECURE_PASSWORD_HERE' ]]; then
+  echo "ERROR: Please set DB_ADMIN_PASSWORD in the CONFIGURATION section before running this script."
+  exit 1
+fi
+
+echo "==> Updating MySQL Flexible Server CLI extension..."
+# In Azure Cloud Shell the CLI binary cannot be self-updated ('az upgrade' will fail).
+# Update only the extension to avoid InvalidApiVersionParameter errors.
+# On a local machine you can instead run: az upgrade --yes --all
+az extension update --name rdbms-connect \
+  || az extension add --upgrade --name rdbms-connect \
+  || echo "NOTE: Extension update skipped — retry if you see InvalidApiVersionParameter errors."
+
+echo "==> Creating resource group..."
+az group create --name "$RESOURCE_GROUP" --location "$LOCATION"
+
+echo "==> Creating MySQL Flexible Server..."
+az mysql flexible-server create \
+  --resource-group "$RESOURCE_GROUP" \
+  --name "$DB_SERVER_NAME" \
+  --location "$LOCATION" \
+  --admin-user "$DB_ADMIN_USER" \
+  --admin-password "$DB_ADMIN_PASSWORD" \
+  --sku-name Standard_D2ds_v4 \
+  --tier GeneralPurpose \
+  --storage-size 20 \
+  --version 8.0.21 \
+  --public-access 0.0.0.0
+# NOTE: If "The requested VM size is not available in the current region", replace the
+# --sku-name and --tier lines above with: --sku-name Standard_B1ms --tier Burstable
+
+echo "==> Creating databases..."
+for DB_NAME in lar_b2c lar_agent lar_supplier lar_supervision lar_webservices lar_ultralux; do
+  az mysql flexible-server db create \
+    --resource-group "$RESOURCE_GROUP" \
+    --server-name "$DB_SERVER_NAME" \
+    --database-name "$DB_NAME" \
+    --charset utf8mb4 \
+    --collation utf8mb4_unicode_ci
+done
+
+echo "==> Creating App Service Plan..."
+az appservice plan create \
+  --resource-group "$RESOURCE_GROUP" \
+  --name "$APP_SERVICE_PLAN" \
+  --location "$LOCATION" \
+  --is-linux \
+  --sku P1v3
+
+echo "==> Creating Web Apps..."
+for APP_NAME in lar-b2c lar-agent lar-supplier lar-supervision lar-services; do
+  az webapp create \
+    --resource-group "$RESOURCE_GROUP" \
+    --plan "$APP_SERVICE_PLAN" \
+    --name "$APP_NAME" \
+    --runtime "PHP|8.2"
+done
+
+echo "==> Enabling diagnostic logging on all Web Apps..."
+for APP_NAME in lar-b2c lar-agent lar-supplier lar-supervision lar-services; do
+  az webapp log config \
+    --resource-group "$RESOURCE_GROUP" \
+    --name "$APP_NAME" \
+    --application-logging filesystem \
+    --level verbose \
+    --web-server-logging filesystem \
+    --detailed-error-messages true \
+    --failed-request-tracing true
+done
+
+echo "==> Creating service principal for GitHub Actions..."
+SUBSCRIPTION_ID=$(az account show --query id -o tsv)
+az ad sp create-for-rbac \
+  --name "lar-github-actions" \
+  --role contributor \
+  --scopes "/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP}" \
+  --json-auth > /tmp/azure-credentials.json
+echo "  Service principal JSON saved to /tmp/azure-credentials.json"
+echo "  Add its contents as the AZURE_CREDENTIALS GitHub Secret"
+
+echo "==> Configuring App Settings..."
+DB_HOST="${DB_SERVER_NAME}.mysql.database.azure.com"
+APPS_AND_DBS=(
+  "lar-b2c:lar_b2c"
+  "lar-agent:lar_agent"
+  "lar-supplier:lar_supplier"
+  "lar-supervision:lar_supervision"
+  "lar-services:lar_webservices"
+)
+for ENTRY in "${APPS_AND_DBS[@]}"; do
+  APP_NAME="${ENTRY%%:*}"
+  DB_NAME="${ENTRY##*:}"
+  az webapp config appsettings set \
+    --resource-group "$RESOURCE_GROUP" \
+    --name "$APP_NAME" \
+    --settings \
+      DB_HOSTNAME="$DB_HOST" \
+      DB_USERNAME="${DB_ADMIN_USER}@${DB_SERVER_NAME}" \
+      DB_PASSWORD="$DB_ADMIN_PASSWORD" \
+      DB_DATABASE="$DB_NAME" \
+      ENVIRONMENT="production" \
+      WEBSITE_RUN_FROM_PACKAGE="1"
+done
+
+echo "==> Downloading publish profiles..."
+for APP_NAME in lar-b2c lar-agent lar-supplier lar-supervision lar-services; do
+  az webapp deployment list-publishing-profiles \
+    --resource-group "$RESOURCE_GROUP" \
+    --name "$APP_NAME" \
+    --xml \
+    --output tsv > /tmp/publishprofile-${APP_NAME}.xml
+  echo "  Saved /tmp/publishprofile-${APP_NAME}.xml — add to GitHub Secrets (see AZURE_DEPLOYMENT.md Step 5 / Section 7)"
+done
+
+echo ""
+echo "==> DONE. Next steps:"
+echo "  1. Add AZURE_CREDENTIALS from /tmp/azure-credentials.json as a GitHub Secret"
+echo "  2. Add the publish profile XMLs as GitHub Secrets (see AZURE_DEPLOYMENT.md Step 5)"
+echo "  3. Add the app name and resource group as GitHub Variables (see AZURE_DEPLOYMENT.md Step 5)"
+echo "  4. Import your database schema (see AZURE_DEPLOYMENT.md Step 7)"
+echo "  5. Push to main or manually trigger the GitHub Actions workflow"
