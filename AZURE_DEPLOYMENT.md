@@ -393,7 +393,16 @@ the `AZURE_CREDENTIALS` secret.
 ### Add GitHub Secrets
 
 Go to your repository on GitHub:
-**Settings → Secrets and variables → Actions → New repository secret**
+**Settings → Secrets and variables → Actions → Secrets tab → New repository secret**
+
+> **⚠️ SECRETS vs VARIABLES — Important distinction:**
+> GitHub Actions has two separate stores:
+> - **Secrets** — for sensitive credentials (passwords, tokens, keys). Accessed in workflows as `${{ secrets.NAME }}`. Values are masked in logs.
+> - **Variables** — for non-sensitive configuration data (names, IDs, resource names). Accessed in workflows as `${{ vars.NAME }}`. Values are NOT masked.
+>
+> `AZURE_RESOURCE_GROUP` and `AZURE_WEBAPP_NAME_*` **must be added as Variables, NOT Secrets**.
+> If you accidentally add them as secrets, the workflow will silently receive empty values
+> because `${{ vars.NAME }}` only reads from the Variables store.
 
 Add the following **Secrets** (paste the full XML content from each publish profile file):
 
@@ -408,6 +417,13 @@ Add the following **Secrets** (paste the full XML content from each publish prof
 
 ### Add GitHub Variables
 
+> **⚠️ These must be Variables — NOT Secrets.**
+> In the GitHub UI the Secrets and Variables pages look similar. Make sure you are on the
+> **Variables tab**, not the Secrets tab. Variables are accessed in the workflow via
+> `${{ vars.NAME }}`; secrets are accessed via `${{ secrets.NAME }}`.
+
+**Option A — Repository-level variables (recommended)**
+
 Go to: **Settings → Secrets and variables → Actions → Variables tab → New repository variable**
 
 | Variable Name | Value |
@@ -418,6 +434,23 @@ Go to: **Settings → Secrets and variables → Actions → Variables tab → Ne
 | `AZURE_WEBAPP_NAME_SUPPLIER` | `lar-supplier` |
 | `AZURE_WEBAPP_NAME_SUPERVISION` | `lar-supervision` |
 | `AZURE_WEBAPP_NAME_SERVICES` | `lar-services` |
+
+**Option B — Environment-level variables (if using the `production` environment)**
+
+If you are using a GitHub environment named `production` (the workflow targets
+`environment: name: production`), you can set these at the environment level instead.
+
+Go to: **Settings → Environments → production → Environment variables → Add variable**
+
+Add the same six variables listed in the table above. Environment variables take precedence
+over repository variables and are also read via `${{ vars.NAME }}` in workflow jobs that
+reference the `production` environment.
+
+> **⚠️ Common mistake:** GitHub Environments have both **"Environment secrets"** and
+> **"Environment variables"** sections. `AZURE_RESOURCE_GROUP` and `AZURE_WEBAPP_NAME_*`
+> must go under **"Environment variables"** — **not** under "Environment secrets".
+> Adding them as environment secrets will cause the workflow to silently fail with empty
+> app-name values.
 
 ---
 
@@ -809,7 +842,14 @@ bash azure-provision.sh
 
 Before triggering the workflow, confirm ALL of the following are set in GitHub:
 
-**Secrets** (Settings → Secrets and variables → Actions → Secrets):
+> **⚠️ SECRETS vs VARIABLES reminder:**
+> - Items listed under **Secrets** must be added via **Settings → Secrets and variables → Actions → Secrets tab** (or under an environment's **"Environment secrets"** section).
+> - Items listed under **Variables** must be added via **Settings → Secrets and variables → Actions → Variables tab** (or under an environment's **"Environment variables"** section).
+>
+> Do **not** mix them up — adding `AZURE_RESOURCE_GROUP` or `AZURE_WEBAPP_NAME_*` as secrets
+> will cause the workflow to receive empty values and deployment will fail silently.
+
+**Secrets** (Settings → Secrets and variables → Actions → **Secrets tab**):
 - [ ] `AZURE_CREDENTIALS` (service principal JSON — **required for all deploy and log-collection jobs**)
 - [ ] `AZUREAPPSERVICE_PUBLISHPROFILE_B2C`
 - [ ] `AZUREAPPSERVICE_PUBLISHPROFILE_AGENT`
@@ -817,7 +857,7 @@ Before triggering the workflow, confirm ALL of the following are set in GitHub:
 - [ ] `AZUREAPPSERVICE_PUBLISHPROFILE_SUPERVISION`
 - [ ] `AZUREAPPSERVICE_PUBLISHPROFILE_SERVICES`
 
-**Variables** (Settings → Secrets and variables → Actions → Variables):
+**Variables** (Settings → Secrets and variables → Actions → **Variables tab** — ⚠️ NOT the Secrets tab):
 - [ ] `AZURE_RESOURCE_GROUP` = `rg-lar-system`
 - [ ] `AZURE_WEBAPP_NAME_B2C` = `lar-b2c`
 - [ ] `AZURE_WEBAPP_NAME_AGENT` = `lar-agent`

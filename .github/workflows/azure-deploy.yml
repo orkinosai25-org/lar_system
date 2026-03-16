@@ -2,7 +2,7 @@
 # GitHub Actions Workflow — Deploy LAR System to Azure Web App
 # ============================================================
 #
-# REQUIRED GITHUB SECRETS (Settings → Secrets and variables → Actions):
+# REQUIRED GITHUB SECRETS (Settings → Secrets and variables → Actions → Secrets tab):
 #   AZURE_CREDENTIALS                         - Service principal JSON (required for ALL deploy jobs)
 #   AZUREAPPSERVICE_PUBLISHPROFILE_B2C        - Publish profile for B2C web app
 #   AZUREAPPSERVICE_PUBLISHPROFILE_AGENT      - Publish profile for Agent web app
@@ -10,13 +10,15 @@
 #   AZUREAPPSERVICE_PUBLISHPROFILE_SUPERVISION- Publish profile for Supervision web app
 #   AZUREAPPSERVICE_PUBLISHPROFILE_SERVICES   - Publish profile for Services web app
 #
-# REQUIRED GITHUB VARIABLES (Settings → Secrets and variables → Actions → Variables):
+# REQUIRED GITHUB VARIABLES (Settings → Secrets and variables → Actions → Variables tab):
+#   *** These MUST be Variables, NOT Secrets. They are read via ${{ vars.NAME }}. ***
+#   *** If added as Secrets they will resolve to empty strings and deployments will fail. ***
 #   AZURE_RESOURCE_GROUP     - e.g. rg-lar-system
-#   AZURE_WEBAPP_NAME_B2C
-#   AZURE_WEBAPP_NAME_AGENT
-#   AZURE_WEBAPP_NAME_SUPPLIER
-#   AZURE_WEBAPP_NAME_SUPERVISION
-#   AZURE_WEBAPP_NAME_SERVICES
+#   AZURE_WEBAPP_NAME_B2C    - e.g. lar-b2c
+#   AZURE_WEBAPP_NAME_AGENT  - e.g. lar-agent
+#   AZURE_WEBAPP_NAME_SUPPLIER    - e.g. lar-supplier
+#   AZURE_WEBAPP_NAME_SUPERVISION - e.g. lar-supervision
+#   AZURE_WEBAPP_NAME_SERVICES    - e.g. lar-services
 #
 # See AZURE_DEPLOYMENT.md for full setup instructions.
 # ============================================================
