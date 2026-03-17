@@ -1,0 +1,230 @@
+# ============================================================
+# GitHub Actions Workflow — Vertical Integration Tests
+# ============================================================
+#
+# Executes the LAR functional integration test suite against the
+# three contracted verticals (TOR Section 3.1):
+#   - Flights  : fare parity, repricing, PNR/error path, TTL
+#   - Hotels   : confirmation status, cancellation, no-result
+#   - Cars     : rate/availability, stale-cache, pre-checkout
+#
+# Also covers the booking flow audit (TOR Section 3.2):
+#   - Session lifecycle, retry/recovery, silent failure detection
+#
+# Tests run against the DEPLOYED Azure Web Apps and produce a
+# structured evidence pack uploaded as a GitHub artifact.
+#
+# TRIGGER:
+#   - Manual trigger (workflow_dispatch) with optional URL override
+#   - Automatically after a successful "Deploy to Azure Web App" run
+#   - Weekly on Mondays at 06:00 UTC (catch regressions between deploys)
+#
+# REQUIRED GITHUB SECRETS:
+#   AZURE_WEBAPP_NAME_B2C   - e.g. lar-b2c
+#                             (workflow builds URL as https://<name>.azurewebsites.net)
+#
+# NO APPLICATION SECRETS ARE NEEDED — tests use only HTTP GET requests.
+#
+# See scripts/functional_tests.py for the full test implementation.
+# See AUDIT_REPORT.md + email feedback (Issue #17) for scope context.
+# ============================================================
+
+name: Vertical Integration Tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: >
+          Full base URL to test (leave blank to auto-build from AZURE_WEBAPP_NAME_B2C secret).
+          Example: https://lar-b2c.azurewebsites.net
+        required: false
+        default: ''
+      no_ssl_verify:
+        description: 'Disable SSL verification (use for staging/self-signed certs)'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+
+  # Auto-trigger after every successful deployment to main
+  workflow_run:
+    workflows: ["Deploy to Azure Web App"]
+    types: [completed]
+    branches: [main]
+
+  # Weekly regression check
+  schedule:
+    - cron: '0 6 * * 1'   # Mondays 06:00 UTC
+
+jobs:
+  # --------------------------------------------------------
+  # Wait for the deployed app to be ready (only on auto-trigger)
+  # --------------------------------------------------------
+  wait-for-deploy:
+    name: Wait for App Ready
+    runs-on: ubuntu-latest
+    permissions: {}
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+    outputs:
+      base_url: ${{ steps.resolve_url.outputs.base_url }}
+
+    steps:
+      - name: Resolve base URL
+        id: resolve_url
+        run: |
+          if [[ -n "${{ github.event.inputs.base_url }}" ]]; then
+            BASE_URL="${{ github.event.inputs.base_url }}"
+          elif [[ -n "${{ secrets.AZURE_WEBAPP_NAME_B2C }}" ]]; then
+            BASE_URL="https://${{ secrets.AZURE_WEBAPP_NAME_B2C }}.azurewebsites.net"
+          else
+            echo "ERROR: No base URL provided and AZURE_WEBAPP_NAME_B2C secret is not set."
+            echo "       Set the secret or pass --base-url via workflow_dispatch input."
+            exit 1
+          fi
+          echo "base_url=${BASE_URL}" >> "${GITHUB_OUTPUT}"
+          echo "Testing against: ${BASE_URL}"
+
+      - name: Wait for app to be reachable
+        run: |
+          BASE_URL="${{ steps.resolve_url.outputs.base_url }}"
+          MAX_ATTEMPTS=10
+          DELAY=15
+          for i in $(seq 1 $MAX_ATTEMPTS); do
+            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+              --max-time 20 "${BASE_URL}/" 2>/dev/null || echo "000")
+            echo "Attempt ${i}/${MAX_ATTEMPTS}: HTTP ${HTTP_STATUS}"
+            if [[ "${HTTP_STATUS}" =~ ^[23] ]]; then
+              echo "App is ready."
+              exit 0
+            fi
+            sleep $DELAY
+          done
+          echo "WARNING: App did not return 2xx/3xx after ${MAX_ATTEMPTS} attempts."
+          echo "Tests will run anyway — failures may reflect deployment state."
+
+  # --------------------------------------------------------
+  # Run functional tests for all contracted verticals
+  # --------------------------------------------------------
+  run-integration-tests:
+    name: Run Integration Tests
+    runs-on: ubuntu-latest
+    needs: wait-for-deploy
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          # No third-party deps — stdlib only (urllib, json, re, ssl)
+
+      - name: Run functional integration tests
+        id: run_tests
+        env:
+          BASE_URL: ${{ needs.wait-for-deploy.outputs.base_url }}
+          NO_SSL:   ${{ github.event.inputs.no_ssl_verify || 'false' }}
+        run: |
+          mkdir -p /tmp/test-reports
+
+          SSL_FLAG=""
+          if [[ "${NO_SSL}" == "true" ]]; then
+            SSL_FLAG="--no-ssl-verify"
+          fi
+
+          echo "Running tests against: ${BASE_URL}"
+          python3 scripts/functional_tests.py \
+            --base-url "${BASE_URL}" \
+            --output-dir /tmp/test-reports \
+            --verbose \
+            ${SSL_FLAG} \
+            ; TEST_EXIT=$?
+
+          echo "test_exit=${TEST_EXIT}" >> "${GITHUB_OUTPUT}"
+
+          # Always show the text report in the workflow log
+          echo ""
+          echo "═══════════════════════════════════════════════════════════════"
+          echo "  TEST REPORT SUMMARY"
+          echo "═══════════════════════════════════════════════════════════════"
+          cat /tmp/test-reports/LAR_Functional_Test_Report_*.txt || true
+
+          exit 0  # always upload artifacts even on test failure
+
+      - name: Upload test reports as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lar-vertical-integration-test-report-${{ github.run_id }}
+          path: /tmp/test-reports/
+          retention-days: 90
+
+      # ---- Post summary to GitHub job summary ---------
+      - name: Write job summary
+        if: always()
+        run: |
+          REPORT=$(find /tmp/test-reports -name "*.txt" | head -1)
+          if [[ -f "${REPORT}" ]]; then
+            echo "## LAR Vertical Integration Test Report" >> "${GITHUB_STEP_SUMMARY}"
+            echo "" >> "${GITHUB_STEP_SUMMARY}"
+            echo "\`\`\`" >> "${GITHUB_STEP_SUMMARY}"
+            cat "${REPORT}" >> "${GITHUB_STEP_SUMMARY}"
+            echo "\`\`\`" >> "${GITHUB_STEP_SUMMARY}"
+          else
+            echo "## LAR Vertical Integration Test Report" >> "${GITHUB_STEP_SUMMARY}"
+            echo "No report generated." >> "${GITHUB_STEP_SUMMARY}"
+          fi
+
+      # ---- Print FAIL summary to make failures visible in CI ----
+      - name: Report test failures
+        if: always()
+        run: |
+          JSON_REPORT=$(find /tmp/test-reports -name "*.json" | head -1)
+          if [[ -f "${JSON_REPORT}" ]]; then
+            python3 - "${JSON_REPORT}" << 'PYEOF'
+import json, sys
+data  = json.loads(open(sys.argv[1]).read())
+summ  = data.get("summary", {})
+fails = [r for r in data.get("results", []) if r["status"] == "FAIL"]
+warns = [r for r in data.get("results", []) if r["status"] == "WARN"]
+
+print(f"\n{'═' * 70}")
+print(f"  SUMMARY:  PASS={summ.get('PASS',0)}  WARN={summ.get('WARN',0)}  FAIL={summ.get('FAIL',0)}  SKIP={summ.get('SKIP',0)}")
+print(f"{'═' * 70}")
+
+if fails:
+    print(f"\n  ❌ FAIL RESULTS ({len(fails)}):")
+    for r in fails:
+        print(f"    [{r['scenario']}] {r['check']}")
+        if r.get('detail'):
+            print(f"      → {r['detail']}")
+        if r.get('evidence'):
+            print(f"      EVIDENCE: {r['evidence'][:200]}")
+
+if warns:
+    print(f"\n  ⚠️  WARN RESULTS ({len(warns)}):")
+    for r in warns:
+        print(f"    [{r['scenario']}] {r['check']}")
+        if r.get('detail'):
+            print(f"      → {r['detail']}")
+
+if not fails and not warns:
+    print("\n  ✅ All tests passed or skipped — no FAIL or WARN results.")
+PYEOF
+          fi
+
+      - name: Fail workflow on test failures
+        if: steps.run_tests.outputs.test_exit != '0'
+        run: |
+          echo "One or more integration tests FAILED."
+          echo "Download the artifact 'lar-vertical-integration-test-report-*' for the full evidence pack."
+          exit 1

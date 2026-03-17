@@ -1,0 +1,401 @@
+# ============================================================
+# GitHub Actions Workflow — Vertical Test Runner & Error Reporter
+# ============================================================
+#
+# Runs automated checks across all LAR System verticals:
+#   - B2C Consumer Website
+#   - Agent Panel
+#   - Supplier Portal
+#   - Supervision / Back-office Panel
+#   - Web Services API
+#   - UltraLux Premium Module
+#
+# Checks performed for each vertical:
+#   1. PHP syntax validation (all .php files)
+#   2. Critical file existence checks (controllers, models, config)
+#   3. Database configuration verification (env vars, no hardcoded creds)
+#   4. CodeIgniter structure verification
+#
+# All errors are REPORTED (not fixed) and uploaded as artifacts.
+# The workflow always completes — it never blocks deployment.
+# Review the uploaded reports to prioritise remediation.
+#
+# TRIGGER:
+#   - Every push to main or any feature branch
+#   - Every pull request targeting main
+#   - Manual trigger (workflow_dispatch)
+#   - Weekly schedule (Sundays 02:00 UTC)
+#
+# See AUDIT_REPORT.md and REMEDIATION_ROADMAP.md for context on known issues.
+# ============================================================
+
+name: Vertical Tests & Error Report
+
+on:
+  push:
+    branches:
+      - main
+      - 'feature/**'
+      - 'fix/**'
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+  schedule:
+    # Weekly full scan — Sundays at 02:00 UTC
+    - cron: '0 2 * * 0'
+
+env:
+  PHP_VERSION: '8.2'
+
+jobs:
+  # ----------------------------------------------------------
+  # Job: Run checks for all verticals in parallel using a matrix
+  # ----------------------------------------------------------
+  check-vertical:
+    name: Check ${{ matrix.vertical.name }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    strategy:
+      fail-fast: false    # continue checking all verticals even if one fails
+      matrix:
+        vertical:
+          - name: B2C
+            dir: b2c
+            config_path: b2c/config/production/database.php
+          - name: Agent
+            dir: agent
+            config_path: agent/application/config/production/database.php
+          - name: Supplier
+            dir: supplier
+            config_path: supplier/application/config/production/database.php
+          - name: Supervision
+            dir: supervision
+            config_path: supervision/application/config/production/database.php
+          - name: Services
+            dir: services
+            config_path: services/webservices/application/config/production/database.php
+          - name: UltraLux
+            dir: ultralux
+            config_path: ultralux/application/config/production/database.php
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up PHP ${{ env.PHP_VERSION }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: mysqli, mbstring, gd, curl, zip, xml, intl
+          ini-values: display_errors=Off, log_errors=On, error_reporting=E_ALL
+          coverage: none
+
+      # ---- 1. PHP Syntax Validation ---------------------------
+      - name: PHP syntax check — ${{ matrix.vertical.name }}
+        id: syntax
+        run: |
+          REPORT_FILE="/tmp/syntax-${{ matrix.vertical.dir }}.txt"
+          echo "=== PHP Syntax Report — ${{ matrix.vertical.name }} ===" > "${REPORT_FILE}"
+          echo "Generated: $(date -u)" >> "${REPORT_FILE}"
+          echo "PHP version: $(php -r 'echo PHP_VERSION;')" >> "${REPORT_FILE}"
+          echo "" >> "${REPORT_FILE}"
+
+          SYNTAX_ERRORS=0
+          FILE_COUNT=0
+
+          while IFS= read -r -d '' php_file; do
+            FILE_COUNT=$((FILE_COUNT + 1))
+            RESULT=$(php -l "${php_file}" 2>&1)
+            if echo "${RESULT}" | grep -qv "No syntax errors"; then
+              echo "SYNTAX ERROR: ${php_file}" >> "${REPORT_FILE}"
+              echo "${RESULT}" >> "${REPORT_FILE}"
+              echo "" >> "${REPORT_FILE}"
+              SYNTAX_ERRORS=$((SYNTAX_ERRORS + 1))
+            fi
+          done < <(find "${{ matrix.vertical.dir }}" -name "*.php" -print0 2>/dev/null)
+
+          echo "" >> "${REPORT_FILE}"
+          echo "--- Summary ---" >> "${REPORT_FILE}"
+          echo "Files checked : ${FILE_COUNT}" >> "${REPORT_FILE}"
+          echo "Syntax errors : ${SYNTAX_ERRORS}" >> "${REPORT_FILE}"
+          echo "" >> "${REPORT_FILE}"
+
+          echo "syntax_errors=${SYNTAX_ERRORS}" >> "${GITHUB_OUTPUT}"
+          echo "file_count=${FILE_COUNT}"       >> "${GITHUB_OUTPUT}"
+
+          cat "${REPORT_FILE}"
+
+      # ---- 2. Critical File Existence Check -------------------
+      - name: Critical files check — ${{ matrix.vertical.name }}
+        id: files
+        run: |
+          REPORT_FILE="/tmp/files-${{ matrix.vertical.dir }}.txt"
+          echo "=== Critical Files Report — ${{ matrix.vertical.name }} ===" > "${REPORT_FILE}"
+          echo "Generated: $(date -u)" >> "${REPORT_FILE}"
+          echo "" >> "${REPORT_FILE}"
+
+          MISSING=0
+
+          check_file() {
+            local f="$1"
+            if [[ -f "${f}" ]]; then
+              echo "  [OK]     ${f}" >> "${REPORT_FILE}"
+            else
+              echo "  [MISSING] ${f}" >> "${REPORT_FILE}"
+              MISSING=$((MISSING + 1))
+            fi
+          }
+
+          check_file "${{ matrix.vertical.config_path }}"
+
+          # Check for controllers directory
+          CONTROLLERS_DIR="$(find "${{ matrix.vertical.dir }}" -type d -name 'controllers' 2>/dev/null | head -1)"
+          if [[ -n "${CONTROLLERS_DIR}" ]]; then
+            echo "  [OK]     controllers directory: ${CONTROLLERS_DIR}" >> "${REPORT_FILE}"
+          else
+            echo "  [MISSING] controllers directory under ${{ matrix.vertical.dir }}" >> "${REPORT_FILE}"
+            MISSING=$((MISSING + 1))
+          fi
+
+          # Check for models directory
+          MODELS_DIR="$(find "${{ matrix.vertical.dir }}" -type d -name 'models' 2>/dev/null | head -1)"
+          if [[ -n "${MODELS_DIR}" ]]; then
+            echo "  [OK]     models directory: ${MODELS_DIR}" >> "${REPORT_FILE}"
+          else
+            echo "  [MISSING] models directory under ${{ matrix.vertical.dir }}" >> "${REPORT_FILE}"
+            MISSING=$((MISSING + 1))
+          fi
+
+          echo "" >> "${REPORT_FILE}"
+          echo "--- Summary ---" >> "${REPORT_FILE}"
+          echo "Missing files/dirs: ${MISSING}" >> "${REPORT_FILE}"
+
+          echo "missing_files=${MISSING}" >> "${GITHUB_OUTPUT}"
+          cat "${REPORT_FILE}"
+
+      # ---- 3. Database Config Verification --------------------
+      - name: DB config check — ${{ matrix.vertical.name }}
+        id: dbconfig
+        run: |
+          REPORT_FILE="/tmp/dbconfig-${{ matrix.vertical.dir }}.txt"
+          echo "=== DB Config Report — ${{ matrix.vertical.name }} ===" > "${REPORT_FILE}"
+          echo "Generated: $(date -u)" >> "${REPORT_FILE}"
+          echo "" >> "${REPORT_FILE}"
+
+          DB_ISSUES=0
+          CONFIG_FILE="${{ matrix.vertical.config_path }}"
+
+          if [[ ! -f "${CONFIG_FILE}" ]]; then
+            echo "  [SKIP] Config file not found: ${CONFIG_FILE}" >> "${REPORT_FILE}"
+          else
+            # Check that production config uses getenv() or env vars, not literals
+            if grep -qP "'\''hostname'\''\s*=\s*'\''.+'\''|\"hostname\"\s*=\s*\".+\"" "${CONFIG_FILE}" 2>/dev/null; then
+              LITERAL_HOST=$(grep -P "hostname" "${CONFIG_FILE}" | head -3)
+              echo "  [CHECK] hostname entry found: ${LITERAL_HOST}" >> "${REPORT_FILE}"
+            fi
+
+            # Check for hardcoded plain-text passwords (flag if NOT using getenv)
+            if grep -P "\['password'\]\s*=\s*'[^']+" "${CONFIG_FILE}" 2>/dev/null \
+               | grep -qvP "getenv|''|\"\""; then
+              echo "  [WARN] Possible hardcoded password detected in ${CONFIG_FILE}" >> "${REPORT_FILE}"
+              DB_ISSUES=$((DB_ISSUES + 1))
+            else
+              echo "  [OK]   No hardcoded passwords detected in production config." >> "${REPORT_FILE}"
+            fi
+
+            # Check that getenv() is used for credentials
+            if grep -q "getenv(" "${CONFIG_FILE}"; then
+              echo "  [OK]   Config uses getenv() for credentials (env-var driven)." >> "${REPORT_FILE}"
+            else
+              echo "  [WARN] Config does not use getenv() — credentials may be hardcoded." >> "${REPORT_FILE}"
+              DB_ISSUES=$((DB_ISSUES + 1))
+            fi
+
+            # Check that db_debug is FALSE in production
+            if grep -qP "db_debug.*FALSE" "${CONFIG_FILE}"; then
+              echo "  [OK]   db_debug is FALSE." >> "${REPORT_FILE}"
+            else
+              echo "  [WARN] db_debug is not explicitly set to FALSE in production config." >> "${REPORT_FILE}"
+              DB_ISSUES=$((DB_ISSUES + 1))
+            fi
+
+            # Check for utf8mb4 charset
+            if grep -q "utf8mb4" "${CONFIG_FILE}"; then
+              echo "  [OK]   utf8mb4 charset configured." >> "${REPORT_FILE}"
+            else
+              echo "  [INFO] utf8mb4 charset not configured (legacy utf8 may cause emoji issues)." >> "${REPORT_FILE}"
+            fi
+          fi
+
+          echo "" >> "${REPORT_FILE}"
+          echo "--- Summary ---" >> "${REPORT_FILE}"
+          echo "DB config issues: ${DB_ISSUES}" >> "${REPORT_FILE}"
+
+          echo "db_issues=${DB_ISSUES}" >> "${GITHUB_OUTPUT}"
+          cat "${REPORT_FILE}"
+
+      # ---- 4. CodeIgniter Structure Check ---------------------
+      - name: CodeIgniter structure check — ${{ matrix.vertical.name }}
+        id: cicheck
+        run: |
+          REPORT_FILE="/tmp/ci-${{ matrix.vertical.dir }}.txt"
+          echo "=== CodeIgniter Structure Report — ${{ matrix.vertical.name }} ===" > "${REPORT_FILE}"
+          echo "Generated: $(date -u)" >> "${REPORT_FILE}"
+          echo "" >> "${REPORT_FILE}"
+
+          CI_ISSUES=0
+
+          # Check for CodeIgniter system directory reference
+          if find "${{ matrix.vertical.dir }}" -name "*.php" | head -1 | xargs grep -l "CI_" 2>/dev/null | head -1 | grep -q .; then
+            echo "  [OK]   CodeIgniter PHP files found." >> "${REPORT_FILE}"
+          fi
+
+          # Check for TODO/FIXME items (report only — do not fail)
+          TODO_COUNT=$(grep -rn "TODO\|FIXME\|HACK\|XXX" \
+            --include="*.php" "${{ matrix.vertical.dir }}" 2>/dev/null | wc -l || echo 0)
+          echo "  [INFO] TODO/FIXME/HACK comments: ${TODO_COUNT}" >> "${REPORT_FILE}"
+          if [[ "${TODO_COUNT}" -gt 0 ]]; then
+            grep -rn "TODO\|FIXME\|HACK\|XXX" \
+              --include="*.php" "${{ matrix.vertical.dir }}" 2>/dev/null \
+              | head -20 >> "${REPORT_FILE}" || true
+            echo "  (showing first 20 — see full artifact for complete list)" >> "${REPORT_FILE}"
+          fi
+
+          # Check for hardcoded credentials in non-production config files
+          HARDCODED=$(grep -rn "\['password'\].*=.*'[A-Za-z0-9!@#$%^&*]" \
+            --include="*.php" "${{ matrix.vertical.dir }}" 2>/dev/null \
+            | grep -v "production\|getenv\|''\|\"\"" || true)
+          if [[ -n "${HARDCODED}" ]]; then
+            echo "  [WARN] Hardcoded credentials found:" >> "${REPORT_FILE}"
+            echo "${HARDCODED}" | head -10 >> "${REPORT_FILE}"
+            CI_ISSUES=$((CI_ISSUES + 1))
+          else
+            echo "  [OK]   No hardcoded credentials found." >> "${REPORT_FILE}"
+          fi
+
+          echo "" >> "${REPORT_FILE}"
+          echo "--- Summary ---" >> "${REPORT_FILE}"
+          echo "CI structure issues: ${CI_ISSUES}" >> "${REPORT_FILE}"
+          echo "TODO/FIXME count   : ${TODO_COUNT}" >> "${REPORT_FILE}"
+
+          echo "ci_issues=${CI_ISSUES}"     >> "${GITHUB_OUTPUT}"
+          echo "todo_count=${TODO_COUNT}"   >> "${GITHUB_OUTPUT}"
+          cat "${REPORT_FILE}"
+
+      # ---- Collect all reports --------------------------------
+      - name: Merge reports for ${{ matrix.vertical.name }}
+        if: always()
+        run: |
+          MERGED="/tmp/report-${{ matrix.vertical.dir }}.txt"
+          echo "╔══════════════════════════════════════════════════════════════╗" > "${MERGED}"
+          echo "║  LAR System — Vertical Check Report                         ║" >> "${MERGED}"
+          echo "║  Vertical : ${{ matrix.vertical.name }}" >> "${MERGED}"
+          echo "║  Run ID   : ${{ github.run_id }}" >> "${MERGED}"
+          echo "║  Commit   : ${{ github.sha }}" >> "${MERGED}"
+          echo "║  Date     : $(date -u)" >> "${MERGED}"
+          echo "╚══════════════════════════════════════════════════════════════╝" >> "${MERGED}"
+          echo "" >> "${MERGED}"
+
+          for SECTION in syntax files dbconfig ci; do
+            SECTION_FILE="/tmp/${SECTION}-${{ matrix.vertical.dir }}.txt"
+            if [[ -f "${SECTION_FILE}" ]]; then
+              cat "${SECTION_FILE}" >> "${MERGED}"
+              echo "" >> "${MERGED}"
+              echo "--------------------------------------------------------------" >> "${MERGED}"
+              echo "" >> "${MERGED}"
+            fi
+          done
+
+          # Summary table
+          echo "╔══════════════════════════════════════════════════════════════╗" >> "${MERGED}"
+          echo "║  OVERALL SUMMARY — ${{ matrix.vertical.name }}" >> "${MERGED}"
+          echo "║  PHP files checked : ${{ steps.syntax.outputs.file_count }}" >> "${MERGED}"
+          echo "║  Syntax errors     : ${{ steps.syntax.outputs.syntax_errors }}" >> "${MERGED}"
+          echo "║  Missing files     : ${{ steps.files.outputs.missing_files }}" >> "${MERGED}"
+          echo "║  DB config issues  : ${{ steps.dbconfig.outputs.db_issues }}" >> "${MERGED}"
+          echo "║  CI structure issues: ${{ steps.cicheck.outputs.ci_issues }}" >> "${MERGED}"
+          echo "║  TODO/FIXME count  : ${{ steps.cicheck.outputs.todo_count }}" >> "${MERGED}"
+          echo "╚══════════════════════════════════════════════════════════════╝" >> "${MERGED}"
+
+          cat "${MERGED}"
+          cp "${MERGED}" "/tmp/final-report-${{ matrix.vertical.dir }}.txt"
+
+      - name: Upload vertical report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vertical-report-${{ matrix.vertical.dir }}
+          path: /tmp/final-report-${{ matrix.vertical.dir }}.txt
+          retention-days: 30
+
+  # ----------------------------------------------------------
+  # Job: Aggregate all vertical reports into a single summary
+  # ----------------------------------------------------------
+  aggregate-report:
+    name: Aggregate Error Report
+    runs-on: ubuntu-latest
+    needs: check-vertical
+    if: always()
+    permissions:
+      contents: read
+
+    steps:
+      - name: Download all vertical reports
+        uses: actions/download-artifact@v4
+        with:
+          pattern: vertical-report-*
+          path: /tmp/reports/
+          merge-multiple: true
+
+      - name: Build aggregated report
+        run: |
+          AGGREGATE="/tmp/lar-system-error-report-${{ github.run_id }}.txt"
+
+          echo "╔══════════════════════════════════════════════════════════════╗" > "${AGGREGATE}"
+          echo "║  LAR System — Aggregated Vertical Error Report               ║" >> "${AGGREGATE}"
+          echo "║  Run ID : ${{ github.run_id }}" >> "${AGGREGATE}"
+          echo "║  Commit : ${{ github.sha }}" >> "${AGGREGATE}"
+          echo "║  Branch : ${{ github.ref_name }}" >> "${AGGREGATE}"
+          echo "║  Date   : $(date -u)" >> "${AGGREGATE}"
+          echo "╚══════════════════════════════════════════════════════════════╝" >> "${AGGREGATE}"
+          echo "" >> "${AGGREGATE}"
+          echo "NOTE: Errors are REPORTED here, not automatically fixed." >> "${AGGREGATE}"
+          echo "Review this report and prioritise fixes per REMEDIATION_ROADMAP.md" >> "${AGGREGATE}"
+          echo "" >> "${AGGREGATE}"
+          echo "══════════════════════════════════════════════════════════════" >> "${AGGREGATE}"
+          echo "" >> "${AGGREGATE}"
+
+          for REPORT in /tmp/reports/final-report-*.txt; do
+            if [[ -f "${REPORT}" ]]; then
+              cat "${REPORT}" >> "${AGGREGATE}"
+              echo "" >> "${AGGREGATE}"
+              echo "══════════════════════════════════════════════════════════════" >> "${AGGREGATE}"
+              echo "" >> "${AGGREGATE}"
+            fi
+          done
+
+          echo "" >> "${AGGREGATE}"
+          echo "=== End of Report ===" >> "${AGGREGATE}"
+          echo "" >> "${AGGREGATE}"
+
+          cat "${AGGREGATE}"
+          cp "${AGGREGATE}" /tmp/lar-system-error-report.txt
+
+      - name: Upload aggregated report
+        uses: actions/upload-artifact@v4
+        with:
+          name: lar-system-error-report
+          path: /tmp/lar-system-error-report.txt
+          retention-days: 90
+
+      - name: Print report summary to workflow log
+        run: |
+          echo "=== LAR System Vertical Check Complete ==="
+          echo "Individual reports: check artifacts 'vertical-report-*'"
+          echo "Full report       : check artifact 'lar-system-error-report'"
+          echo ""
+          echo "This workflow REPORTS errors — it does NOT automatically fix them."
+          echo "Review the artifacts and prioritise fixes per REMEDIATION_ROADMAP.md"
