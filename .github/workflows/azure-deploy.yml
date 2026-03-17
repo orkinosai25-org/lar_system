@@ -15,8 +15,11 @@
 #   AZURE_WEBAPP_NAME_SUPPLIER                - e.g. lar-supplier
 #   AZURE_WEBAPP_NAME_SUPERVISION             - e.g. lar-supervision
 #   AZURE_WEBAPP_NAME_SERVICES                - e.g. lar-services
+#   DB_SERVER_NAME                            - Azure MySQL Flexible Server name (e.g. lar-mysql-server)
 #
-# See AZURE_DEPLOYMENT.md for full setup instructions.
+# Database schema import (Step 7) is handled by the 'Database Setup' workflow.
+# Trigger it manually from the Actions tab after the first deployment.
+# See AZURE_DEPLOYMENT.md and database-setup.yml for details.
 # ============================================================
 
 name: Deploy to Azure Web App
@@ -250,7 +253,80 @@ jobs:
           package: .
 
   # ----------------------------------------------------------
-  # Job 3: Collect runtime logs from all Azure Web Apps
+  # Job 3: Post-deployment health checks
+  #         Verifies all web apps return HTTP 2xx/3xx and that
+  #         the Azure MySQL server is reachable.
+  #         Results are reported — not used to block the deploy.
+  # ----------------------------------------------------------
+  health-check:
+    name: Post-Deploy Health Check
+    runs-on: ubuntu-latest
+    needs:
+      - deploy-b2c
+      - deploy-agent
+      - deploy-supplier
+      - deploy-supervision
+      - deploy-services
+    permissions: {}
+    if: always()
+
+    steps:
+      - name: Wait 90s for apps to start
+        run: sleep 90
+
+      - name: HTTP health check — all verticals
+        run: |
+          REPORT_FILE="/tmp/health-check.txt"
+          echo "=== Post-Deploy HTTP Health Check ===" > "${REPORT_FILE}"
+          echo "Generated: $(date -u)" >> "${REPORT_FILE}"
+          echo "" >> "${REPORT_FILE}"
+
+          UNHEALTHY=0
+          for APP_NAME in \
+            "${{ secrets.AZURE_WEBAPP_NAME_B2C }}" \
+            "${{ secrets.AZURE_WEBAPP_NAME_AGENT }}" \
+            "${{ secrets.AZURE_WEBAPP_NAME_SUPPLIER }}" \
+            "${{ secrets.AZURE_WEBAPP_NAME_SUPERVISION }}" \
+            "${{ secrets.AZURE_WEBAPP_NAME_SERVICES }}"; do
+            if [[ -z "${APP_NAME}" ]]; then continue; fi
+            URL="https://${APP_NAME}.azurewebsites.net"
+            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+              --max-time 30 --retry 2 "${URL}" 2>/dev/null || echo "000")
+            if [[ "${HTTP_STATUS}" =~ ^[23] ]]; then
+              echo "  [OK]     ${APP_NAME}: HTTP ${HTTP_STATUS}" >> "${REPORT_FILE}"
+            else
+              echo "  [WARN]   ${APP_NAME}: HTTP ${HTTP_STATUS} — app may not be responding" >> "${REPORT_FILE}"
+              UNHEALTHY=$((UNHEALTHY + 1))
+            fi
+          done
+
+          echo "" >> "${REPORT_FILE}"
+          echo "Unhealthy apps: ${UNHEALTHY}" >> "${REPORT_FILE}"
+          cat "${REPORT_FILE}"
+
+      - name: Log in to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: MySQL connectivity check
+        run: |
+          if [[ -z "${{ secrets.DB_SERVER_NAME }}" ]]; then
+            echo "DB_SERVER_NAME secret not set — skipping MySQL connectivity check."
+            exit 0
+          fi
+
+          DB_HOST="${{ secrets.DB_SERVER_NAME }}.mysql.database.azure.com"
+          echo "Checking TCP connectivity to ${DB_HOST}:3306 ..."
+          if timeout 15 bash -c "echo > /dev/tcp/${DB_HOST}/3306" 2>/dev/null; then
+            echo "  [OK]   MySQL server is reachable at ${DB_HOST}:3306"
+          else
+            echo "  [WARN] Cannot reach MySQL server at ${DB_HOST}:3306"
+            echo "         Ensure the Azure MySQL firewall allows Azure services (0.0.0.0–0.0.0.0)."
+          fi
+
+  # ----------------------------------------------------------
+  # Job 4: Collect runtime logs from all Azure Web Apps
   #         Runs after all deploys — downloads PHP error logs,
   #         application event logs, and HTTP access logs.
   #         Logs are uploaded as a GitHub artifact for audit.
@@ -267,13 +343,14 @@ jobs:
       - deploy-supplier
       - deploy-supervision
       - deploy-services
+      - health-check
     permissions: {}
     # Run even if some deploy jobs fail so partial logs are still collected
     if: always()
 
     steps:
-      - name: Wait 60s for apps to start and generate errors
-        run: sleep 60
+      - name: Wait 30s for apps to generate errors
+        run: sleep 30
 
       - name: Log in to Azure
         uses: azure/login@v2

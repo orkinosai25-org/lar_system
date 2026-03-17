@@ -1,0 +1,195 @@
+# ============================================================
+# GitHub Actions Workflow — Automated Database Setup (Step 7)
+# ============================================================
+#
+# Automates Step 7 — Initial Database Setup from AZURE_DEPLOYMENT.md.
+# Imports all SQL schema files from db/ into the Azure MySQL Flexible
+# Server that was provisioned in Steps 1–2.
+#
+# REQUIRED GITHUB SECRETS (Settings → Secrets → Actions):
+#   AZURE_CREDENTIALS           - Service principal JSON (from azure-provision.sh)
+#   DB_SERVER_NAME              - Azure MySQL Flexible Server name (e.g. lar-mysql-server)
+#   DB_ADMIN_USER               - MySQL admin username (e.g. laradmin)
+#   DB_ADMIN_PASSWORD           - MySQL admin password
+#   AZURE_RESOURCE_GROUP        - Azure resource group (e.g. rg-lar-system)
+#
+# TRIGGER:
+#   - Manual trigger (workflow_dispatch) with optional per-database selection
+#   - Automatically after a successful azure-deploy.yml run on main
+#     (configure by uncommenting the workflow_run trigger below)
+#
+# See AZURE_DEPLOYMENT.md Step 7 and scripts/db-setup.sh for details.
+# ============================================================
+
+name: Database Setup
+
+on:
+  workflow_dispatch:
+    inputs:
+      database:
+        description: >
+          Database to import (leave blank to import all six databases).
+          Valid values: lar_b2c, lar_agent, lar_supplier, lar_supervision,
+          lar_webservices, lar_ultralux
+        required: false
+        default: ''
+      dry_run:
+        description: 'Dry-run mode (print commands, do not execute)'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+
+  # Uncomment to auto-run after every successful deployment:
+  # workflow_run:
+  #   workflows: ["Deploy to Azure Web App"]
+  #   types: [completed]
+  #   branches: [main]
+
+jobs:
+  setup-database:
+    name: Import Database Schemas
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ---- Allow Azure services to reach the MySQL server ----
+      - name: Log in to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Add GitHub Actions runner IP to MySQL firewall
+        run: |
+          RUNNER_IP=$(curl -s https://api.ipify.org)
+          echo "Runner public IP: ${RUNNER_IP}"
+          az mysql flexible-server firewall-rule create \
+            --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
+            --name "${{ secrets.DB_SERVER_NAME }}" \
+            --rule-name "github-actions-runner" \
+            --start-ip-address "${RUNNER_IP}" \
+            --end-ip-address "${RUNNER_IP}" 2>&1 \
+            || echo "WARNING: Could not add firewall rule — the runner IP may already be allowed."
+
+      # ---- Install MySQL client --------------------------------
+      - name: Install MySQL client
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq mysql-client
+
+      # ---- Validate SQL schema syntax -------------------------
+      - name: Validate SQL schema files
+        run: |
+          echo "=== Validating SQL schema files ==="
+          ERRORS=0
+          for SQL_FILE in db/lar_b2c.sql db/lar_agent.sql db/lar_supplier.sql \
+                          db/lar_supervision.sql db/lar_webservices.sql db/lar_ultralux.sql; do
+            if [[ -f "${SQL_FILE}" ]]; then
+              echo "  Checking ${SQL_FILE}..."
+              # Basic validation: check the file is non-empty and starts with expected SQL
+              if ! head -5 "${SQL_FILE}" | grep -qiE "^--\|^SET\|^CREATE\|^INSERT"; then
+                echo "  WARNING: ${SQL_FILE} may be empty or malformed"
+                ERRORS=$((ERRORS + 1))
+              else
+                echo "  OK: ${SQL_FILE}"
+              fi
+            else
+              echo "  MISSING: ${SQL_FILE}"
+              ERRORS=$((ERRORS + 1))
+            fi
+          done
+          if [[ ${ERRORS} -gt 0 ]]; then
+            echo "ERROR: ${ERRORS} schema file(s) are missing or malformed."
+            exit 1
+          fi
+          echo "All schema files passed validation."
+
+      # ---- Run database setup script --------------------------
+      - name: Import database schemas
+        env:
+          DB_SERVER_NAME: ${{ secrets.DB_SERVER_NAME }}
+          DB_ADMIN_USER:  ${{ secrets.DB_ADMIN_USER }}
+          DB_ADMIN_PASSWORD: ${{ secrets.DB_ADMIN_PASSWORD }}
+        run: |
+          chmod +x scripts/db-setup.sh
+
+          EXTRA_ARGS=""
+          if [[ "${{ github.event.inputs.dry_run }}" == "true" ]]; then
+            EXTRA_ARGS="${EXTRA_ARGS} --dry-run"
+          fi
+          if [[ -n "${{ github.event.inputs.database }}" ]]; then
+            EXTRA_ARGS="${EXTRA_ARGS} --db ${{ github.event.inputs.database }}"
+          fi
+
+          # shellcheck disable=SC2086
+          ./scripts/db-setup.sh ${EXTRA_ARGS}
+
+      # ---- Verify tables were created -------------------------
+      - name: Verify database tables
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        env:
+          DB_SERVER_NAME: ${{ secrets.DB_SERVER_NAME }}
+          DB_ADMIN_USER:  ${{ secrets.DB_ADMIN_USER }}
+          DB_ADMIN_PASSWORD: ${{ secrets.DB_ADMIN_PASSWORD }}
+        run: |
+          MYSQL_HOST="${DB_SERVER_NAME}.mysql.database.azure.com"
+          export MYSQL_PWD="${DB_ADMIN_PASSWORD}"
+
+          echo "=== Verifying table creation in all databases ==="
+          VERIFY_ERRORS=0
+
+          DBS=(lar_b2c lar_agent lar_supplier lar_supervision lar_webservices lar_ultralux)
+          # Filter to only the requested database if one was specified
+          if [[ -n "${{ github.event.inputs.database }}" ]]; then
+            DBS=("${{ github.event.inputs.database }}")
+          fi
+
+          for DB_NAME in "${DBS[@]}"; do
+            TABLE_COUNT=$(mysql \
+              --host="${MYSQL_HOST}" \
+              --user="${DB_ADMIN_USER}" \
+              --ssl-ca=DigiCertGlobalRootCA.crt.pem \
+              --ssl-mode=REQUIRED \
+              --connect-timeout=30 \
+              --batch --skip-column-names \
+              -e "SELECT COUNT(*) FROM information_schema.tables
+                  WHERE table_schema='${DB_NAME}';" 2>/dev/null || echo "0")
+            echo "  ${DB_NAME}: ${TABLE_COUNT} table(s)"
+            if [[ "${TABLE_COUNT}" -eq 0 ]]; then
+              echo "  WARNING: No tables found in ${DB_NAME}"
+              VERIFY_ERRORS=$((VERIFY_ERRORS + 1))
+            fi
+          done
+
+          if [[ ${VERIFY_ERRORS} -gt 0 ]]; then
+            echo "WARNING: ${VERIFY_ERRORS} database(s) appear to have no tables."
+            echo "This may be expected if the database was just created."
+            exit 1
+          fi
+          echo "All databases verified successfully."
+
+      # ---- Remove temporary firewall rule ---------------------
+      - name: Remove runner firewall rule
+        if: always()
+        run: |
+          az mysql flexible-server firewall-rule delete \
+            --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
+            --name "${{ secrets.DB_SERVER_NAME }}" \
+            --rule-name "github-actions-runner" \
+            --yes 2>&1 \
+            || echo "NOTE: Could not remove firewall rule (may not exist)."
+
+      - name: Upload setup report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: database-setup-report
+          path: |
+            db/*.sql
+          retention-days: 30
