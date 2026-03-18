@@ -3,18 +3,28 @@
 # ============================================================
 #
 # REQUIRED GITHUB SECRETS (Settings → Secrets and variables → Actions → Secrets tab):
-#   AZURE_CREDENTIALS                         - Service principal JSON (required for ALL deploy jobs)
+#
+# For Agent, Supplier, and Supervision apps (OIDC — set automatically when
+# connecting the app via Azure App Service → Deployment Center):
+#   AZUREAPPSERVICE_CLIENTID_D69A9EA7F8524CCCBBD7066E6B90DD3C   - Agent client ID
+#   AZUREAPPSERVICE_TENANTID_29B6E855E16A471AAF4C9570D40E7B57   - Agent tenant ID
+#   AZUREAPPSERVICE_SUBSCRIPTIONID_207113D6983740A7B30BB05C5A73C9E8 - Agent subscription ID
+#   AZUREAPPSERVICE_CLIENTID_D8DDB62B6B9E4C6C91E6658B7A249ED2   - Supplier client ID
+#   AZUREAPPSERVICE_TENANTID_DD0792E13DC640CABCD2799153B61EDC   - Supplier tenant ID
+#   AZUREAPPSERVICE_SUBSCRIPTIONID_2BF9BCACCA544FB4AA8364C3BF3E0BFC - Supplier subscription ID
+#   AZUREAPPSERVICE_CLIENTID_0C44E64F3D2444F9A7D73D4B3CA119AC   - Supervision client ID
+#   AZUREAPPSERVICE_TENANTID_8C0BE25D7F0342CBA9D69CD2A22DF0A0   - Supervision tenant ID
+#   AZUREAPPSERVICE_SUBSCRIPTIONID_D21BF9711A484C91A5610092135959FB - Supervision subscription ID
+#
+# For B2C and Services apps (publish profiles — download from Azure portal):
 #   AZUREAPPSERVICE_PUBLISHPROFILE_B2C        - Publish profile for B2C web app
-#   AZUREAPPSERVICE_PUBLISHPROFILE_AGENT      - Publish profile for Agent web app
-#   AZUREAPPSERVICE_PUBLISHPROFILE_SUPPLIER   - Publish profile for Supplier web app
-#   AZUREAPPSERVICE_PUBLISHPROFILE_SUPERVISION- Publish profile for Supervision web app
 #   AZUREAPPSERVICE_PUBLISHPROFILE_SERVICES   - Publish profile for Services web app
-#   AZURE_RESOURCE_GROUP                      - e.g. rg-lar-system
 #   AZURE_WEBAPP_NAME_B2C                     - e.g. lar-b2c
-#   AZURE_WEBAPP_NAME_AGENT                   - e.g. lar-agent
-#   AZURE_WEBAPP_NAME_SUPPLIER                - e.g. lar-supplier
-#   AZURE_WEBAPP_NAME_SUPERVISION             - e.g. lar-supervision
 #   AZURE_WEBAPP_NAME_SERVICES                - e.g. lar-services
+#
+# Optional (for post-deploy health checks and log collection):
+#   AZURE_CREDENTIALS                         - Service principal JSON
+#   AZURE_RESOURCE_GROUP                      - e.g. rg-lar-system
 #   DB_SERVER_NAME                            - Azure MySQL Flexible Server name (e.g. lar-mysql-server)
 #
 # Database schema import (Step 7) is handled by the 'Database Setup' workflow.
@@ -107,6 +117,9 @@ jobs:
 
   # ----------------------------------------------------------
   # Job 2a: Deploy B2C (Consumer Website) — main entry point
+  # NOTE: Requires AZUREAPPSERVICE_PUBLISHPROFILE_B2C and AZURE_WEBAPP_NAME_B2C
+  #       secrets. Connect this app via Azure App Service → Deployment Center
+  #       to use OIDC authentication instead.
   # ----------------------------------------------------------
   deploy-b2c:
     name: Deploy B2C
@@ -116,6 +129,7 @@ jobs:
     environment:
       name: production
       url: ${{ steps.deploy.outputs.webapp-url }}
+    continue-on-error: true   # skip gracefully until publish-profile secret is configured
 
     steps:
       - name: Download build artifact
@@ -138,12 +152,15 @@ jobs:
 
   # ----------------------------------------------------------
   # Job 2b: Deploy Agent Panel
+  # Uses OIDC federated identity (set up via Azure App Service → Deployment Center)
   # ----------------------------------------------------------
   deploy-agent:
     name: Deploy Agent Panel
     runs-on: ubuntu-latest
     needs: build
-    permissions: {}
+    permissions:
+      id-token: write
+      contents: read
     environment:
       name: production
 
@@ -156,23 +173,28 @@ jobs:
       - name: Log in to Azure
         uses: azure/login@v2
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_D69A9EA7F8524CCCBBD7066E6B90DD3C }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_29B6E855E16A471AAF4C9570D40E7B57 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_207113D6983740A7B30BB05C5A73C9E8 }}
 
       - name: Deploy to Azure Web App (Agent)
         uses: azure/webapps-deploy@v3
         with:
-          app-name: ${{ secrets.AZURE_WEBAPP_NAME_AGENT }}
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_AGENT }}
+          app-name: 'lar-agent'
+          slot-name: 'Production'
           package: .
 
   # ----------------------------------------------------------
   # Job 2c: Deploy Supplier Portal
+  # Uses OIDC federated identity (set up via Azure App Service → Deployment Center)
   # ----------------------------------------------------------
   deploy-supplier:
     name: Deploy Supplier Portal
     runs-on: ubuntu-latest
     needs: build
-    permissions: {}
+    permissions:
+      id-token: write
+      contents: read
     environment:
       name: production
 
@@ -185,23 +207,28 @@ jobs:
       - name: Log in to Azure
         uses: azure/login@v2
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_D8DDB62B6B9E4C6C91E6658B7A249ED2 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_DD0792E13DC640CABCD2799153B61EDC }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_2BF9BCACCA544FB4AA8364C3BF3E0BFC }}
 
       - name: Deploy to Azure Web App (Supplier)
         uses: azure/webapps-deploy@v3
         with:
-          app-name: ${{ secrets.AZURE_WEBAPP_NAME_SUPPLIER }}
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_SUPPLIER }}
+          app-name: 'lar-supplier'
+          slot-name: 'Production'
           package: .
 
   # ----------------------------------------------------------
   # Job 2d: Deploy Supervision Panel
+  # Uses OIDC federated identity (set up via Azure App Service → Deployment Center)
   # ----------------------------------------------------------
   deploy-supervision:
     name: Deploy Supervision Panel
     runs-on: ubuntu-latest
     needs: build
-    permissions: {}
+    permissions:
+      id-token: write
+      contents: read
     environment:
       name: production
 
@@ -214,17 +241,22 @@ jobs:
       - name: Log in to Azure
         uses: azure/login@v2
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_0C44E64F3D2444F9A7D73D4B3CA119AC }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_8C0BE25D7F0342CBA9D69CD2A22DF0A0 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_D21BF9711A484C91A5610092135959FB }}
 
       - name: Deploy to Azure Web App (Supervision)
         uses: azure/webapps-deploy@v3
         with:
-          app-name: ${{ secrets.AZURE_WEBAPP_NAME_SUPERVISION }}
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_SUPERVISION }}
+          app-name: 'lar-supervision'
+          slot-name: 'Production'
           package: .
 
   # ----------------------------------------------------------
   # Job 2e: Deploy Web Services API
+  # NOTE: Requires AZUREAPPSERVICE_PUBLISHPROFILE_SERVICES and AZURE_WEBAPP_NAME_SERVICES
+  #       secrets. Connect this app via Azure App Service → Deployment Center
+  #       to use OIDC authentication instead.
   # ----------------------------------------------------------
   deploy-services:
     name: Deploy Web Services
@@ -233,6 +265,7 @@ jobs:
     permissions: {}
     environment:
       name: production
+    continue-on-error: true   # skip gracefully until publish-profile secret is configured
 
     steps:
       - name: Download build artifact
@@ -284,9 +317,9 @@ jobs:
           UNHEALTHY=0
           for APP_NAME in \
             "${{ secrets.AZURE_WEBAPP_NAME_B2C }}" \
-            "${{ secrets.AZURE_WEBAPP_NAME_AGENT }}" \
-            "${{ secrets.AZURE_WEBAPP_NAME_SUPPLIER }}" \
-            "${{ secrets.AZURE_WEBAPP_NAME_SUPERVISION }}" \
+            "lar-agent" \
+            "lar-supplier" \
+            "lar-supervision" \
             "${{ secrets.AZURE_WEBAPP_NAME_SERVICES }}"; do
             if [[ -z "${APP_NAME}" ]]; then continue; fi
             URL="https://${APP_NAME}.azurewebsites.net"
@@ -305,14 +338,15 @@ jobs:
           cat "${REPORT_FILE}"
 
       - name: Log in to Azure
+        if: secrets.AZURE_CREDENTIALS != ''
         uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: MySQL connectivity check
         run: |
-          if [[ -z "${{ secrets.DB_SERVER_NAME }}" ]]; then
-            echo "DB_SERVER_NAME secret not set — skipping MySQL connectivity check."
+          if [[ -z "${{ secrets.AZURE_CREDENTIALS }}" ]] || [[ -z "${{ secrets.DB_SERVER_NAME }}" ]]; then
+            echo "AZURE_CREDENTIALS or DB_SERVER_NAME secret not set — skipping MySQL connectivity check."
             exit 0
           fi
 
@@ -353,18 +387,21 @@ jobs:
         run: sleep 30
 
       - name: Log in to Azure
+        if: secrets.AZURE_CREDENTIALS != ''
         uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Enable filesystem logging on all Web Apps
+        if: secrets.AZURE_CREDENTIALS != '' && secrets.AZURE_RESOURCE_GROUP != ''
         run: |
           for APP in \
             "${{ secrets.AZURE_WEBAPP_NAME_B2C }}" \
-            "${{ secrets.AZURE_WEBAPP_NAME_AGENT }}" \
-            "${{ secrets.AZURE_WEBAPP_NAME_SUPPLIER }}" \
-            "${{ secrets.AZURE_WEBAPP_NAME_SUPERVISION }}" \
+            "lar-agent" \
+            "lar-supplier" \
+            "lar-supervision" \
             "${{ secrets.AZURE_WEBAPP_NAME_SERVICES }}"; do
+            if [[ -z "${APP}" ]]; then continue; fi
             echo "Enabling logging for ${APP}..."
             az webapp log config \
               --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
@@ -377,14 +414,16 @@ jobs:
           done
 
       - name: Download logs from all Web Apps
+        if: secrets.AZURE_CREDENTIALS != '' && secrets.AZURE_RESOURCE_GROUP != ''
         run: |
           mkdir -p /tmp/azure-logs
           for APP in \
             "${{ secrets.AZURE_WEBAPP_NAME_B2C }}" \
-            "${{ secrets.AZURE_WEBAPP_NAME_AGENT }}" \
-            "${{ secrets.AZURE_WEBAPP_NAME_SUPPLIER }}" \
-            "${{ secrets.AZURE_WEBAPP_NAME_SUPERVISION }}" \
+            "lar-agent" \
+            "lar-supplier" \
+            "lar-supervision" \
             "${{ secrets.AZURE_WEBAPP_NAME_SERVICES }}"; do
+            if [[ -z "${APP}" ]]; then continue; fi
             echo "Downloading logs for ${APP}..."
             az webapp log download \
               --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
@@ -392,7 +431,13 @@ jobs:
               --log-file "/tmp/azure-logs/${APP}-logs.zip" 2>&1 \
               || echo "WARNING: could not download logs for ${APP}"
           done
-          ls -lh /tmp/azure-logs/
+          ls -lh /tmp/azure-logs/ 2>/dev/null || true
+
+      - name: Create placeholder log directory if Azure credentials not configured
+        if: secrets.AZURE_CREDENTIALS == '' || secrets.AZURE_RESOURCE_GROUP == ''
+        run: |
+          mkdir -p /tmp/azure-logs
+          echo "Azure credentials not configured — log collection skipped." > /tmp/azure-logs/README.txt
 
       - name: Upload Azure runtime logs as artifact
         uses: actions/upload-artifact@v4
