@@ -1,0 +1,804 @@
+╔══════════════════════════════════════════════════════════════╗
+║  LAR System — Aggregated Vertical Error Report               ║
+║  Run ID : 23225145549
+║  Commit : 185d0bb15723dad99199ad4986ff09af9a84490f
+║  Branch : main
+║  Date   : Wed Mar 18 01:46:26 UTC 2026
+╚══════════════════════════════════════════════════════════════╝
+
+NOTE: Errors are REPORTED here, not automatically fixed.
+Review this report and prioritise fixes per REMEDIATION_ROADMAP.md
+
+══════════════════════════════════════════════════════════════
+
+╔══════════════════════════════════════════════════════════════╗
+║  LAR System — Vertical Check Report                         ║
+║  Vertical : Agent
+║  Run ID   : 23225145549
+║  Commit   : 185d0bb15723dad99199ad4986ff09af9a84490f
+║  Date     : Wed Mar 18 01:45:53 UTC 2026
+╚══════════════════════════════════════════════════════════════╝
+
+=== PHP Syntax Report — Agent ===
+Generated: Wed Mar 18 01:45:42 UTC 2026
+PHP version: 8.2.30
+
+SYNTAX ERROR: agent/application/controllers/hotel.php
+PHP Parse error:  Unclosed '{' on line 12 in agent/application/controllers/hotel.php on line 1028
+Errors parsing agent/application/controllers/hotel.php
+
+
+--- Summary ---
+Files checked : 220
+Syntax errors : 1
+
+
+--------------------------------------------------------------
+
+=== Critical Files Report — Agent ===
+Generated: Wed Mar 18 01:45:52 UTC 2026
+
+  [OK]     agent/application/config/production/database.php
+  [OK]     controllers directory: agent/application/controllers
+  [OK]     models directory: agent/application/models
+
+--- Summary ---
+Missing files/dirs: 0
+
+--------------------------------------------------------------
+
+=== DB Config Report — Agent ===
+Generated: Wed Mar 18 01:45:52 UTC 2026
+
+  [WARN] Possible hardcoded password detected in agent/application/config/production/database.php
+  [WARN] Config does not use getenv() — credentials may be hardcoded.
+  [OK]   db_debug is FALSE.
+  [INFO] utf8mb4 charset not configured (legacy utf8 may cause emoji issues).
+
+--- Summary ---
+DB config issues: 2
+
+--------------------------------------------------------------
+
+=== CodeIgniter Structure Report — Agent ===
+Generated: Wed Mar 18 01:45:53 UTC 2026
+
+  [INFO] TODO/FIXME/HACK comments: 14
+agent/application/views/template_list/template_v3/car/car_booking_page.php:806:                                <!-- //FIXME: insert the country code to DB -->
+agent/application/views/template_list/template_v3/hotel/tbo/tbo_booking_page.php:461:$nationality_options = generate_options($iso_country_list, array(INDIA_CODE));//FIXME get ISO CODE --- ISO_INDIA
+agent/application/views/template_list/template_v3/hotel/tbo/tbo_room_list.php:57: * FIXME
+agent/application/views/template_list/template_v3/share/navigation.php:14:				if($v != 'package') {//FIXME: remove later
+agent/application/views/template_list/template_v3/flight/tbo/tbo_booking_page.php:201:                            $nationality_options = generate_options($iso_country_list, array(INDIA_CODE)); //FIXME get ISO CODE --- ISO_INDIA
+agent/application/views/template_list/template_v1/report/navigation.php:14:				if($v != 'package') {//FIXME: remove later
+agent/application/views/template_list/template_v1/share/report_filter.php:17:			if($v != 'package') {//FIXME: remove later
+agent/application/views/template_list/template_v1/share/report_navigator_tab.php:17:			if($v != 'package') {//FIXME: remove later
+agent/application/models_old/domain_management_model.php:388:                    // TODO: Send SMS notification
+agent/application/controllers/management.php:358:					// FIXME :: Update Not Needed As Of Now
+agent/application/controllers/flight.php:28:	 * FIXME : REMOVE THIS - Balu A
+agent/application/controllers/flight.php:308:						//TODO: Implement this using old and new price
+agent/application/controllers/flight.php:628:				//Failed booking logs in separate file, FIXME ---------------------------
+agent/application/models/domain_management_model.php:409:                    // TODO: Send SMS notification
+  (showing first 20 — see full artifact for complete list)
+  [WARN] Hardcoded credentials found:
+agent/application/views/page_configuration/user_management.php:74:$auto_validator['password'] = 'trim|required|min_length[5]|max_length[80]|matches[confirm_password]';
+agent/application/controllers/management.php:725:						$condition['password'] = provab_encrypt(md5(trim($this->input->post('current_password'))));
+agent/application/controllers/management.php:726:						$data['password'] = provab_encrypt(md5(trim($this->input->post('new_password'))));
+agent/application/controllers/auth.php:66:        $user_record['data'][0]['password'] = provab_encrypt(md5(trim('Provab@123')));
+agent/application/controllers/user.php:209:				$page_data_arr['form_data']['password'] = provab_encrypt(md5(trim($page_data['form_data']['password'])));
+agent/application/controllers/user.php:247:				$page_data_arr['form_data']['password'] = $page_data['form_data']['password']; // Dont remove
+agent/application/controllers/user.php:378:			$condition['password'] = provab_encrypt(md5(trim($this->input->post('new_password'))));
+agent/application/controllers/user.php:385:				$condition['password'] = provab_encrypt(md5(trim($this->input->post('current_password'))));
+agent/application/controllers/user.php:387:				$data['password'] = provab_encrypt(md5(trim($this->input->post('new_password'))));
+agent/application/models/user_model.php:231:        $user[0]['password'] = provab_decrypt($user[0]['password']);
+
+--- Summary ---
+CI structure issues: 1
+TODO/FIXME count   : 14
+
+--------------------------------------------------------------
+
+╔══════════════════════════════════════════════════════════════╗
+║  OVERALL SUMMARY — Agent
+║  PHP files checked : 220
+║  Syntax errors     : 1
+║  Missing files     : 0
+║  DB config issues  : 2
+║  CI structure issues: 1
+║  TODO/FIXME count  : 14
+╚══════════════════════════════════════════════════════════════╝
+
+══════════════════════════════════════════════════════════════
+
+╔══════════════════════════════════════════════════════════════╗
+║  LAR System — Vertical Check Report                         ║
+║  Vertical : B2C
+║  Run ID   : 23225145549
+║  Commit   : 185d0bb15723dad99199ad4986ff09af9a84490f
+║  Date     : Wed Mar 18 01:45:52 UTC 2026
+╚══════════════════════════════════════════════════════════════╝
+
+=== PHP Syntax Report — B2C ===
+Generated: Wed Mar 18 01:45:41 UTC 2026
+PHP version: 8.2.30
+
+SYNTAX ERROR: b2c/views/template_list/template_v3/share/transfer_search.php
+PHP Fatal error:  Unparenthesized `a ? b : c ? d : e` is not supported. Use either `(a ? b : c) ? d : e` or `a ? b : (c ? d : e)` in b2c/views/template_list/template_v3/share/transfer_search.php on line 26
+Errors parsing b2c/views/template_list/template_v3/share/transfer_search.php
+
+SYNTAX ERROR: b2c/models/payment_model.php
+PHP Deprecated:  Optional parameter $convenience_fees declared before required parameter $conversion_rate is implicitly treated as a required parameter in b2c/models/payment_model.php on line 12
+PHP Deprecated:  Optional parameter $promocode_discount declared before required parameter $conversion_rate is implicitly treated as a required parameter in b2c/models/payment_model.php on line 12
+No syntax errors detected in b2c/models/payment_model.php
+
+
+--- Summary ---
+Files checked : 215
+Syntax errors : 2
+
+
+--------------------------------------------------------------
+
+=== Critical Files Report — B2C ===
+Generated: Wed Mar 18 01:45:52 UTC 2026
+
+  [OK]     b2c/config/production/database.php
+  [OK]     controllers directory: b2c/controllers
+  [OK]     models directory: b2c/models
+
+--- Summary ---
+Missing files/dirs: 0
+
+--------------------------------------------------------------
+
+=== DB Config Report — B2C ===
+Generated: Wed Mar 18 01:45:52 UTC 2026
+
+  [WARN] Possible hardcoded password detected in b2c/config/production/database.php
+  [WARN] Config does not use getenv() — credentials may be hardcoded.
+  [OK]   db_debug is FALSE.
+  [INFO] utf8mb4 charset not configured (legacy utf8 may cause emoji issues).
+
+--- Summary ---
+DB config issues: 2
+
+--------------------------------------------------------------
+
+=== CodeIgniter Structure Report — B2C ===
+Generated: Wed Mar 18 01:45:52 UTC 2026
+
+  [INFO] TODO/FIXME/HACK comments: 7
+b2c/views/template_list/template_v3/car/car_booking_page.php:802:                                <!-- //FIXME: insert the country code to DB -->
+b2c/views/template_list/template_v3/hotel/tbo/tbo_booking_page.php:713:$nationality_options = generate_options($iso_country_list, array(INDIA_CODE));//FIXME get ISO CODE --- ISO_INDIA
+b2c/views/template_list/template_v3/hotel/tbo/tbo_room_list.php:61: * FIXME
+b2c/views/template_list/template_v3/share/navigation.php:14:				if($v != 'package') {//FIXME: remove later
+b2c/views/template_list/template_v3/flight/tbo/tbo_booking_page.php:349:$nationality_options = generate_options($iso_country_list, array(INDIA_CODE)); //FIXME get ISO CODE --- ISO_INDIA
+b2c/config/constants.php:51:define('CURRENT_DOMAIN_KEY', 'TMX1512291534825461'); // FIXME//Vc8Z7XLsyys9TEQdFPkV
+b2c/config/constants.php:52:define('PROJECT_COOKIE_NAME', 'travels');//FIXME
+  (showing first 20 — see full artifact for complete list)
+  [WARN] Hardcoded credentials found:
+b2c/views/page_configuration/user_management.php:74:$auto_validator['password'] = 'trim|required|min_length[5]|max_length[80]|matches[confirm_password]';
+b2c/config/development/database.php:72:$db['seconddb']['password'] = '5Eq8tu57%';
+b2c/controllers/user.php:240:	                $condition['password'] = md5($this->input->post('current_password'));
+b2c/models/user_model.php:120:				$user[0]['password'] = provab_decrypt($user[0]['password']);
+
+--- Summary ---
+CI structure issues: 1
+TODO/FIXME count   : 7
+
+--------------------------------------------------------------
+
+╔══════════════════════════════════════════════════════════════╗
+║  OVERALL SUMMARY — B2C
+║  PHP files checked : 215
+║  Syntax errors     : 2
+║  Missing files     : 0
+║  DB config issues  : 2
+║  CI structure issues: 1
+║  TODO/FIXME count  : 7
+╚══════════════════════════════════════════════════════════════╝
+
+══════════════════════════════════════════════════════════════
+
+╔══════════════════════════════════════════════════════════════╗
+║  LAR System — Vertical Check Report                         ║
+║  Vertical : Services
+║  Run ID   : 23225145549
+║  Commit   : 185d0bb15723dad99199ad4986ff09af9a84490f
+║  Date     : Wed Mar 18 01:46:10 UTC 2026
+╚══════════════════════════════════════════════════════════════╝
+
+=== PHP Syntax Report — Services ===
+Generated: Wed Mar 18 01:45:46 UTC 2026
+PHP version: 8.2.30
+
+SYNTAX ERROR: services/webservices/application/models/flight_model.php
+PHP Parse error:  syntax error, unexpected token "public" in services/webservices/application/models/flight_model.php on line 279
+Errors parsing services/webservices/application/models/flight_model.php
+
+SYNTAX ERROR: services/webservices/application/models/hotel_model_v3.php
+PHP Deprecated:  Optional parameter $pan_card_number declared before required parameter $status is implicitly treated as a required parameter in services/webservices/application/models/hotel_model_v3.php on line 541
+No syntax errors detected in services/webservices/application/models/hotel_model_v3.php
+
+SYNTAX ERROR: services/webservices/application/models/user_model.php
+PHP Deprecated:  Optional parameter $system declared before required parameter $serverIp is implicitly treated as a required parameter in services/webservices/application/models/user_model.php on line 443
+PHP Deprecated:  Optional parameter $system declared before required parameter $travelomatix_payment_key is implicitly treated as a required parameter in services/webservices/application/models/user_model.php on line 642
+No syntax errors detected in services/webservices/application/models/user_model.php
+
+SYNTAX ERROR: services/system/libraries/Log.php
+PHP Deprecated:  Optional parameter $level declared before required parameter $msg is implicitly treated as a required parameter in services/system/libraries/Log.php on line 72
+No syntax errors detected in services/system/libraries/Log.php
+
+SYNTAX ERROR: services/system/libraries/Profiler.php
+PHP Fatal error:  Array and string offset access syntax with curly braces is no longer supported in services/system/libraries/Profiler.php on line 70
+Errors parsing services/system/libraries/Profiler.php
+
+SYNTAX ERROR: services/system/libraries/hotel/GRN/HB/hb.php
+PHP Deprecated:  Optional parameter $API_Currency declared before required parameter $total_room_price is implicitly treated as a required parameter in services/system/libraries/hotel/GRN/HB/hb.php on line 2221
+No syntax errors detected in services/system/libraries/hotel/GRN/HB/hb.php
+
+SYNTAX ERROR: services/system/libraries/Xmlrpcs.php
+PHP Deprecated:  Using ${var} in strings is deprecated, use {$var} instead in services/system/libraries/Xmlrpcs.php on line 539
+PHP Deprecated:  Using ${var} in strings is deprecated, use {$var} instead in services/system/libraries/Xmlrpcs.php on line 540
+No syntax errors detected in services/system/libraries/Xmlrpcs.php
+
+SYNTAX ERROR: services/system/libraries/Api_Interface.php
+PHP Deprecated:  Optional parameter $request declared before required parameter $header_details is implicitly treated as a required parameter in services/system/libraries/Api_Interface.php on line 30
+No syntax errors detected in services/system/libraries/Api_Interface.php
+
+SYNTAX ERROR: services/system/libraries/PHPExcel/Classes/PHPExcel/Shared/Drawing.php
+PHP Deprecated:  Optional parameter $pValue declared before required parameter $pDefaultFont is implicitly treated as a required parameter in services/system/libraries/PHPExcel/Classes/PHPExcel/Shared/Drawing.php on line 73
+PHP Deprecated:  Optional parameter $pValue declared before required parameter $pDefaultFont is implicitly treated as a required parameter in services/system/libraries/PHPExcel/Classes/PHPExcel/Shared/Drawing.php on line 98
+No syntax errors detected in services/system/libraries/PHPExcel/Classes/PHPExcel/Shared/Drawing.php
+
+SYNTAX ERROR: services/system/libraries/PHPExcel/Classes/PHPExcel/Shared/OLE.php
+PHP Warning:  "continue" targeting switch is equivalent to "break". Did you mean to use "continue 2"? in services/system/libraries/PHPExcel/Classes/PHPExcel/Shared/OLE.php on line 288
+PHP Fatal error:  Array and string offset access syntax with curly braces is no longer supported in services/system/libraries/PHPExcel/Classes/PHPExcel/Shared/OLE.php on line 446
+Errors parsing services/system/libraries/PHPExcel/Classes/PHPExcel/Shared/OLE.php
+
+SYNTAX ERROR: services/system/libraries/PHPExcel/Classes/PHPExcel/Shared/trend/trendClass.php
+PHP Deprecated:  Optional parameter $trendType declared before required parameter $yValues is implicitly treated as a required parameter in services/system/libraries/PHPExcel/Classes/PHPExcel/Shared/trend/trendClass.php on line 81
+No syntax errors detected in services/system/libraries/PHPExcel/Classes/PHPExcel/Shared/trend/trendClass.php
+
+SYNTAX ERROR: services/system/libraries/PHPExcel/Classes/PHPExcel/Shared/String.php
+PHP Fatal error:  Array and string offset access syntax with curly braces is no longer supported in services/system/libraries/PHPExcel/Classes/PHPExcel/Shared/String.php on line 526
+Errors parsing services/system/libraries/PHPExcel/Classes/PHPExcel/Shared/String.php
+
+SYNTAX ERROR: services/system/libraries/PHPExcel/Classes/PHPExcel/Shared/ZipStreamWrapper.php
+PHP Fatal error:  Array and string offset access syntax with curly braces is no longer supported in services/system/libraries/PHPExcel/Classes/PHPExcel/Shared/ZipStreamWrapper.php on line 79
+Errors parsing services/system/libraries/PHPExcel/Classes/PHPExcel/Shared/ZipStreamWrapper.php
+
+SYNTAX ERROR: services/system/libraries/PHPExcel/Classes/PHPExcel/Cell/DefaultValueBinder.php
+PHP Fatal error:  Array and string offset access syntax with curly braces is no longer supported in services/system/libraries/PHPExcel/Classes/PHPExcel/Cell/DefaultValueBinder.php on line 82
+Errors parsing services/system/libraries/PHPExcel/Classes/PHPExcel/Cell/DefaultValueBinder.php
+
+SYNTAX ERROR: services/system/libraries/PHPExcel/Classes/PHPExcel/NamedRange.php
+PHP Deprecated:  Optional parameter $pName declared before required parameter $pWorksheet is implicitly treated as a required parameter in services/system/libraries/PHPExcel/Classes/PHPExcel/NamedRange.php on line 75
+PHP Deprecated:  Optional parameter $pNamedRange declared before required parameter $pSheet is implicitly treated as a required parameter in services/system/libraries/PHPExcel/Classes/PHPExcel/NamedRange.php on line 230
+No syntax errors detected in services/system/libraries/PHPExcel/Classes/PHPExcel/NamedRange.php
+
+SYNTAX ERROR: services/system/libraries/PHPExcel/Classes/PHPExcel/Calculation/FormulaParser.php
+PHP Fatal error:  Array and string offset access syntax with curly braces is no longer supported in services/system/libraries/PHPExcel/Classes/PHPExcel/Calculation/FormulaParser.php on line 162
+Errors parsing services/system/libraries/PHPExcel/Classes/PHPExcel/Calculation/FormulaParser.php
+
+SYNTAX ERROR: services/system/libraries/PHPExcel/Classes/PHPExcel/Calculation/Functions.php
+PHP Fatal error:  Array and string offset access syntax with curly braces is no longer supported in services/system/libraries/PHPExcel/Classes/PHPExcel/Calculation/Functions.php on line 324
+Errors parsing services/system/libraries/PHPExcel/Classes/PHPExcel/Calculation/Functions.php
+
+SYNTAX ERROR: services/system/libraries/PHPExcel/Classes/PHPExcel/Calculation/Engineering.php
+PHP Fatal error:  Array and string offset access syntax with curly braces is no longer supported in services/system/libraries/PHPExcel/Classes/PHPExcel/Calculation/Engineering.php on line 771
+Errors parsing services/system/libraries/PHPExcel/Classes/PHPExcel/Calculation/Engineering.php
+
+SYNTAX ERROR: services/system/libraries/PHPExcel/Classes/PHPExcel/Calculation/TextData.php
+PHP Fatal error:  Array and string offset access syntax with curly braces is no longer supported in services/system/libraries/PHPExcel/Classes/PHPExcel/Calculation/TextData.php on line 43
+Errors parsing services/system/libraries/PHPExcel/Classes/PHPExcel/Calculation/TextData.php
+
+SYNTAX ERROR: services/system/libraries/PHPExcel/Classes/PHPExcel/Reader/Excel5.php
+PHP Fatal error:  Array and string offset access syntax with curly braces is no longer supported in services/system/libraries/PHPExcel/Classes/PHPExcel/Reader/Excel5.php on line 1928
+Errors parsing services/system/libraries/PHPExcel/Classes/PHPExcel/Reader/Excel5.php
+
+SYNTAX ERROR: services/system/libraries/PHPExcel/Classes/PHPExcel/Reader/Excel2003XML.php
+PHP Fatal error:  Array and string offset access syntax with curly braces is no longer supported in services/system/libraries/PHPExcel/Classes/PHPExcel/Reader/Excel2003XML.php on line 692
+Errors parsing services/system/libraries/PHPExcel/Classes/PHPExcel/Reader/Excel2003XML.php
+
+SYNTAX ERROR: services/system/libraries/PHPExcel/Classes/PHPExcel/Reader/SYLK.php
+PHP Fatal error:  Array and string offset access syntax with curly braces is no longer supported in services/system/libraries/PHPExcel/Classes/PHPExcel/Reader/SYLK.php on line 164
+Errors parsing services/system/libraries/PHPExcel/Classes/PHPExcel/Reader/SYLK.php
+
+SYNTAX ERROR: services/system/libraries/PHPExcel/Classes/PHPExcel/Reader/Excel5/Escher.php
+PHP Fatal error:  Array and string offset access syntax with curly braces is no longer supported in services/system/libraries/PHPExcel/Classes/PHPExcel/Reader/Excel5/Escher.php on line 283
+Errors parsing services/system/libraries/PHPExcel/Classes/PHPExcel/Reader/Excel5/Escher.php
+
+SYNTAX ERROR: services/system/libraries/PHPExcel/Classes/PHPExcel/ReferenceHelper.php
+PHP Fatal error:  Array and string offset access syntax with curly braces is no longer supported in services/system/libraries/PHPExcel/Classes/PHPExcel/ReferenceHelper.php on line 884
+Errors parsing services/system/libraries/PHPExcel/Classes/PHPExcel/ReferenceHelper.php
+
+SYNTAX ERROR: services/system/libraries/PHPExcel/Classes/PHPExcel/Worksheet.php
+PHP Deprecated:  Optional parameter $pCoordinate declared before required parameter $pValue is implicitly treated as a required parameter in services/system/libraries/PHPExcel/Classes/PHPExcel/Worksheet.php on line 1477
+No syntax errors detected in services/system/libraries/PHPExcel/Classes/PHPExcel/Worksheet.php
+
+SYNTAX ERROR: services/system/libraries/PHPExcel/Classes/PHPExcel/Calculation.php
+PHP Fatal error:  Array and string offset access syntax with curly braces is no longer supported in services/system/libraries/PHPExcel/Classes/PHPExcel/Calculation.php on line 2551
+Errors parsing services/system/libraries/PHPExcel/Classes/PHPExcel/Calculation.php
+
+SYNTAX ERROR: services/system/libraries/PHPExcel/Classes/PHPExcel/Worksheet/AutoFilter.php
+PHP Fatal error:  Array and string offset access syntax with curly braces is no longer supported in services/system/libraries/PHPExcel/Classes/PHPExcel/Worksheet/AutoFilter.php on line 720
+Errors parsing services/system/libraries/PHPExcel/Classes/PHPExcel/Worksheet/AutoFilter.php
+
+SYNTAX ERROR: services/system/libraries/PHPExcel/Classes/PHPExcel/Cell.php
+PHP Fatal error:  Array and string offset access syntax with curly braces is no longer supported in services/system/libraries/PHPExcel/Classes/PHPExcel/Cell.php on line 817
+Errors parsing services/system/libraries/PHPExcel/Classes/PHPExcel/Cell.php
+
+SYNTAX ERROR: services/system/libraries/PHPExcel/Classes/PHPExcel/Writer/Excel2007/Chart.php
+PHP Deprecated:  Optional parameter $dataType declared before required parameter $pSheet is implicitly treated as a required parameter in services/system/libraries/PHPExcel/Classes/PHPExcel/Writer/Excel2007/Chart.php on line 1260
+No syntax errors detected in services/system/libraries/PHPExcel/Classes/PHPExcel/Writer/Excel2007/Chart.php
+
+SYNTAX ERROR: services/system/libraries/PHPExcel/Classes/PHPExcel/Writer/Excel5/Workbook.php
+PHP Fatal error:  Array and string offset access syntax with curly braces is no longer supported in services/system/libraries/PHPExcel/Classes/PHPExcel/Writer/Excel5/Workbook.php on line 667
+Errors parsing services/system/libraries/PHPExcel/Classes/PHPExcel/Writer/Excel5/Workbook.php
+
+SYNTAX ERROR: services/system/libraries/PHPExcel/Classes/PHPExcel/Writer/Excel5/Worksheet.php
+PHP Fatal error:  Array and string offset access syntax with curly braces is no longer supported in services/system/libraries/PHPExcel/Classes/PHPExcel/Writer/Excel5/Worksheet.php on line 879
+Errors parsing services/system/libraries/PHPExcel/Classes/PHPExcel/Writer/Excel5/Worksheet.php
+
+SYNTAX ERROR: services/system/libraries/PHPExcel/Classes/PHPExcel/Writer/Excel5/Parser.php
+PHP Fatal error:  Array and string offset access syntax with curly braces is no longer supported in services/system/libraries/PHPExcel/Classes/PHPExcel/Writer/Excel5/Parser.php on line 1023
+Errors parsing services/system/libraries/PHPExcel/Classes/PHPExcel/Writer/Excel5/Parser.php
+
+SYNTAX ERROR: services/system/libraries/tcpdf/tcpdf.php
+PHP Fatal error:  Array and string offset access syntax with curly braces is no longer supported in services/system/libraries/tcpdf/tcpdf.php on line 2243
+Errors parsing services/system/libraries/tcpdf/tcpdf.php
+
+SYNTAX ERROR: services/system/libraries/tcpdf/include/tcpdf_filters.php
+PHP Fatal error:  Array and string offset access syntax with curly braces is no longer supported in services/system/libraries/tcpdf/include/tcpdf_filters.php on line 282
+Errors parsing services/system/libraries/tcpdf/include/tcpdf_filters.php
+
+SYNTAX ERROR: services/system/libraries/tcpdf/include/barcodes/datamatrix.php
+PHP Fatal error:  Array and string offset access syntax with curly braces is no longer supported in services/system/libraries/tcpdf/include/barcodes/datamatrix.php on line 630
+Errors parsing services/system/libraries/tcpdf/include/barcodes/datamatrix.php
+
+SYNTAX ERROR: services/system/libraries/tcpdf/include/barcodes/pdf417.php
+PHP Fatal error:  Array and string offset access syntax with curly braces is no longer supported in services/system/libraries/tcpdf/include/barcodes/pdf417.php on line 881
+Errors parsing services/system/libraries/tcpdf/include/barcodes/pdf417.php
+
+SYNTAX ERROR: services/system/libraries/tcpdf/include/tcpdf_fonts.php
+PHP Deprecated:  Optional parameter $isunicode declared before required parameter $currentfont is implicitly treated as a required parameter in services/system/libraries/tcpdf/include/tcpdf_fonts.php on line 1881
+PHP Deprecated:  Optional parameter $isunicode declared before required parameter $currentfont is implicitly treated as a required parameter in services/system/libraries/tcpdf/include/tcpdf_fonts.php on line 1903
+PHP Deprecated:  Optional parameter $setbom declared before required parameter $currentfont is implicitly treated as a required parameter in services/system/libraries/tcpdf/include/tcpdf_fonts.php on line 1919
+PHP Deprecated:  Optional parameter $isunicode declared before required parameter $currentfont is implicitly treated as a required parameter in services/system/libraries/tcpdf/include/tcpdf_fonts.php on line 1919
+PHP Deprecated:  Optional parameter $setbom declared before required parameter $currentfont is implicitly treated as a required parameter in services/system/libraries/tcpdf/include/tcpdf_fonts.php on line 1939
+PHP Deprecated:  Optional parameter $forcertl declared before required parameter $currentfont is implicitly treated as a required parameter in services/system/libraries/tcpdf/include/tcpdf_fonts.php on line 1939
+PHP Deprecated:  Optional parameter $isunicode declared before required parameter $currentfont is implicitly treated as a required parameter in services/system/libraries/tcpdf/include/tcpdf_fonts.php on line 1939
+PHP Deprecated:  Optional parameter $str declared before required parameter $currentfont is implicitly treated as a required parameter in services/system/libraries/tcpdf/include/tcpdf_fonts.php on line 1956
+PHP Deprecated:  Optional parameter $setbom declared before required parameter $currentfont is implicitly treated as a required parameter in services/system/libraries/tcpdf/include/tcpdf_fonts.php on line 1956
+PHP Deprecated:  Optional parameter $forcertl declared before required parameter $currentfont is implicitly treated as a required parameter in services/system/libraries/tcpdf/include/tcpdf_fonts.php on line 1956
+PHP Deprecated:  Optional parameter $isunicode declared before required parameter $currentfont is implicitly treated as a required parameter in services/system/libraries/tcpdf/include/tcpdf_fonts.php on line 1956
+PHP Deprecated:  Optional parameter $str declared before required parameter $currentfont is implicitly treated as a required parameter in services/system/libraries/tcpdf/include/tcpdf_fonts.php on line 1972
+PHP Deprecated:  Optional parameter $forcertl declared before required parameter $currentfont is implicitly treated as a required parameter in services/system/libraries/tcpdf/include/tcpdf_fonts.php on line 1972
+PHP Deprecated:  Optional parameter $isunicode declared before required parameter $currentfont is implicitly treated as a required parameter in services/system/libraries/tcpdf/include/tcpdf_fonts.php on line 1972
+No syntax errors detected in services/system/libraries/tcpdf/include/tcpdf_fonts.php
+
+SYNTAX ERROR: services/system/libraries/tcpdf/include/tcpdf_static.php
+PHP Fatal error:  Array and string offset access syntax with curly braces is no longer supported in services/system/libraries/tcpdf/include/tcpdf_static.php on line 140
+Errors parsing services/system/libraries/tcpdf/include/tcpdf_static.php
+
+SYNTAX ERROR: services/system/libraries/tcpdf/include/tcpdf_images.php
+PHP Fatal error:  Array and string offset access syntax with curly braces is no longer supported in services/system/libraries/tcpdf/include/tcpdf_images.php on line 221
+Errors parsing services/system/libraries/tcpdf/include/tcpdf_images.php
+
+SYNTAX ERROR: services/system/libraries/tcpdf/include/tcpdf_colors.php
+PHP Fatal error:  Array and string offset access syntax with curly braces is no longer supported in services/system/libraries/tcpdf/include/tcpdf_colors.php on line 354
+Errors parsing services/system/libraries/tcpdf/include/tcpdf_colors.php
+
+SYNTAX ERROR: services/system/libraries/tcpdf/tcpdf_barcodes_1d.php
+PHP Fatal error:  Array and string offset access syntax with curly braces is no longer supported in services/system/libraries/tcpdf/tcpdf_barcodes_1d.php on line 436
+Errors parsing services/system/libraries/tcpdf/tcpdf_barcodes_1d.php
+
+SYNTAX ERROR: services/system/libraries/tcpdf/tcpdf_parser.php
+PHP Fatal error:  Array and string offset access syntax with curly braces is no longer supported in services/system/libraries/tcpdf/tcpdf_parser.php on line 522
+Errors parsing services/system/libraries/tcpdf/tcpdf_parser.php
+
+SYNTAX ERROR: services/system/libraries/Javascript.php
+PHP Deprecated:  Optional parameter $element declared before required parameter $out is implicitly treated as a required parameter in services/system/libraries/Javascript.php on line 173
+No syntax errors detected in services/system/libraries/Javascript.php
+
+SYNTAX ERROR: services/system/libraries/javascript/Jquery.php
+PHP Deprecated:  Optional parameter $element declared before required parameter $out is implicitly treated as a required parameter in services/system/libraries/javascript/Jquery.php on line 178
+PHP Deprecated:  Optional parameter $container declared before required parameter $controller is implicitly treated as a required parameter in services/system/libraries/javascript/Jquery.php on line 709
+No syntax errors detected in services/system/libraries/javascript/Jquery.php
+
+SYNTAX ERROR: services/system/libraries/flight/Common_api_flight.php
+PHP Deprecated:  Optional parameter $cabin_class declared before required parameter $operating_carrier_name is implicitly treated as a required parameter in services/system/libraries/flight/Common_api_flight.php on line 48
+PHP Deprecated:  Optional parameter $origine_name declared before required parameter $operating_carrier_name is implicitly treated as a required parameter in services/system/libraries/flight/Common_api_flight.php on line 48
+PHP Deprecated:  Optional parameter $destination_name declared before required parameter $operating_carrier_name is implicitly treated as a required parameter in services/system/libraries/flight/Common_api_flight.php on line 48
+PHP Deprecated:  Optional parameter $duration declared before required parameter $operating_carrier_name is implicitly treated as a required parameter in services/system/libraries/flight/Common_api_flight.php on line 48
+PHP Deprecated:  Optional parameter $is_leg declared before required parameter $operating_carrier_name is implicitly treated as a required parameter in services/system/libraries/flight/Common_api_flight.php on line 48
+PHP Deprecated:  Optional parameter $attr declared before required parameter $operating_carrier_name is implicitly treated as a required parameter in services/system/libraries/flight/Common_api_flight.php on line 48
+PHP Deprecated:  Optional parameter $AccumulatedDuration declared before required parameter $operating_carrier_name is implicitly treated as a required parameter in services/system/libraries/flight/Common_api_flight.php on line 48
+PHP Deprecated:  Optional parameter $org_terminal declared before required parameter $operating_carrier_name is implicitly treated as a required parameter in services/system/libraries/flight/Common_api_flight.php on line 48
+PHP Deprecated:  Optional parameter $des_terminal declared before required parameter $operating_carrier_name is implicitly treated as a required parameter in services/system/libraries/flight/Common_api_flight.php on line 48
+PHP Deprecated:  Optional parameter $carrier_code declared before required parameter $operating_carrier_name is implicitly treated as a required parameter in services/system/libraries/flight/Common_api_flight.php on line 48
+PHP Deprecated:  Optional parameter $trip_type declared before required parameter $search_id is implicitly treated as a required parameter in services/system/libraries/flight/Common_api_flight.php on line 248
+No syntax errors detected in services/system/libraries/flight/Common_api_flight.php
+
+SYNTAX ERROR: services/system/libraries/flight/amadeus/amadeus.php
+PHP Deprecated:  Optional parameter $remarks declared before required parameter $soap_url is implicitly treated as a required parameter in services/system/libraries/flight/amadeus/amadeus.php on line 4956
+No syntax errors detected in services/system/libraries/flight/amadeus/amadeus.php
+
+SYNTAX ERROR: services/system/helpers/html_helper.php
+PHP Deprecated:  Optional parameter $type declared before required parameter $list is implicitly treated as a required parameter in services/system/helpers/html_helper.php on line 106
+No syntax errors detected in services/system/helpers/html_helper.php
+
+SYNTAX ERROR: services/system/core/Common.php
+PHP Deprecated:  Optional parameter $level declared before required parameter $message is implicitly treated as a required parameter in services/system/core/Common.php on line 350
+No syntax errors detected in services/system/core/Common.php
+
+
+--- Summary ---
+Files checked : 522
+Syntax errors : 48
+
+
+--------------------------------------------------------------
+
+=== Critical Files Report — Services ===
+Generated: Wed Mar 18 01:46:10 UTC 2026
+
+  [OK]     services/webservices/application/config/production/database.php
+  [OK]     controllers directory: services/webservices/application/controllers
+  [OK]     models directory: services/webservices/application/models
+
+--- Summary ---
+Missing files/dirs: 0
+
+--------------------------------------------------------------
+
+=== DB Config Report — Services ===
+Generated: Wed Mar 18 01:46:10 UTC 2026
+
+  [OK]   No hardcoded passwords detected in production config.
+  [WARN] Config does not use getenv() — credentials may be hardcoded.
+  [OK]   db_debug is FALSE.
+  [INFO] utf8mb4 charset not configured (legacy utf8 may cause emoji issues).
+
+--- Summary ---
+DB config issues: 1
+
+--------------------------------------------------------------
+
+=== CodeIgniter Structure Report — Services ===
+Generated: Wed Mar 18 01:46:10 UTC 2026
+
+  [INFO] TODO/FIXME/HACK comments: 74
+services/webservices/application/hooks/hooks.php:39:        // TODO: Digest Auth has to implement
+services/webservices/application/hooks/hooks.php:40:        //TODO:Digest Auth has to implement
+services/webservices/application/controllers/flight.php:5:	//TODO: validate Client request
+services/webservices/application/models/user_model.php:529:                            // FIXME: send email/notification to domain admin and current domain admin
+services/webservices/application/models/user_model.php:557:                            // FIXME: send email/notification to domain admin and current domain admin
+services/webservices/application/models/domain_management_model.php:145:                        //FIXME - send email, notification for less balance to domain admin and current domain admin
+services/system/libraries/car/common_car.php:704:		// TODO: Calculate markup based on API (booking_source_fk logic)
+services/system/libraries/car/common_car.php:853:	 * TODO: add Travelomatix cancellation charges
+services/system/libraries/hotel/GRN/common_hotel_v3.php:1050:	 * TODO: add Travelomatix cancellation charges
+services/system/libraries/hotel/GRN/hotel_blender_v3.php:77:	 * FIXME: Check for other services (other than search)
+services/system/libraries/booking_data_formatter.php:74:			// $currency_obj->get_currency_symbol($currency);//FIXME: Remove the hardcoded value "INR" Later
+services/system/libraries/booking_data_formatter.php:117:				$complete_booking_details[$key]['currency'] = $currency;// $currency_obj->get_currency_symbol($currency);//FIXME: Remove the hardcoded value "INR" Later
+services/system/libraries/booking_data_formatter.php:464:						$booking_transaction_details[$transaction_k]['segment_details'] = array();//FIXME: assign it properly
+services/system/libraries/booking_data_formatter.php:669:			//FIXME: for offline booking data is not storing
+services/system/libraries/booking_data_formatter.php:785:			$admin_buying_price[$k] = ($fare-$admin_commission);//FIXME:Check Calculation -- Jaganath
+services/system/libraries/booking_data_formatter.php:1120:			$booking_details = array_values($booking_details);//FIXME: Jaganath
+services/system/libraries/booking_data_formatter.php:1221:        //FIXME: cache the data
+services/system/libraries/booking_data_formatter.php:1281:				$complete_booking_details[$key]['currency'] = $currency;// $currency_obj->get_currency_symbol($currency);//FIXME: Remove the hardcoded value "INR" Later
+services/system/libraries/currency.php:454:		//FIXME:Make it Dynamic: Admin will Manage
+services/system/libraries/provab_sms.php:55:		//FIXME 
+  (showing first 20 — see full artifact for complete list)
+  [WARN] Hardcoded credentials found:
+services/webservices/application/config/testing/database.php:52:$db['default']['password'] = 'Vx9u;1hR*6[9';
+services/system/libraries/car/carnect/carnect_old.php:35:        // $this->config['password']  = '4f$ES462Ks';
+services/system/libraries/sms/sms.php:35:		$data ['password'] = $this->config['password'];
+services/system/libraries/sms/sms.php:55:        $data ['password'] = $this->config['password'];
+services/system/libraries/tcpdf/tcpdf.php:19023:						$prop['password'] = 'true';
+services/system/libraries/tcpdf/include/tcpdf_static.php:1798:		if (isset($prop['password']) AND ($prop['password'] == 'true')) {
+services/system/libraries/provab_mailer.php:46:		$return_data['data'][0]['password'] =  'HayTS@54$zA!r&45Z%M';
+services/system/libraries/provab_mailer.php:63:				isset($this->mail_configuration['password']) == true and empty($this->mail_configuration['password']) == false
+
+--- Summary ---
+CI structure issues: 1
+TODO/FIXME count   : 74
+
+--------------------------------------------------------------
+
+╔══════════════════════════════════════════════════════════════╗
+║  OVERALL SUMMARY — Services
+║  PHP files checked : 522
+║  Syntax errors     : 48
+║  Missing files     : 0
+║  DB config issues  : 1
+║  CI structure issues: 1
+║  TODO/FIXME count  : 74
+╚══════════════════════════════════════════════════════════════╝
+
+══════════════════════════════════════════════════════════════
+
+╔══════════════════════════════════════════════════════════════╗
+║  LAR System — Vertical Check Report                         ║
+║  Vertical : Supervision
+║  Run ID   : 23225145549
+║  Commit   : 185d0bb15723dad99199ad4986ff09af9a84490f
+║  Date     : Wed Mar 18 01:46:00 UTC 2026
+╚══════════════════════════════════════════════════════════════╝
+
+=== PHP Syntax Report — Supervision ===
+Generated: Wed Mar 18 01:45:43 UTC 2026
+PHP version: 8.2.30
+
+SYNTAX ERROR: supervision/application/controllers/eco_stays.php
+PHP Deprecated:  Optional parameter $season_origin declared before required parameter $end_date is implicitly treated as a required parameter in supervision/application/controllers/eco_stays.php on line 612
+PHP Deprecated:  Optional parameter $room_origin declared before required parameter $to_before_days is implicitly treated as a required parameter in supervision/application/controllers/eco_stays.php on line 1190
+PHP Deprecated:  Optional parameter $origin declared before required parameter $to_before_days is implicitly treated as a required parameter in supervision/application/controllers/eco_stays.php on line 1190
+No syntax errors detected in supervision/application/controllers/eco_stays.php
+
+
+--- Summary ---
+Files checked : 342
+Syntax errors : 1
+
+
+--------------------------------------------------------------
+
+=== Critical Files Report — Supervision ===
+Generated: Wed Mar 18 01:45:59 UTC 2026
+
+  [OK]     supervision/application/config/production/database.php
+  [OK]     controllers directory: supervision/application/controllers
+  [OK]     models directory: supervision/application/models
+
+--- Summary ---
+Missing files/dirs: 0
+
+--------------------------------------------------------------
+
+=== DB Config Report — Supervision ===
+Generated: Wed Mar 18 01:45:59 UTC 2026
+
+  [WARN] Possible hardcoded password detected in supervision/application/config/production/database.php
+  [WARN] Config does not use getenv() — credentials may be hardcoded.
+  [OK]   db_debug is FALSE.
+  [INFO] utf8mb4 charset not configured (legacy utf8 may cause emoji issues).
+
+--- Summary ---
+DB config issues: 2
+
+--------------------------------------------------------------
+
+=== CodeIgniter Structure Report — Supervision ===
+Generated: Wed Mar 18 01:46:00 UTC 2026
+
+  [INFO] TODO/FIXME/HACK comments: 11
+supervision/application/views/template_list/template_v1/utilities/manage_promo_code.php:174: * FIXME: Balu A--Implement Share It Button
+supervision/application/views/template_list/template_v1/utilities/manage_promo_code.php:201:		var has_readonly = $(this).attr('readonly');//FIXME:filter readonly
+supervision/application/config/constants.php:47:define('CURRENT_DOMAIN_KEY', 'TMX1512291534825461'); //FIXME :: Auto Set
+supervision/application/controllers/report.php:921:        //FIXME: Return the status
+supervision/application/controllers/private_management.php:205:				$agent_currency_convsesrion_rate = $this->domain_management_model->get_currency_conversion_rate($agent_base_currency); //TODO: find better solution, place it in currency library
+supervision/application/controllers/private_management.php:251:				$agent_currency_convsesrion_rate = $this->domain_management_model->get_currency_conversion_rate($agent_base_currency); //TODO: find better solution, place it in currency library
+supervision/application/controllers/private_management.php:296:				$agent_currency_convsesrion_rate = $this->domain_management_model->get_currency_conversion_rate($agent_base_currency); //TODO: find better solution, place it in currency library
+supervision/application/controllers/private_management.php:336:				$agent_currency_convsesrion_rate = $this->domain_management_model->get_currency_conversion_rate($agent_base_currency); //TODO: find better solution, place it in currency library
+supervision/application/models/db_cache_api.php:130:		//FIXME
+supervision/application/models/domain_management_model.php:257:		//FIXME
+supervision/application/models/domain_management_model.php:909:				//FIXME:Send Notification
+  (showing first 20 — see full artifact for complete list)
+  [WARN] Hardcoded credentials found:
+supervision/application/views/page_configuration/supplier_management.php:97:$auto_validator['password'] = 'trim|required|min_length[5]|max_length[80]|matches[confirm_password]';
+supervision/application/views/page_configuration/b2b_user_management.php:86:$auto_validator['password'] = 'trim|required|min_length[5]|max_length[80]|matches[confirm_password]';
+supervision/application/views/page_configuration/b2c_user.php:73:$auto_validator['password'] = 'trim|required|min_length[5]|max_length[80]|matches[confirm_password]';
+supervision/application/views/page_configuration/user_management.php:74:$auto_validator['password'] = 'trim|required|min_length[5]|max_length[80]|matches[confirm_password]';
+supervision/application/views/page_configuration/ultralux_user_management.php:86:$auto_validator['password'] = 'trim|required|min_length[5]|max_length[80]|matches[confirm_password]';
+supervision/application/views/page_configuration/b2b_user.php:73:$auto_validator['password'] = 'trim|required|min_length[5]|max_length[80]|matches[confirm_password]';
+supervision/application/config/development/database.php:52:$db['default']['password'] = '32n8oL*8f';
+supervision/application/config/development/database.php:71:$db['seconddb']['password'] = '5Eq8tu57%';
+supervision/application/controllers/general.php:188:        $data['password'] = provab_encrypt(md5($data['password']));
+supervision/application/controllers/general.php:225:            $update['password'] = provab_encrypt(md5('Provab@123'));
+
+--- Summary ---
+CI structure issues: 1
+TODO/FIXME count   : 11
+
+--------------------------------------------------------------
+
+╔══════════════════════════════════════════════════════════════╗
+║  OVERALL SUMMARY — Supervision
+║  PHP files checked : 342
+║  Syntax errors     : 1
+║  Missing files     : 0
+║  DB config issues  : 2
+║  CI structure issues: 1
+║  TODO/FIXME count  : 11
+╚══════════════════════════════════════════════════════════════╝
+
+══════════════════════════════════════════════════════════════
+
+╔══════════════════════════════════════════════════════════════╗
+║  LAR System — Vertical Check Report                         ║
+║  Vertical : Supplier
+║  Run ID   : 23225145549
+║  Commit   : 185d0bb15723dad99199ad4986ff09af9a84490f
+║  Date     : Wed Mar 18 01:45:49 UTC 2026
+╚══════════════════════════════════════════════════════════════╝
+
+=== PHP Syntax Report — Supplier ===
+Generated: Wed Mar 18 01:45:44 UTC 2026
+PHP version: 8.2.30
+
+SYNTAX ERROR: supplier/application/controllers/eco_stays.php
+PHP Deprecated:  Optional parameter $season_origin declared before required parameter $end_date is implicitly treated as a required parameter in supplier/application/controllers/eco_stays.php on line 700
+PHP Fatal error:  Cannot use string as default value for parameter $season_origin of type int in supplier/application/controllers/eco_stays.php on line 700
+Errors parsing supplier/application/controllers/eco_stays.php
+
+
+--- Summary ---
+Files checked : 111
+Syntax errors : 1
+
+
+--------------------------------------------------------------
+
+=== Critical Files Report — Supplier ===
+Generated: Wed Mar 18 01:45:49 UTC 2026
+
+  [OK]     supplier/application/config/production/database.php
+  [OK]     controllers directory: supplier/application/controllers
+  [OK]     models directory: supplier/application/models
+
+--- Summary ---
+Missing files/dirs: 0
+
+--------------------------------------------------------------
+
+=== DB Config Report — Supplier ===
+Generated: Wed Mar 18 01:45:49 UTC 2026
+
+  [WARN] Possible hardcoded password detected in supplier/application/config/production/database.php
+  [WARN] Config does not use getenv() — credentials may be hardcoded.
+  [OK]   db_debug is FALSE.
+  [INFO] utf8mb4 charset not configured (legacy utf8 may cause emoji issues).
+
+--- Summary ---
+DB config issues: 2
+
+--------------------------------------------------------------
+
+=== CodeIgniter Structure Report — Supplier ===
+Generated: Wed Mar 18 01:45:49 UTC 2026
+
+  [INFO] TODO/FIXME/HACK comments: 1
+supplier/application/models/db_cache_api.php:145:		//FIXME
+  (showing first 20 — see full artifact for complete list)
+  [WARN] Hardcoded credentials found:
+supplier/application/views/page_configuration/user_management.php:74:$auto_validator['password'] = 'trim|required|min_length[5]|max_length[80]|matches[confirm_password]';
+supplier/application/controllers/auth.php:49:			$user_record['data'][0]['password'] = provab_encrypt(md5(trim($user_record['data'][0]['password'])));
+supplier/application/controllers/auth.php:130:				$condition['password'] = md5($this->input->post('new_password'));
+supplier/application/controllers/auth.php:134:					$condition['password'] = md5($this->input->post('current_password'));
+supplier/application/controllers/auth.php:136:					$data['password'] = md5($this->input->post('new_password'));
+supplier/application/controllers/user.php:183:				$condition['password'] = provab_encrypt(md5(trim($this->input->post('new_password'))));
+supplier/application/controllers/user.php:187:					$condition['password'] = provab_encrypt(md5(trim($this->input->post('current_password'))));
+supplier/application/controllers/user.php:190:					$data['password'] = provab_encrypt(md5(trim($this->input->post('new_password'))));
+supplier/application/models/user_model.php:211:			$user[0]['password']=provab_decrypt($user[0]['password']);
+
+--- Summary ---
+CI structure issues: 1
+TODO/FIXME count   : 1
+
+--------------------------------------------------------------
+
+╔══════════════════════════════════════════════════════════════╗
+║  OVERALL SUMMARY — Supplier
+║  PHP files checked : 111
+║  Syntax errors     : 1
+║  Missing files     : 0
+║  DB config issues  : 2
+║  CI structure issues: 1
+║  TODO/FIXME count  : 1
+╚══════════════════════════════════════════════════════════════╝
+
+══════════════════════════════════════════════════════════════
+
+╔══════════════════════════════════════════════════════════════╗
+║  LAR System — Vertical Check Report                         ║
+║  Vertical : UltraLux
+║  Run ID   : 23225145549
+║  Commit   : 185d0bb15723dad99199ad4986ff09af9a84490f
+║  Date     : Wed Mar 18 01:45:54 UTC 2026
+╚══════════════════════════════════════════════════════════════╝
+
+=== PHP Syntax Report — UltraLux ===
+Generated: Wed Mar 18 01:45:46 UTC 2026
+PHP version: 8.2.30
+
+SYNTAX ERROR: ultralux/application/models/domain_management_model.php
+PHP Deprecated:  Optional parameter $markup_origin declared before required parameter $domain_origin is implicitly treated as a required parameter in ultralux/application/models/domain_management_model.php on line 570
+No syntax errors detected in ultralux/application/models/domain_management_model.php
+
+
+--- Summary ---
+Files checked : 215
+Syntax errors : 1
+
+
+--------------------------------------------------------------
+
+=== Critical Files Report — UltraLux ===
+Generated: Wed Mar 18 01:45:54 UTC 2026
+
+  [OK]     ultralux/application/config/production/database.php
+  [OK]     controllers directory: ultralux/application/controllers
+  [OK]     models directory: ultralux/application/models
+
+--- Summary ---
+Missing files/dirs: 0
+
+--------------------------------------------------------------
+
+=== DB Config Report — UltraLux ===
+Generated: Wed Mar 18 01:45:54 UTC 2026
+
+  [WARN] Possible hardcoded password detected in ultralux/application/config/production/database.php
+  [WARN] Config does not use getenv() — credentials may be hardcoded.
+  [OK]   db_debug is FALSE.
+  [INFO] utf8mb4 charset not configured (legacy utf8 may cause emoji issues).
+
+--- Summary ---
+DB config issues: 2
+
+--------------------------------------------------------------
+
+=== CodeIgniter Structure Report — UltraLux ===
+Generated: Wed Mar 18 01:45:54 UTC 2026
+
+  [INFO] TODO/FIXME/HACK comments: 15
+ultralux/application/views/template_list/template_v3/car/car_booking_page.php:802:                                <!-- //FIXME: insert the country code to DB -->
+ultralux/application/views/template_list/template_v3/hotel/tbo/tbo_booking_page.php:605:$nationality_options = generate_options($iso_country_list, array(INDIA_CODE));//FIXME get ISO CODE --- ISO_INDIA
+ultralux/application/views/template_list/template_v3/hotel/tbo/tbo_room_list.php:57: * FIXME
+ultralux/application/views/template_list/template_v3/share/navigation.php:14:				if($v == 'flights') {//FIXME: remove later
+ultralux/application/views/template_list/template_v3/share/navigation.php:20:	<?php }elseif($v == 'hotels') {//FIXME: remove later
+ultralux/application/views/template_list/template_v3/share/navigation.php:26:	<?php }elseif($v == 'cars') {//FIXME: remove later
+ultralux/application/views/template_list/template_v3/flight/tbo/tbo_booking_page.php:213:                            $nationality_options = generate_options($iso_country_list, array(INDIA_CODE)); //FIXME get ISO CODE --- ISO_INDIA
+ultralux/application/views/template_list/template_v1/report/navigation.php:14:				if($v != 'package') {//FIXME: remove later
+ultralux/application/views/template_list/template_v1/share/report_filter.php:17:			if($v != 'package') {//FIXME: remove later
+ultralux/application/views/template_list/template_v1/share/report_navigator_tab.php:17:			if($v != 'package') {//FIXME: remove later
+ultralux/application/controllers/management.php:371:					// FIXME :: Update Not Needed As Of Now
+ultralux/application/controllers/flight.php:29:	 * FIXME : REMOVE THIS - Balu A
+ultralux/application/controllers/flight.php:309:						//TODO: Implement this using old and new price
+ultralux/application/controllers/flight.php:634:				//Failed booking logs in separate file, FIXME ---------------------------
+ultralux/application/models/domain_management_model.php:409:                    // TODO: Send SMS notification
+  (showing first 20 — see full artifact for complete list)
+  [WARN] Hardcoded credentials found:
+ultralux/application/views/page_configuration/user_management.php:74:$auto_validator['password'] = 'trim|required|min_length[5]|max_length[80]|matches[confirm_password]';
+ultralux/application/controllers/management.php:747:						$condition['password'] = provab_encrypt(md5(trim($this->input->post('current_password'))));
+ultralux/application/controllers/management.php:748:						$data['password'] = provab_encrypt(md5(trim($this->input->post('new_password'))));
+ultralux/application/controllers/auth.php:67:        $user_record['data'][0]['password'] = provab_encrypt(md5(trim('Provab@123')));
+ultralux/application/controllers/user.php:209:				$page_data_arr['form_data']['password'] = provab_encrypt(md5(trim($page_data['form_data']['password'])));
+ultralux/application/controllers/user.php:247:				$page_data_arr['form_data']['password'] = $page_data['form_data']['password']; // Dont remove
+ultralux/application/controllers/user.php:377:			$condition['password'] = provab_encrypt(md5(trim($this->input->post('new_password'))));
+ultralux/application/controllers/user.php:384:				$condition['password'] = provab_encrypt(md5(trim($this->input->post('current_password'))));
+ultralux/application/controllers/user.php:386:				$data['password'] = provab_encrypt(md5(trim($this->input->post('new_password'))));
+ultralux/application/models/user_model.php:231:        $user[0]['password'] = provab_decrypt($user[0]['password']);
+
+--- Summary ---
+CI structure issues: 1
+TODO/FIXME count   : 15
+
+--------------------------------------------------------------
+
+╔══════════════════════════════════════════════════════════════╗
+║  OVERALL SUMMARY — UltraLux
+║  PHP files checked : 215
+║  Syntax errors     : 1
+║  Missing files     : 0
+║  DB config issues  : 2
+║  CI structure issues: 1
+║  TODO/FIXME count  : 15
+╚══════════════════════════════════════════════════════════════╝
+
+══════════════════════════════════════════════════════════════
+
+
+=== End of Report ===
+
