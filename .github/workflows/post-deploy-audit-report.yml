@@ -46,7 +46,7 @@ on:
 
 permissions:
   actions: read     # needed to list/download artefacts via gh CLI
-  contents: read
+  contents: write   # needed to commit the report to audit-report/
 
 jobs:
   generate-audit-report:
@@ -55,14 +55,20 @@ jobs:
 
     steps:
       # ----------------------------------------------------------
-      # 1. Set up workspace
+      # 1. Checkout repository and set up workspace
       # ----------------------------------------------------------
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
       - name: Prepare workspace
         run: |
           mkdir -p /tmp/audit/artifacts/vertical-tests
           mkdir -p /tmp/audit/artifacts/deploy
           mkdir -p /tmp/audit/artifacts/integration-tests
           mkdir -p /tmp/audit/report
+          mkdir -p audit-report
 
       # ----------------------------------------------------------
       # 2. Download artefacts from the most recent vertical-tests run
@@ -322,7 +328,44 @@ jobs:
           retention-days: 90
 
       # ----------------------------------------------------------
-      # 7. Write the full report to the GitHub Actions job summary
+      # 7. Commit audit report to audit-report/ folder
+      # ----------------------------------------------------------
+      - name: Commit audit report to audit-report/
+        if: always()
+        run: |
+          REPORT=$(find /tmp/audit/report -name "*.txt" | head -1)
+          if [[ -z "${REPORT}" ]]; then
+            echo "No report file found — skipping commit."
+            exit 0
+          fi
+
+          REPORT_FILENAME=$(basename "${REPORT}")
+          mkdir -p audit-report
+          cp "${REPORT}" "audit-report/${REPORT_FILENAME}"
+
+          # Also copy any individual artifact files for full traceability
+          if [[ -d /tmp/audit/artifacts ]]; then
+            while IFS= read -r -d '' f; do
+              SUBDIR=$(dirname "${f}" | sed 's|/tmp/audit/artifacts/||')
+              mkdir -p "audit-report/artifacts/${SUBDIR}"
+              cp "${f}" "audit-report/artifacts/${SUBDIR}/"
+            done < <(find /tmp/audit/artifacts -type f -name "*.txt" -print0)
+          fi
+
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add audit-report/
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "ci: add post-deploy audit report [run ${{ github.run_id }}]"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
+
+      # ----------------------------------------------------------
+      # 8. Write the full report to the GitHub Actions job summary
       # ----------------------------------------------------------
       - name: Write job summary
         if: always()
@@ -346,6 +389,7 @@ jobs:
           fi
           echo "" >> "${GITHUB_STEP_SUMMARY}"
           echo "📦 Full report artifact: \`lar-audit-report-${{ github.run_id }}\` (retained 90 days)" >> "${GITHUB_STEP_SUMMARY}"
+          echo "📁 Report also committed to: \`audit-report/\` in the repository" >> "${GITHUB_STEP_SUMMARY}"
           echo "" >> "${GITHUB_STEP_SUMMARY}"
 
           if [[ -f "${REPORT}" ]]; then
