@@ -1,0 +1,371 @@
+# ============================================================
+# GitHub Actions Workflow — Post-Deployment Audit Report
+# ============================================================
+#
+# Automatically triggers after every successful deployment to main
+# and generates a single, comprehensive audit report by collecting
+# and combining all artefacts produced during the CI/CD run:
+#
+#   1. PHP syntax & vertical error reports  (vertical-tests.yml)
+#   2. Azure runtime logs                   (azure-deploy.yml → collect-logs)
+#   3. Functional integration test results  (vertical-integration-tests.yml)
+#
+# TRIGGER:
+#   - Automatically after "Vertical Integration Tests" completes on main
+#     (that workflow already chains after "Deploy to Azure Web App")
+#   - Manually via workflow_dispatch
+#   - Weekly on Tuesdays at 07:00 UTC
+#
+# OUTPUT:
+#   - GitHub Actions job summary (visible immediately in the UI)
+#   - Artifact: lar-audit-report-<run_id>  (retained 90 days)
+#
+# NO EXTRA SECRETS REQUIRED — uses only the built-in GITHUB_TOKEN.
+# ============================================================
+
+name: Post-Deploy Audit Report
+
+on:
+  # Auto-chain: run after vertical-integration-tests finishes on main
+  workflow_run:
+    workflows: ["Vertical Integration Tests"]
+    types: [completed]
+    branches: [main]
+
+  # Weekly fallback — ensures a fresh report even without a new deploy
+  schedule:
+    - cron: '0 7 * * 2'   # Tuesdays 07:00 UTC
+
+  # Manual trigger — useful after investigating an issue
+  workflow_dispatch:
+    inputs:
+      notes:
+        description: 'Optional notes to include in the audit report header'
+        required: false
+        default: ''
+
+permissions:
+  actions: read     # needed to list/download artefacts via gh CLI
+  contents: read
+
+jobs:
+  generate-audit-report:
+    name: Generate Audit Report
+    runs-on: ubuntu-latest
+
+    steps:
+      # ----------------------------------------------------------
+      # 1. Set up workspace
+      # ----------------------------------------------------------
+      - name: Prepare workspace
+        run: |
+          mkdir -p /tmp/audit/artifacts/vertical-tests
+          mkdir -p /tmp/audit/artifacts/deploy
+          mkdir -p /tmp/audit/artifacts/integration-tests
+          mkdir -p /tmp/audit/report
+
+      # ----------------------------------------------------------
+      # 2. Download artefacts from the most recent vertical-tests run
+      # ----------------------------------------------------------
+      - name: Download artefacts — Vertical Tests
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          RUN_ID=$(gh api \
+            "repos/${REPO}/actions/workflows/vertical-tests.yml/runs?branch=main&status=success&per_page=1" \
+            --jq '.workflow_runs[0].id' 2>/dev/null || echo "")
+          if [[ -z "${RUN_ID}" || "${RUN_ID}" == "null" ]]; then
+            echo "No successful vertical-tests run found on main."
+            echo "vertical_run_id=none" >> "${GITHUB_ENV}"
+          else
+            echo "vertical_run_id=${RUN_ID}" >> "${GITHUB_ENV}"
+            echo "Downloading artifacts from run ${RUN_ID}..."
+            gh run download "${RUN_ID}" \
+              --repo "${REPO}" \
+              --dir /tmp/audit/artifacts/vertical-tests \
+              2>&1 || echo "WARNING: some vertical-tests artifacts could not be downloaded."
+            find /tmp/audit/artifacts/vertical-tests -type f | sort || true
+          fi
+
+      # ----------------------------------------------------------
+      # 3. Download artefacts from the most recent deploy run
+      # ----------------------------------------------------------
+      - name: Download artefacts — Deploy to Azure Web App
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          # Intentionally no status filter: audit report should include the most recent
+          # deploy attempt regardless of outcome so failures are captured for analysis.
+          RUN_ID=$(gh api \
+            "repos/${REPO}/actions/workflows/azure-deploy.yml/runs?branch=main&per_page=1" \
+            --jq '.workflow_runs[0].id' 2>/dev/null || echo "")
+          if [[ -z "${RUN_ID}" || "${RUN_ID}" == "null" ]]; then
+            echo "No deploy run found."
+            echo "deploy_run_id=none" >> "${GITHUB_ENV}"
+          else
+            echo "deploy_run_id=${RUN_ID}" >> "${GITHUB_ENV}"
+            echo "Downloading artifacts from run ${RUN_ID}..."
+            gh run download "${RUN_ID}" \
+              --repo "${REPO}" \
+              --dir /tmp/audit/artifacts/deploy \
+              2>&1 || echo "WARNING: some deploy artifacts could not be downloaded."
+            find /tmp/audit/artifacts/deploy -type f | sort || true
+          fi
+
+      # ----------------------------------------------------------
+      # 4. Download artefacts from the most recent integration-tests run
+      # ----------------------------------------------------------
+      - name: Download artefacts — Vertical Integration Tests
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          # Intentionally no status filter: audit report should capture the most recent
+          # integration test run regardless of outcome so FAIL results are included.
+          RUN_ID=$(gh api \
+            "repos/${REPO}/actions/workflows/vertical-integration-tests.yml/runs?branch=main&per_page=1" \
+            --jq '.workflow_runs[0].id' 2>/dev/null || echo "")
+          if [[ -z "${RUN_ID}" || "${RUN_ID}" == "null" ]]; then
+            echo "No integration-tests run found."
+            echo "inttest_run_id=none" >> "${GITHUB_ENV}"
+          else
+            echo "inttest_run_id=${RUN_ID}" >> "${GITHUB_ENV}"
+            echo "Downloading artifacts from run ${RUN_ID}..."
+            gh run download "${RUN_ID}" \
+              --repo "${REPO}" \
+              --dir /tmp/audit/artifacts/integration-tests \
+              2>&1 || echo "WARNING: some integration-tests artifacts could not be downloaded."
+            find /tmp/audit/artifacts/integration-tests -type f | sort || true
+          fi
+
+      # ----------------------------------------------------------
+      # 5. Build the comprehensive audit report
+      # ----------------------------------------------------------
+      - name: Build comprehensive audit report
+        env:
+          MANUAL_NOTES: ${{ github.event.inputs.notes }}
+        run: |
+          REPORT="/tmp/audit/report/LAR_Post_Deploy_Audit_Report_${{ github.run_id }}.txt"
+          TIMESTAMP=$(date -u '+%Y-%m-%d %H:%M:%S UTC')
+          REPO_URL="https://github.com/${{ github.repository }}"
+
+          # ── Header ────────────────────────────────────────────────────────
+          echo "╔══════════════════════════════════════════════════════════════════════╗" >> "${REPORT}"
+          echo "║          LAR SYSTEM — POST-DEPLOYMENT AUDIT REPORT                  ║" >> "${REPORT}"
+          echo "╚══════════════════════════════════════════════════════════════════════╝" >> "${REPORT}"
+          echo "" >> "${REPORT}"
+          echo "  Generated  : ${TIMESTAMP}" >> "${REPORT}"
+          echo "  Report ID  : ${{ github.run_id }}" >> "${REPORT}"
+          echo "  Repository : ${{ github.repository }}" >> "${REPORT}"
+          echo "  Branch     : main" >> "${REPORT}"
+          echo "  Trigger    : ${{ github.event_name }}" >> "${REPORT}"
+          echo "  Actor      : ${{ github.actor }}" >> "${REPORT}"
+          echo "" >> "${REPORT}"
+          echo "  Source workflow runs:" >> "${REPORT}"
+          echo "    Vertical Tests   : ${REPO_URL}/actions/runs/${vertical_run_id}" >> "${REPORT}"
+          echo "    Deploy           : ${REPO_URL}/actions/runs/${deploy_run_id}" >> "${REPORT}"
+          echo "    Integration Tests: ${REPO_URL}/actions/runs/${inttest_run_id}" >> "${REPORT}"
+          echo "" >> "${REPORT}"
+          if [[ -n "${MANUAL_NOTES}" ]]; then
+            echo "  Notes: ${MANUAL_NOTES}" >> "${REPORT}"
+            echo "" >> "${REPORT}"
+          fi
+          echo "══════════════════════════════════════════════════════════════════════" >> "${REPORT}"
+          echo "" >> "${REPORT}"
+
+          # ── Section 1: Vertical Error Reports ─────────────────────────────
+          echo "SECTION 1: VERTICAL PHP CHECKS & ERROR REPORTS" >> "${REPORT}"
+          echo "────────────────────────────────────────────────────────────────────" >> "${REPORT}"
+          echo "" >> "${REPORT}"
+
+          VERT_DIR="/tmp/audit/artifacts/vertical-tests"
+          AGGREGATE_FILE=$(find "${VERT_DIR}" -type f -name "*.txt" 2>/dev/null \
+            | grep -i "lar-system-error-report\|aggregate" | head -1 || echo "")
+
+          if [[ -f "${AGGREGATE_FILE}" ]]; then
+            echo "  Source: Aggregated vertical error report" >> "${REPORT}"
+            echo "" >> "${REPORT}"
+            cat "${AGGREGATE_FILE}" >> "${REPORT}"
+          else
+            FOUND=0
+            while IFS= read -r -d '' vr; do
+              echo "  --- $(basename "${vr}") ---" >> "${REPORT}"
+              cat "${vr}" >> "${REPORT}"
+              echo "" >> "${REPORT}"
+              FOUND=$((FOUND + 1))
+            done < <(find "${VERT_DIR}" -type f -name "*.txt" -print0 2>/dev/null)
+            if [[ "${FOUND}" -eq 0 ]]; then
+              echo "  [INFO] No vertical check reports available." >> "${REPORT}"
+              echo "         Run 'Vertical Tests & Error Report' workflow and re-run this report." >> "${REPORT}"
+            fi
+          fi
+
+          echo "" >> "${REPORT}"
+          echo "══════════════════════════════════════════════════════════════════════" >> "${REPORT}"
+          echo "" >> "${REPORT}"
+
+          # ── Section 2: PHP Syntax Build Report ────────────────────────────
+          echo "SECTION 2: PHP SYNTAX BUILD REPORT" >> "${REPORT}"
+          echo "────────────────────────────────────────────────────────────────────" >> "${REPORT}"
+          echo "" >> "${REPORT}"
+
+          DEPLOY_DIR="/tmp/audit/artifacts/deploy"
+          PHP_SYNTAX=$(find "${DEPLOY_DIR}" -type f -name "*.txt" 2>/dev/null \
+            | grep -i "php-syntax" | head -1 || echo "")
+
+          if [[ -f "${PHP_SYNTAX}" ]]; then
+            cat "${PHP_SYNTAX}" >> "${REPORT}"
+          else
+            echo "  [INFO] No PHP syntax build report available." >> "${REPORT}"
+            echo "         This report is generated by the 'Deploy to Azure Web App' workflow." >> "${REPORT}"
+          fi
+
+          echo "" >> "${REPORT}"
+          echo "══════════════════════════════════════════════════════════════════════" >> "${REPORT}"
+          echo "" >> "${REPORT}"
+
+          # ── Section 3: Azure Runtime Logs ─────────────────────────────────
+          echo "SECTION 3: AZURE RUNTIME LOGS" >> "${REPORT}"
+          echo "────────────────────────────────────────────────────────────────────" >> "${REPORT}"
+          echo "" >> "${REPORT}"
+
+          LOG_DIR=$(find "${DEPLOY_DIR}" -type d -name "azure-runtime-logs" 2>/dev/null | head -1 || echo "")
+          if [[ -n "${LOG_DIR}" ]] && [[ -d "${LOG_DIR}" ]]; then
+            LOG_COUNT=$(find "${LOG_DIR}" -type f | wc -l)
+            if [[ "${LOG_COUNT}" -gt 0 ]]; then
+              echo "  Azure runtime logs collected (${LOG_COUNT} file(s)):" >> "${REPORT}"
+              while IFS= read -r -d '' log_file; do
+                FNAME=$(basename "${log_file}")
+                FSIZE=$(du -sh "${log_file}" 2>/dev/null | cut -f1)
+                echo "    ${FNAME}  (${FSIZE})" >> "${REPORT}"
+              done < <(find "${LOG_DIR}" -type f -print0 | sort -z)
+              echo "" >> "${REPORT}"
+              # Show text/README file contents (zip logs are binary)
+              while IFS= read -r -d '' txt_file; do
+                echo "  --- $(basename "${txt_file}") ---" >> "${REPORT}"
+                cat "${txt_file}" >> "${REPORT}"
+                echo "" >> "${REPORT}"
+              done < <(find "${LOG_DIR}" \( -name "*.txt" -o -name "README*" \) -print0 2>/dev/null)
+            else
+              echo "  [INFO] Log directory found but empty." >> "${REPORT}"
+            fi
+          else
+            echo "  [INFO] No Azure runtime logs available." >> "${REPORT}"
+            echo "         Logs are collected by the 'Deploy to Azure Web App' workflow." >> "${REPORT}"
+            echo "         Ensure AZURE_CREDENTIALS and AZURE_RESOURCE_GROUP secrets are set." >> "${REPORT}"
+          fi
+
+          echo "" >> "${REPORT}"
+          echo "══════════════════════════════════════════════════════════════════════" >> "${REPORT}"
+          echo "" >> "${REPORT}"
+
+          # ── Section 4: Functional Integration Test Results ────────────────
+          echo "SECTION 4: VERTICAL INTEGRATION TEST RESULTS" >> "${REPORT}"
+          echo "────────────────────────────────────────────────────────────────────" >> "${REPORT}"
+          echo "" >> "${REPORT}"
+
+          INTTEST_DIR="/tmp/audit/artifacts/integration-tests"
+          TEST_REPORT=$(find "${INTTEST_DIR}" -type f -name "*.txt" 2>/dev/null | head -1 || echo "")
+
+          if [[ -f "${TEST_REPORT}" ]]; then
+            echo "  Source: Functional integration test evidence pack" >> "${REPORT}"
+            echo "" >> "${REPORT}"
+            cat "${TEST_REPORT}" >> "${REPORT}"
+          else
+            echo "  [INFO] No functional integration test report available." >> "${REPORT}"
+            echo "         Tests run automatically after a successful deployment." >> "${REPORT}"
+            echo "         Ensure AZURE_WEBAPP_NAME_B2C secret is set." >> "${REPORT}"
+          fi
+
+          echo "" >> "${REPORT}"
+          echo "══════════════════════════════════════════════════════════════════════" >> "${REPORT}"
+          echo "" >> "${REPORT}"
+
+          # ── Section 5: Artefact Inventory ─────────────────────────────────
+          echo "SECTION 5: ARTEFACT INVENTORY" >> "${REPORT}"
+          echo "────────────────────────────────────────────────────────────────────" >> "${REPORT}"
+          echo "" >> "${REPORT}"
+          echo "  All files collected for this audit report:" >> "${REPORT}"
+          echo "" >> "${REPORT}"
+          ARTIFACT_COUNT=0
+          while IFS= read -r -d '' f; do
+            FSIZE=$(du -sh "${f}" 2>/dev/null | cut -f1)
+            RELPATH="${f##/tmp/audit/artifacts/}"
+            echo "    ${RELPATH}  (${FSIZE})" >> "${REPORT}"
+            ARTIFACT_COUNT=$((ARTIFACT_COUNT + 1))
+          done < <(find /tmp/audit/artifacts -type f -print0 | sort -z)
+          if [[ "${ARTIFACT_COUNT}" -eq 0 ]]; then
+            echo "  [INFO] No artifacts collected." >> "${REPORT}"
+          fi
+          echo "" >> "${REPORT}"
+
+          echo "══════════════════════════════════════════════════════════════════════" >> "${REPORT}"
+          echo "  End of report.  Generated: ${TIMESTAMP}" >> "${REPORT}"
+          echo "══════════════════════════════════════════════════════════════════════" >> "${REPORT}"
+
+          echo ""
+          echo "Report written: ${REPORT}"
+          echo "Size: $(wc -l < "${REPORT}") lines, $(wc -c < "${REPORT}") bytes"
+          echo "report_path=${REPORT}" >> "${GITHUB_ENV}"
+
+      # ----------------------------------------------------------
+      # 6. Upload the combined report as an artifact (90-day retention)
+      # ----------------------------------------------------------
+      - name: Upload audit report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lar-audit-report-${{ github.run_id }}
+          path: /tmp/audit/report/
+          retention-days: 90
+
+      # ----------------------------------------------------------
+      # 7. Write the full report to the GitHub Actions job summary
+      # ----------------------------------------------------------
+      - name: Write job summary
+        if: always()
+        run: |
+          REPORT=$(find /tmp/audit/report -name "*.txt" | head -1)
+          REPO_URL="https://github.com/${{ github.repository }}"
+
+          echo "## 📋 LAR System — Post-Deploy Audit Report" >> "${GITHUB_STEP_SUMMARY}"
+          echo "" >> "${GITHUB_STEP_SUMMARY}"
+          echo "_Run ID: \`${{ github.run_id }}\` — Trigger: \`${{ github.event_name }}\`_" >> "${GITHUB_STEP_SUMMARY}"
+          echo "" >> "${GITHUB_STEP_SUMMARY}"
+          echo "**Source runs:**" >> "${GITHUB_STEP_SUMMARY}"
+          if [[ "${vertical_run_id}" != "none" && -n "${vertical_run_id}" ]]; then
+            echo "- Vertical Tests: [Run \`${vertical_run_id}\`](${REPO_URL}/actions/runs/${vertical_run_id})" >> "${GITHUB_STEP_SUMMARY}"
+          fi
+          if [[ "${deploy_run_id}" != "none" && -n "${deploy_run_id}" ]]; then
+            echo "- Deploy: [Run \`${deploy_run_id}\`](${REPO_URL}/actions/runs/${deploy_run_id})" >> "${GITHUB_STEP_SUMMARY}"
+          fi
+          if [[ "${inttest_run_id}" != "none" && -n "${inttest_run_id}" ]]; then
+            echo "- Integration Tests: [Run \`${inttest_run_id}\`](${REPO_URL}/actions/runs/${inttest_run_id})" >> "${GITHUB_STEP_SUMMARY}"
+          fi
+          echo "" >> "${GITHUB_STEP_SUMMARY}"
+          echo "📦 Full report artifact: \`lar-audit-report-${{ github.run_id }}\` (retained 90 days)" >> "${GITHUB_STEP_SUMMARY}"
+          echo "" >> "${GITHUB_STEP_SUMMARY}"
+
+          if [[ -f "${REPORT}" ]]; then
+            echo "<details>" >> "${GITHUB_STEP_SUMMARY}"
+            echo "<summary>📄 Expand full report</summary>" >> "${GITHUB_STEP_SUMMARY}"
+            echo "" >> "${GITHUB_STEP_SUMMARY}"
+            echo '```' >> "${GITHUB_STEP_SUMMARY}"
+            # GitHub job summaries are capped at 1 MB; trim to 65 000 chars
+            # (~65 KB) to stay well within the limit. If the report is larger,
+            # append a notice directing reviewers to download the full artifact.
+            REPORT_SIZE=$(wc -c < "${REPORT}")
+            SUMMARY_LIMIT=65000
+            if [[ "${REPORT_SIZE}" -le "${SUMMARY_LIMIT}" ]]; then
+              cat "${REPORT}" >> "${GITHUB_STEP_SUMMARY}"
+            else
+              head -c "${SUMMARY_LIMIT}" "${REPORT}" >> "${GITHUB_STEP_SUMMARY}"
+              echo "" >> "${GITHUB_STEP_SUMMARY}"
+              echo "[... report truncated at ${SUMMARY_LIMIT} chars — download artifact 'lar-audit-report-${{ github.run_id }}' for the full report ...]" >> "${GITHUB_STEP_SUMMARY}"
+            fi
+            echo '```' >> "${GITHUB_STEP_SUMMARY}"
+            echo "" >> "${GITHUB_STEP_SUMMARY}"
+            echo "</details>" >> "${GITHUB_STEP_SUMMARY}"
+          fi
