@@ -396,22 +396,209 @@ jobs:
           path: /tmp/lar-system-error-report.txt
           retention-days: 90
 
-      # ---- Commit report to audit-report/ folder (main branch only) ----
+      # ---- Build Markdown audit summary --------------------------------
+      - name: Build Markdown audit summary
+        run: |
+          REPORT_DATE=$(date -u '+%Y-%m-%d')
+          MD_FILE="/tmp/LAR_CI_Audit_Overview_${REPORT_DATE}.md"
+          RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          COMMIT_URL="https://github.com/${{ github.repository }}/commit/${{ github.sha }}"
+
+          # ── Parse per-vertical summary stats ──────────────────────────
+          declare -A FILES_CHECKED SYNTAX_ERRORS MISSING_FILES DB_ISSUES CI_ISSUES TODO_COUNT
+          TOTAL_FILES=0
+          TOTAL_SYNTAX=0
+          TOTAL_DB=0
+          TOTAL_TODO=0
+          TOTAL_FATAL=0
+
+          for REPORT in /tmp/reports/final-report-*.txt; do
+            [[ -f "${REPORT}" ]] || continue
+            VERT=$(grep -m1 "Vertical :" "${REPORT}" | sed 's/.*Vertical : //' | tr -d '║ \r')
+            [[ -z "${VERT}" ]] && continue
+
+            FC=$(grep  "PHP files checked" "${REPORT}" | tail -1 | grep -oP '\d+' | head -1 || echo 0)
+            SE=$(grep  "Syntax errors"     "${REPORT}" | tail -1 | grep -oP '\d+' | head -1 || echo 0)
+            MF=$(grep  "Missing files"     "${REPORT}" | tail -1 | grep -oP '\d+' | head -1 || echo 0)
+            DI=$(grep  "DB config issues"  "${REPORT}" | tail -1 | grep -oP '\d+' | head -1 || echo 0)
+            CI=$(grep  "CI structure issues" "${REPORT}" | tail -1 | grep -oP '\d+' | head -1 || echo 0)
+            TC=$(grep  "TODO/FIXME count"  "${REPORT}" | tail -1 | grep -oP '\d+' | head -1 || echo 0)
+            FE=$(grep -c "^Errors parsing" "${REPORT}" || echo 0)
+
+            FILES_CHECKED["${VERT}"]="${FC}"
+            SYNTAX_ERRORS["${VERT}"]="${SE}"
+            MISSING_FILES["${VERT}"]="${MF}"
+            DB_ISSUES["${VERT}"]="${DI}"
+            CI_ISSUES["${VERT}"]="${CI}"
+            TODO_COUNT["${VERT}"]="${TC}"
+
+            TOTAL_FILES=$((TOTAL_FILES + FC))
+            TOTAL_SYNTAX=$((TOTAL_SYNTAX + SE))
+            TOTAL_DB=$((TOTAL_DB + DI))
+            TOTAL_TODO=$((TOTAL_TODO + TC))
+            TOTAL_FATAL=$((TOTAL_FATAL + FE))
+          done
+
+          # ── Write Markdown report ──────────────────────────────────────
+          cat > "${MD_FILE}" <<MDEOF
+# LAR System — CI/CD Audit Overview Report
+
+**Report Date:** ${REPORT_DATE}
+**Workflow Run:** [Run ${{ github.run_id }}](${RUN_URL})
+**Commit:** [\`$(echo "${{ github.sha }}" | cut -c1-10)\`](${COMMIT_URL})
+**Branch:** \`${{ github.ref_name }}\`
+**Trigger:** \`${{ github.event_name }}\`
+
+> ⚠️ Errors are **reported, not auto-fixed**. Review this report and prioritise fixes per [REMEDIATION_ROADMAP.md](../REMEDIATION_ROADMAP.md).
+
+---
+
+## Executive Summary
+
+| Metric | Count |
+|--------|-------|
+| PHP files scanned | ${TOTAL_FILES} |
+| Fatal PHP parse errors | ${TOTAL_FATAL} |
+| Total syntax issues (inc. deprecations) | ${TOTAL_SYNTAX} |
+| DB config security issues | ${TOTAL_DB} |
+| TODO/FIXME/HACK markers | ${TOTAL_TODO} |
+
+---
+
+## Per-Vertical Results
+
+| Vertical | Files | Syntax Issues | Missing Files | DB Issues | TODO/FIXME |
+|----------|-------|--------------|---------------|-----------|------------|
+MDEOF
+
+          # Append per-vertical rows
+          for VERT in Agent B2C Services Supervision Supplier UltraLux; do
+            FC="${FILES_CHECKED[${VERT}]:-0}"
+            SE="${SYNTAX_ERRORS[${VERT}]:-0}"
+            MF="${MISSING_FILES[${VERT}]:-0}"
+            DI="${DB_ISSUES[${VERT}]:-0}"
+            TC="${TODO_COUNT[${VERT}]:-0}"
+            SE_ICON="✅ 0"; [[ "${SE}" -gt 0 ]] && SE_ICON="⚠️ ${SE}"
+            MF_ICON="✅ 0"; [[ "${MF}" -gt 0 ]] && MF_ICON="❌ ${MF}"
+            DI_ICON="✅ 0"; [[ "${DI}" -gt 0 ]] && DI_ICON="⚠️ ${DI}"
+            echo "| ${VERT} | ${FC} | ${SE_ICON} | ${MF_ICON} | ${DI_ICON} | ${TC} |" >> "${MD_FILE}"
+          done
+
+          cat >> "${MD_FILE}" <<MDEOF
+
+---
+
+## Key Findings
+
+MDEOF
+
+          # Services PHPExcel/TCPDF check
+          SERVICES_FATAL=$(grep -ci "^Errors parsing services" /tmp/lar-system-error-report.txt 2>/dev/null || echo 0)
+          if [[ "${SERVICES_FATAL}" -gt 0 ]]; then
+            cat >> "${MD_FILE}" <<MDEOF
+### 🔴 Services: Legacy Library PHP 8.2 Incompatibility (${SERVICES_FATAL} fatal errors)
+
+The Services vertical contains legacy third-party libraries with PHP 8.x-incompatible syntax:
+- **PHPExcel** — abandoned library using \`\$str{n}\` curly-brace array offset syntax (removed in PHP 8.0). Replace with [PhpSpreadsheet](https://phpspreadsheet.readthedocs.io/).
+- **TCPDF** — bundled version using deprecated curly-brace syntax. Upgrade to TCPDF ≥ 6.6.0 or replace with mPDF/Dompdf.
+
+MDEOF
+          fi
+
+          # DB credentials check
+          if [[ "${TOTAL_DB}" -gt 0 ]]; then
+            cat >> "${MD_FILE}" <<MDEOF
+### 🔴 Hardcoded DB Credentials in Production Config (${TOTAL_DB} issues)
+
+Production database configuration files contain hardcoded passwords and do not use \`getenv()\`.
+Move all DB credentials to Azure App Service Application Settings and use \`getenv('DB_PASSWORD')\` in config files.
+
+MDEOF
+          fi
+
+          # Syntax errors per vertical (read from each vertical's specific report file)
+          declare -A VERT_DIR_MAP
+          VERT_DIR_MAP["Agent"]="agent"
+          VERT_DIR_MAP["B2C"]="b2c"
+          VERT_DIR_MAP["Services"]="services"
+          VERT_DIR_MAP["Supervision"]="supervision"
+          VERT_DIR_MAP["Supplier"]="supplier"
+          VERT_DIR_MAP["UltraLux"]="ultralux"
+          ALL_SYNTAX_ERRORS=""
+          for VERT in Agent B2C Services Supervision Supplier UltraLux; do
+            SE="${SYNTAX_ERRORS[${VERT}]:-0}"
+            if [[ "${SE}" -gt 0 ]]; then
+              VDIR="${VERT_DIR_MAP[${VERT}]}"
+              VREPORT="/tmp/reports/final-report-${VDIR}.txt"
+              if [[ -f "${VREPORT}" ]]; then
+                ERRORS=$(grep "SYNTAX ERROR:" "${VREPORT}" 2>/dev/null \
+                  | sed 's/^SYNTAX ERROR: //' | head -5 \
+                  | sed 's/^/  - /' || true)
+              else
+                ERRORS=""
+              fi
+              ALL_SYNTAX_ERRORS="${ALL_SYNTAX_ERRORS}**${VERT}** (${SE} issues):\n${ERRORS}\n\n"
+            fi
+          done
+          if [[ -n "${ALL_SYNTAX_ERRORS}" ]]; then
+            echo "### ⚠️ PHP Syntax Errors by Vertical" >> "${MD_FILE}"
+            echo "" >> "${MD_FILE}"
+            printf "%b" "${ALL_SYNTAX_ERRORS}" >> "${MD_FILE}"
+          fi
+
+          cat >> "${MD_FILE}" <<MDEOF
+
+---
+
+## Remediation Priority
+
+| Priority | Action | Effort |
+|----------|--------|--------|
+| 🔴 P1 | Replace PHPExcel with PhpSpreadsheet in Services | Medium |
+| 🔴 P1 | Upgrade/replace TCPDF in Services | Medium |
+| 🔴 P1 | Move DB credentials to env vars (all verticals) | Medium |
+| 🔴 P1 | Fix fatal parse errors in application code | Low |
+| 🟠 P2 | Fix PHP 8.2 deprecation warnings | Low–Medium |
+| 🟡 P3 | Triage and resolve TODO/FIXME markers | High |
+
+See [REMEDIATION_ROADMAP.md](../REMEDIATION_ROADMAP.md) for the full remediation plan.
+See [AUDIT_REPORT.md](../AUDIT_REPORT.md) for the complete technical audit.
+
+---
+
+*Generated automatically by [Vertical Tests & Error Report](${RUN_URL}) workflow.*
+*Raw data: [vertical-error-report-${{ github.run_id }}.txt](./vertical-error-report-${{ github.run_id }}.txt)*
+MDEOF
+
+          echo "Markdown audit summary written to ${MD_FILE}"
+          cp "${MD_FILE}" "/tmp/LAR_CI_Audit_Overview.md"
+
+      - name: Upload Markdown audit summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: lar-ci-audit-overview
+          path: /tmp/LAR_CI_Audit_Overview.md
+          retention-days: 90
+
+      # ---- Commit both reports to audit-report/ folder (main branch only) ----
       - name: Commit aggregated report to audit-report/
         if: github.ref == 'refs/heads/main'
         run: |
-          REPORT_FILENAME="vertical-error-report-${{ github.run_id }}.txt"
+          REPORT_DATE=$(date -u '+%Y-%m-%d')
+          TXT_FILENAME="vertical-error-report-${{ github.run_id }}.txt"
+          MD_FILENAME="LAR_CI_Audit_Overview_${REPORT_DATE}.md"
           mkdir -p audit-report
-          cp /tmp/lar-system-error-report.txt "audit-report/${REPORT_FILENAME}"
+          cp /tmp/lar-system-error-report.txt "audit-report/${TXT_FILENAME}"
+          cp /tmp/LAR_CI_Audit_Overview.md "audit-report/${MD_FILENAME}"
 
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add "audit-report/${REPORT_FILENAME}"
+          git add "audit-report/${TXT_FILENAME}" "audit-report/${MD_FILENAME}"
 
           if git diff --cached --quiet; then
             echo "No changes to commit."
           else
-            git commit -m "ci: add vertical error report [run ${{ github.run_id }}]"
+            git commit -m "ci: add vertical error report and audit overview [run ${{ github.run_id }}]"
             git pull --rebase origin main
             git push origin HEAD:main
           fi
