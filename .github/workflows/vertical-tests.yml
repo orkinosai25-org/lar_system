@@ -108,7 +108,7 @@ jobs:
 
           while IFS= read -r -d '' php_file; do
             FILE_COUNT=$((FILE_COUNT + 1))
-            RESULT=$(php -l "${php_file}" 2>&1)
+            RESULT=$(php -l "${php_file}" 2>&1) || true
             if echo "${RESULT}" | grep -qv "No syntax errors"; then
               echo "SYNTAX ERROR: ${php_file}" >> "${REPORT_FILE}"
               echo "${RESULT}" >> "${REPORT_FILE}"
