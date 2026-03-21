@@ -23,7 +23,7 @@ $GLOBALS['CI']->current_page->auto_adjust_datetimepicker(array(array('transfer_d
         <div class="waywy" style="margin-top: 10px;">
             <div class="smalway">
                 <label class="wament hand-cursor">
-                    <input class="hide" type="radio" name="transfer_type" <?= (isset($transfer_search_params['trip_type']) == false ? 'checked' : ($transfer_search_params['trip_type']) == 'oneway' ? 'checked="checked"' : '') ?> id="onew-trip" value="oneway" /> One-Way
+                    <input class="hide" type="radio" name="transfer_type" <?= (isset($transfer_search_params['trip_type']) == false ? 'checked' : (($transfer_search_params['trip_type']) == 'oneway' ? 'checked="checked"' : '')) ?> id="onew-trip" value="oneway" /> One-Way
                 </label>
                 <label class="wament hand-cursor">
                     <input class="hide" type="radio" name="transfer_type" <?= (@$transfer_search_params['trip_type'] == 'circle' ? 'checked="checked"' : '') ?> id="rnd-trip" value="circle" /> Roundtrip

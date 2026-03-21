@@ -730,6 +730,7 @@ function get_compressed_output($data) {
  * @param object  $json  Json which has to be decoded
  * @param boolean $assoc boolean which indicates if array should be returned
  */
+if (!function_exists('json_validate')) {
 function json_validate($json, $assoc = TRUE) {
     //decode the JSON data
     $result = json_decode($json, $assoc);
@@ -774,6 +775,7 @@ function json_validate($json, $assoc = TRUE) {
 
     return array('status' => $status, 'message' => $message, 'data' => $data);
 }
+} // end if (!function_exists('json_validate'))
 
 /**
  * get message returns a message with appropriate html
