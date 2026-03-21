@@ -3,16 +3,19 @@ set -euo pipefail
 
 # ============================================================
 # LAR System — Azure Quick-Start Provisioning Script
-# Update all variables in the CONFIGURATION section below.
 #
 # Usage:
 #   chmod +x azure-provision.sh
-#   ./azure-provision.sh          # local machine
-#   bash azure-provision.sh       # Azure Cloud Shell
+#   ./azure-provision.sh                                 # prompts for DB password
+#   DB_ADMIN_PASSWORD='mypassword' ./azure-provision.sh  # non-interactive
+#   ./azure-provision.sh --env-file .env                 # read all values from .env
 #
 # IMPORTANT: Run this script from a logged-in Azure CLI session.
 #   Local machine: az login
 #   Cloud Shell:   already logged in
+#
+# After provisioning, run scripts/azure-appsettings-sync.sh to push all
+# API keys, payment credentials, and other secrets to the Web Apps.
 # ============================================================
 
 # --- CONFIGURATION -------------------------------------------
@@ -20,14 +23,51 @@ RESOURCE_GROUP="rg-lar-system"
 LOCATION="southafricanorth"     # Closest region to Africa; alternatives: westeurope, eastus
 APP_SERVICE_PLAN="asp-lar-system"
 DB_SERVER_NAME="lar-mysql-server"           # Must be globally unique across all Azure customers
-DB_ADMIN_USER="laradmin"
-DB_ADMIN_PASSWORD='YOUR_SECURE_PASSWORD_HERE'   # Replace — min 8 chars, upper+lower+number+symbol
-# NOTE: Use single quotes to prevent bash interpreting ! as history expansion.
+DB_ADMIN_USER="${DB_ADMIN_USER:-laradmin}"
+DB_ADMIN_PASSWORD="${DB_ADMIN_PASSWORD:-}"  # Set via env var, --env-file, or interactive prompt
 # -------------------------------------------------------------
 
-# Validate that the password has been changed from the placeholder.
-if [[ "$DB_ADMIN_PASSWORD" == 'YOUR_SECURE_PASSWORD_HERE' ]]; then
-  echo "ERROR: Please set DB_ADMIN_PASSWORD in the CONFIGURATION section before running this script."
+# ---- Parse --env-file argument ------------------------------
+ENV_FILE_ARG=""
+for arg in "$@"; do
+  if [[ "$arg" == "--env-file" ]]; then
+    ENV_FILE_ARG="NEXT"
+  elif [[ "$ENV_FILE_ARG" == "NEXT" ]]; then
+    ENV_FILE_ARG="$arg"
+  fi
+done
+
+if [[ -n "$ENV_FILE_ARG" && "$ENV_FILE_ARG" != "NEXT" && -f "$ENV_FILE_ARG" ]]; then
+  echo "==> Loading configuration from ${ENV_FILE_ARG} ..."
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]] && continue
+    [[ "$line" != *=* ]] && continue
+    key="${line%%=*}"
+    value="${line#*=}"
+    # Strip only matching outer quotes (single or double)
+    if [[ "$value" =~ ^\'(.*)\'$ ]]; then
+      value="${BASH_REMATCH[1]}"
+    elif [[ "$value" =~ ^\"(.*)\"$ ]]; then
+      value="${BASH_REMATCH[1]}"
+    fi
+    export "$key"="$value"
+  done < "$ENV_FILE_ARG"
+  # DB_PASSWORD in .env is the same credential as DB_ADMIN_PASSWORD for Azure MySQL.
+  # The .env file uses DB_PASSWORD (app-facing name); azure-provision.sh uses
+  # DB_ADMIN_PASSWORD (the MySQL admin account name) — they are the same value.
+  DB_ADMIN_PASSWORD="${DB_PASSWORD:-${DB_ADMIN_PASSWORD:-}}"
+  [[ -n "${DB_USERNAME:-}" ]] && DB_ADMIN_USER="${DB_USERNAME}"
+fi
+
+# ---- Prompt for password if still unset ---------------------
+if [[ -z "$DB_ADMIN_PASSWORD" ]]; then
+  echo -n "==> Enter DB admin password (min 8 chars, upper+lower+number+symbol): "
+  read -rs DB_ADMIN_PASSWORD
+  echo
+fi
+
+if [[ -z "$DB_ADMIN_PASSWORD" ]]; then
+  echo "ERROR: DB_ADMIN_PASSWORD is required. Set it via environment variable, --env-file, or interactive prompt."
   exit 1
 fi
 
@@ -106,7 +146,9 @@ az ad sp create-for-rbac \
 echo "  Service principal JSON saved to /tmp/azure-credentials.json"
 echo "  Add its contents as the AZURE_CREDENTIALS GitHub Secret"
 
-echo "==> Configuring App Settings..."
+echo "==> Configuring App Settings (DB, environment, and base security settings)..."
+echo "    NOTE: To push API keys, payment credentials, and SMTP settings,"
+echo "    run: scripts/azure-appsettings-sync.sh --env-file .env"
 DB_HOST="${DB_SERVER_NAME}.mysql.database.azure.com"
 APPS_AND_DBS=(
   "lar-b2c:lar_b2c"
@@ -126,8 +168,11 @@ for ENTRY in "${APPS_AND_DBS[@]}"; do
       DB_USERNAME="${DB_ADMIN_USER}@${DB_SERVER_NAME}" \
       DB_PASSWORD="$DB_ADMIN_PASSWORD" \
       DB_DATABASE="$DB_NAME" \
+      APP_ENV="production" \
       ENVIRONMENT="production" \
-      WEBSITE_RUN_FROM_PACKAGE="1"
+      WEBSITE_RUN_FROM_PACKAGE="1" \
+    --output none
+  echo "  Settings applied: ${APP_NAME}"
 done
 
 echo "==> Downloading publish profiles..."
@@ -145,5 +190,7 @@ echo "==> DONE. Next steps:"
 echo "  1. Add AZURE_CREDENTIALS from /tmp/azure-credentials.json as a GitHub Secret"
 echo "  2. Add the publish profile XMLs as GitHub Secrets (see AZURE_DEPLOYMENT.md Step 5)"
 echo "  3. Add the app name and resource group as GitHub Variables (see AZURE_DEPLOYMENT.md Step 5)"
-echo "  4. Import your database schema (see AZURE_DEPLOYMENT.md Step 7)"
-echo "  5. Push to main or manually trigger the GitHub Actions workflow"
+echo "  4. Run: scripts/setup-env.sh   → fill in API keys, payment, SMTP settings"
+echo "  5. Run: scripts/azure-appsettings-sync.sh   → push all settings to Azure"
+echo "  6. Import your database schema (see AZURE_DEPLOYMENT.md Step 7)"
+echo "  7. Push to main or manually trigger the GitHub Actions workflow"

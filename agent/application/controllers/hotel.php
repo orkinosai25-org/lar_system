@@ -1025,3 +1025,4 @@ function cancellation_details(string $app_reference, string $booking_source): vo
 	echo file_get_contents($image_url);
 }
 
+}

@@ -351,7 +351,7 @@ class TCPDF_COLORS {
 				}
 				return $returncolor;
 			}
-			if ($color{0} != '#') {
+			if ($color[0] != '#') {
 				// COLOR NAME
 				if (isset(self::$webcolor[$color])) {
 					// web color

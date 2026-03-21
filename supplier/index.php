@@ -22,9 +22,9 @@ date_default_timezone_set('Asia/Kolkata');//Set India timezone
     if($_SERVER['REMOTE_ADDR'] == '192.168.0.12') {
     	define('ENVIRONMENT', 'testing');
     } else {
-    	define('ENVIRONMENT', 'development');
+    	define('ENVIRONMENT', getenv('APP_ENV') ?: 'production');
     }*/
-	define('ENVIRONMENT', 'development');
+	define('ENVIRONMENT', getenv('APP_ENV') ?: 'production');
 /*
  *---------------------------------------------------------------
  * ERROR REPORTING

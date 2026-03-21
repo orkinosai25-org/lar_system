@@ -49,7 +49,7 @@ $active_group = 'default';
 $active_record = TRUE;
 $db['default']['hostname'] = 'localhost';
 $db['default']['username'] = 'lar_user';
-$db['default']['password'] = '32n8oL*8f';
+$db['default']['password'] = getenv('DB_PASSWORD') ?: '';
 $db['default']['database'] = 'admin_lar';
 $db['default']['db_debug'] = FALSE;
 
@@ -66,10 +66,10 @@ $db['default']['stricton'] = FALSE;
 
 //Second Database
 
-$db['seconddb']['hostname'] = 'localhost';
-$db['seconddb']['username'] = 'larservices';
-$db['seconddb']['password'] = '5Eq8tu57%';
-$db['seconddb']['database'] = 'lar_webservices';
+$db['seconddb']['hostname'] = getenv('DB2_HOSTNAME') ?: 'localhost';
+$db['seconddb']['username'] = getenv('DB2_USERNAME') ?: '';
+$db['seconddb']['password'] = getenv('DB2_PASSWORD') ?: '';
+$db['seconddb']['database'] = getenv('DB2_DATABASE') ?: '';
 $db['seconddb']['db_debug'] = TRUE;
 
 $db['seconddb']['dbdriver'] = 'mysqli';

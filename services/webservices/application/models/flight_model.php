@@ -272,6 +272,7 @@ public function get_static_response(int $token_id): array
         $decoded = json_decode($record['data'][0]['test'], true);
         return is_array($decoded) ? $decoded : [];
     }
+}
 
     /**
      * Save flight booking details
@@ -327,6 +328,7 @@ public function get_static_response(int $token_id): array
 
     // Attempt to insert data
     $insert_result = $this->custom_db->insert_record('flight_booking_details', $data);
+}
 
     /**
      * Save flight booking passenger details

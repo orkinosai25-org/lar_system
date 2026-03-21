@@ -9,7 +9,7 @@ class Payment_model extends CI_Model
         $this->load->database();
     }
 
-    public function create_pay_record(string $app_reference, float $booking_fare, string $firstname, string $email, string $phone, string $productinfo,float $convenience_fees = 0,float $promocode_discount = 0, float $conversion_rate): bool {
+    public function create_pay_record(string $app_reference, float $booking_fare, string $firstname, string $email, string $phone, string $productinfo, float $conversion_rate, float $convenience_fees = 0, float $promocode_discount = 0): bool {
         $duplicate_pg = $this->read_pay_record($app_reference);
         if ($duplicate_pg) {
             return false;

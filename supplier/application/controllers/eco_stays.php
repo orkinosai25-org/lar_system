@@ -697,7 +697,7 @@ public function delete_eco_stays(string $origin = ''): void
             redirect('eco_stays/stays');
         }
     }
-   private function check_season_avalability(int $stays_origin, int $season_origin = '', string $start_date, string $end_date): bool
+   private function check_season_avalability(int $stays_origin, int $season_origin = 0, string $start_date, string $end_date): bool
     {
         $avalability = true;
         $stays_origin = intval($stays_origin);
@@ -865,7 +865,7 @@ public function delete_eco_stays(string $origin = ''): void
             redirect('eco_stays/stays');
         }
     }
-  public function room_price_management(int $room_origin = '', int $origin = ''): void
+  public function room_price_management(int $room_origin = 0, int $origin = 0): void
     {
         $room_origin = intval($room_origin);
         $origin = intval($origin);
@@ -1066,7 +1066,7 @@ public function delete_eco_stays(string $origin = ''): void
         }
     }
 
-   public function room_availability_calendar(int $room_origin = ''): void
+   public function room_availability_calendar(int $room_origin = 0): void
     {
         $room_origin = intval($room_origin);
         $page_data = array();
@@ -1107,7 +1107,7 @@ public function delete_eco_stays(string $origin = ''): void
             redirect('eco_stays/stays');
         }
     }
- public function delete_room_price(int $room_origin = '', int $origin = ''): void
+ public function delete_room_price(int $room_origin = 0, int $origin = 0): void
     {
         $room_origin = intval($room_origin);
         $origin = intval($origin);
@@ -1139,7 +1139,7 @@ public function delete_eco_stays(string $origin = ''): void
         }
     }
 
-    public function room_cancellation_policy(int $room_origin = '', int $origin = ''): void
+    public function room_cancellation_policy(int $room_origin = 0, int $origin = 0): void
     {$page_data=[];
         $room_origin = intval($room_origin);
         $origin = intval($origin);
@@ -1225,7 +1225,7 @@ public function delete_eco_stays(string $origin = ''): void
             redirect('eco_stays/stays');
         }
     }
-   public function delete_room_cancellation_policy(int $room_origin = '', int $origin = ''): void
+   public function delete_room_cancellation_policy(int $room_origin = 0, int $origin = 0): void
     {
         $room_origin = intval($room_origin);
         if ($room_origin > 0) {
@@ -1255,7 +1255,7 @@ public function delete_eco_stays(string $origin = ''): void
             redirect('eco_stays/stays');
         }
     }
-    private function check_cancellation_days_validity(int $room_origin = '', int $origin = '', int $to_before_days): bool
+    private function check_cancellation_days_validity(int $room_origin = 0, int $origin = 0, int $to_before_days): bool
     {$cancellation_policy=[];
         $room_origin = intval($room_origin);
         $origin = intval($origin);
@@ -1280,7 +1280,7 @@ public function delete_eco_stays(string $origin = ''): void
         return true;
     }
 
-   public function reviews(int $stays_origin = ''): void
+   public function reviews(int $stays_origin = 0): void
     {
         $page_data = array();
         $stays_origin = intval($stays_origin);
@@ -1343,7 +1343,7 @@ public function delete_eco_stays(string $origin = ''): void
             redirect('eco_stays/stays');
         }
     }
-    public function types(int $origin = ''): void
+    public function types(int $origin = 0): void
     {$config=[];
         $page_data = array();
         $page_data['origin'] = 0;
@@ -1474,7 +1474,7 @@ public function delete_eco_stays(string $origin = ''): void
     }
 
 
-   public function delete_types(int $origin = ''): void
+   public function delete_types(int $origin = 0): void
     {$page_data=[];
         $origin = intval($origin);
         if ($origin > 0) {
@@ -1500,7 +1500,7 @@ public function delete_eco_stays(string $origin = ''): void
         exit();
     }
 
-    public function room_types(int $origin = ''): void
+    public function room_types(int $origin = 0): void
     {
         $page_data = array();
         $page_data['origin'] = 0;
@@ -1575,7 +1575,7 @@ public function delete_eco_stays(string $origin = ''): void
 
         $this->template->view('eco_stays/room_types', $page_data);
     }
- public function delete_room_types(int $origin = ''): void
+ public function delete_room_types(int $origin = 0): void
     {$page_data=[];
         $origin = intval($origin);
         if ($origin > 0) {
@@ -1596,7 +1596,7 @@ public function delete_eco_stays(string $origin = ''): void
         exit();
     }
 
-  public function board_types(int $origin = ''): void
+  public function board_types(int $origin = 0): void
     {
         $page_data = array();
         $page_data['origin'] = 0;
@@ -1666,7 +1666,7 @@ public function delete_eco_stays(string $origin = ''): void
 
         $this->template->view('eco_stays/board_types', $page_data);
     }
-   public function delete_board_types(int $origin = ''): void
+   public function delete_board_types(int $origin = 0): void
     {$page_data=[];
         $origin = intval($origin);
         if ($origin > 0) {
@@ -1686,7 +1686,7 @@ public function delete_eco_stays(string $origin = ''): void
         redirect('eco_stays/board_types');
         exit();
     }
-    public function eco_stays_amenities(int $origin = ''): void
+    public function eco_stays_amenities(int $origin = 0): void
     {$config=[];
         $page_data = array();
         $page_data['origin'] = 0;
@@ -1819,7 +1819,7 @@ public function delete_eco_stays(string $origin = ''): void
 
         $this->template->view('eco_stays/eco_stays_amenities', $page_data);
     }
-   public function delete_eco_stays_amenities(int $origin = ''): void
+   public function delete_eco_stays_amenities(int $origin = 0): void
     {$page_data=[];
         $origin = intval($origin);
         if ($origin > 0) {
@@ -1842,7 +1842,7 @@ public function delete_eco_stays(string $origin = ''): void
         redirect('eco_stays/eco_stays_amenities');
         exit();
     }
-     public function eco_stays_room_amenities(int $origin = ''): void
+     public function eco_stays_room_amenities(int $origin = 0): void
     {$config=[];
         $page_data = array();
         $page_data['origin'] = 0;
@@ -1974,7 +1974,7 @@ public function delete_eco_stays(string $origin = ''): void
 
         $this->template->view('eco_stays/eco_stays_room_amenities', $page_data);
     }
-   public function delete_eco_stays_room_amenities(int $origin = ''): void
+   public function delete_eco_stays_room_amenities(int $origin = 0): void
     {$page_data=[];
         $origin = intval($origin);
         if ($origin > 0) {
@@ -1998,7 +1998,7 @@ public function delete_eco_stays(string $origin = ''): void
         redirect('eco_stays/eco_stays_room_amenities');
         exit();
     }
-  public function eco_stays_room_meal_types(int $origin = ''): void
+  public function eco_stays_room_meal_types(int $origin = 0): void
     {
         $page_data = array();
         $page_data['origin'] = 0;
@@ -2070,7 +2070,7 @@ public function delete_eco_stays(string $origin = ''): void
 
         $this->template->view('eco_stays/eco_stays_room_meal_types', $page_data);
     }
-   public function delete_eco_stays_room_meal_types(int $origin = ''): void
+   public function delete_eco_stays_room_meal_types(int $origin = 0): void
     {$page_data=[];
         $origin = intval($origin);
         if ($origin > 0) {
@@ -2091,7 +2091,7 @@ public function delete_eco_stays(string $origin = ''): void
         exit();
     }
 
-   public function eco_stays_review_criteria(int $origin = ''): void
+   public function eco_stays_review_criteria(int $origin = 0): void
     {$config=[];
         $page_data = array();
         $page_data['origin'] = 0;
@@ -2213,7 +2213,7 @@ public function delete_eco_stays(string $origin = ''): void
 
         $this->template->view('eco_stays/eco_stays_review_criteria', $page_data);
     }
-     public function delete_eco_stays_review_criteria(int $origin = ''): void
+     public function delete_eco_stays_review_criteria(int $origin = 0): void
     {$page_data=[];
         $origin = intval($origin);
         if ($origin > 0) {

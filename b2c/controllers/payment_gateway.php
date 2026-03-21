@@ -40,7 +40,6 @@ class Payment_Gateway extends CI_Controller {
 
 	    $pg_record['amount'] = roundoff_number($pg_record['amount'] * $pg_record['currency_conversion_rate']);
 	    $params = json_decode($pg_record['request_params'], true);
-	    debug($params);exit;
 	    $pg_initialize_data = [
 	        'txnid'       => $params['txnid'] ?? '',
 	        'pgi_amount'  => $pg_record['amount'],
@@ -199,7 +198,6 @@ class Payment_Gateway extends CI_Controller {
 	}	
 	public function success():void{
 		$response = $this->input->get();
-		debug($response);exit;
 		$this->custom_db->insert_record('test', ['test' => $response]);
 
 	    $this->load->model('transaction');

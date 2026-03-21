@@ -47,10 +47,10 @@
 
 $active_group = 'default';
 $active_record = TRUE;
-$db['default']['hostname'] = 'localhost';
-$db['default']['username'] = 'travelom_newjuly';
-$db['default']['password'] = 'LN2s]WDQ6$a%';
-$db['default']['database'] = 'travelom_new_july';
+$db['default']['hostname'] = getenv('DB_HOSTNAME') ?: 'localhost';
+$db['default']['username'] = getenv('DB_USERNAME') ?: '';
+$db['default']['password'] = getenv('DB_PASSWORD') ?: '';
+$db['default']['database'] = getenv('DB_DATABASE') ?: '';
 $db['default']['db_debug'] = FALSE;
 
 $db['default']['dbdriver'] = 'mysqli';
