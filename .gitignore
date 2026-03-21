@@ -1,0 +1,25 @@
+# Environment / secrets — NEVER commit these
+.env
+.env.local
+.env.*.local
+
+# Composer dependencies
+vendor/
+composer.lock
+
+# PHP logs and caches
+*.log
+application/logs/
+application/cache/
+*/application/logs/
+*/application/cache/
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+*.swo

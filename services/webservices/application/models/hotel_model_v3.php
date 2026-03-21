@@ -552,9 +552,9 @@ Class Hotel_Model_V3 extends CI_Model
         string $passport_number,
         string $passport_issuing_country,
         string $passport_expiry_date,
-        string $pan_card_number='',
         string $status,
-        string $attributes=''
+        string $attributes='',
+        string $pan_card_number=''
     ): array {
         // Prepare the data array for insertion
         $data = [

@@ -67,10 +67,10 @@ $db['default']['stricton'] = FALSE;
 //second database
 //Second Database
 
-$db['seconddb']['hostname'] = 'localhost';
-$db['seconddb']['username'] = 'larservices';
-$db['seconddb']['password'] = '5Eq8tu57%';
-$db['seconddb']['database'] = 'lar_webservices';
+$db['seconddb']['hostname'] = getenv('DB2_HOSTNAME') ?: 'localhost';
+$db['seconddb']['username'] = getenv('DB2_USERNAME') ?: '';
+$db['seconddb']['password'] = getenv('DB2_PASSWORD') ?: '';
+$db['seconddb']['database'] = getenv('DB2_DATABASE') ?: '';
 $db['seconddb']['db_debug'] = TRUE;
 
 $db['seconddb']['dbdriver'] = 'mysqli';
